@@ -110,6 +110,7 @@ void mathfun_cleanup(struct mathfun *mathfun)
 {
 	free(mathfun->code);
 	free(mathfun->regs);
+	free(mathfun->funct_map);
 }
 
 mathfun_value mathfun_call(struct mathfun *mathfun, ...) {
@@ -214,6 +215,7 @@ int mathfun_context_compile(const struct mathfun_context *ctx,
 		return errno ? errno : EINVAL;
 	}
 
+	mathfun->argc = argc;
 	int errnum = mathfun_context_codegen(ctx, opt, mathfun);
 
 	// mathfun_expr_optimize reuses expr and frees discarded things,

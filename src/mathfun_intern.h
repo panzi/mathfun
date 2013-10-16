@@ -7,6 +7,8 @@
 
 #include "mathfun.h"
 
+#define MATHFUN_REGS_MAX 256
+
 enum mathfun_decl_type {
 	DECL_CONST,
 	DECL_FUNCT
@@ -30,11 +32,13 @@ struct mathfun_context {
 	size_t decl_used;
 };
 
+typedef uint8_t mathfun_code_t;
+
 struct mathfun {
-	size_t         argc;
-	uint8_t       *code;
-	mathfun_value *regs;
-	mathfun_binding_funct funct_map[256];
+	size_t          argc;
+	mathfun_code_t *code;
+	mathfun_value  *regs;
+	mathfun_binding_funct *funct_map;
 };
 
 enum mathfun_expr_type {
@@ -75,18 +79,18 @@ struct mathfun_expr {
 };
 
 enum mathfun_bytecode {
-	       // args           description
-	RET,   // reg            return
-	MOV,   // reg, reg       copy value
-	CALL,  // index, reg     call a function. index points into funct_map.
+	            // args           description
+	RET  = 0,   // reg            return
+	MOV  = 1,   // reg, reg       copy value
+	CALL = 2,   // index, reg     call a function. index points into funct_map.
 
-	NEG,   // reg, reg       negate
-	ADD,   // reg, reg, reg  add
-	SUB,   // reg, reg, reg  substract
-	MUL,   // reg, reg, reg  multiply
-	DIV,   // reg, reg, reg  divide
-	MOD,   // reg, reg, reg  modulo
-	POW    // reg, reg, reg  power
+	NEG  = 3,   // reg, reg       negate
+	ADD  = 4,   // reg, reg, reg  add
+	SUB  = 5,   // reg, reg, reg  substract
+	MUL  = 6,   // reg, reg, reg  multiply
+	DIV  = 7,   // reg, reg, reg  divide
+	MOD  = 8,   // reg, reg, reg  modulo
+	POW  = 9    // reg, reg, reg  power
 
 /* maybe later
 	EQ,    // reg, reg, reg  equal
