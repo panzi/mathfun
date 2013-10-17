@@ -3,11 +3,46 @@
 
 // this is a internal header, hence no MATHFUN_/mathfun_ prefixes or ifdef __cplusplus
 
-#include <stdint.h>
-
 #include "mathfun.h"
 
-#define MATHFUN_REGS_MAX 256
+#include <stdbool.h>
+#include <stdlib.h>
+#include <inttypes.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Assumtions:
+// sizeof(x) == 2 ** n and sizeof(x) == __alignof__(x)
+// for x in {mathfun_value, mathfun_binding_funct, size_t}
+
+#define MATHFUN_REGS_MAX UINTPTR_MAX
+#define MATHFUN_FUNCT_CODES (1 + ((sizeof(mathfun_binding_funct) - 1) / sizeof(mathfun_code)))
+#define MATHFUN_VALUE_CODES (1 + ((sizeof(mathfun_value) - 1) / sizeof(mathfun_code)))
+
+#define MATHFUN_MOD(A,B) \
+	mathfun_value __mathfun_mod_i = floor((A)/(B)); \
+	mathfun_value mathfun_mod_result = (A) - __mathfun_mod_i * (B); \
+	if (((A) < 0.0) != ((B) < 0.0)) { \
+		mathfun_mod_result -= (B); \
+	}
+
+#if (defined(_WIN16) || defined(_WIN32) || defined(_WIN64)) && !defined(__CYGWIN__)
+#	if defined(_WIN64)
+#		define PRIzu PRIu64
+#		define PRIzx PRIx64
+#	elif defined(_WIN32)
+#		define PRIzu PRIu32
+#		define PRIzx PRIx32
+#	elif defined(_WIN16)
+#		define PRIzu PRIu16
+#		define PRIzx PRIx16
+#	endif
+#else
+#	define PRIzu "zu"
+#	define PRIzx "zx"
+#endif
 
 enum mathfun_decl_type {
 	DECL_CONST,
@@ -24,21 +59,6 @@ struct mathfun_decl {
 			size_t argc;
 		} funct;
 	} decl;
-};
-
-struct mathfun_context {
-	struct mathfun_decl *decls;
-	size_t decl_capacity;
-	size_t decl_used;
-};
-
-typedef uint8_t mathfun_code_t;
-
-struct mathfun {
-	size_t          argc;
-	mathfun_code_t *code;
-	mathfun_value  *regs;
-	mathfun_binding_funct *funct_map;
 };
 
 enum mathfun_expr_type {
@@ -68,29 +88,34 @@ struct mathfun_expr {
 		} funct;
 
 		struct {
-			struct expr *expr;
+			struct mathfun_expr *expr;
 		} unary;
 
 		struct {
-			struct expr *left;
-			struct expr *right;
+			struct mathfun_expr *left;
+			struct mathfun_expr *right;
 		} binary;
 	} ex;
 };
 
 enum mathfun_bytecode {
-	            // args           description
-	RET  = 0,   // reg            return
-	MOV  = 1,   // reg, reg       copy value
-	CALL = 2,   // index, reg     call a function. index points into funct_map.
+	             // args           description
+	NOP  =  0,   //                do nothing. used to align VAL and CALL
+	RET  =  1,   // reg            return
+	MOV  =  2,   // reg, reg       copy value
+	VAL  =  3,   // val, reg       load an immediate value
+	CALL =  4,   // ptr, reg, reg  call a function. parameters:
+	             //                 * C function pointer
+	             //                 * register of first argument
+	             //                 * register for the return value
 
-	NEG  = 3,   // reg, reg       negate
-	ADD  = 4,   // reg, reg, reg  add
-	SUB  = 5,   // reg, reg, reg  substract
-	MUL  = 6,   // reg, reg, reg  multiply
-	DIV  = 7,   // reg, reg, reg  divide
-	MOD  = 8,   // reg, reg, reg  modulo
-	POW  = 9    // reg, reg, reg  power
+	NEG  =  5,   // reg, reg       negate
+	ADD  =  6,   // reg, reg, reg  add
+	SUB  =  7,   // reg, reg, reg  substract
+	MUL  =  8,   // reg, reg, reg  multiply
+	DIV  =  9,   // reg, reg, reg  divide
+	MOD  = 10,   // reg, reg, reg  modulo division
+	POW  = 11    // reg, reg, reg  power
 
 /* maybe later
 	EQ,    // reg, reg, reg  equal
@@ -112,18 +137,34 @@ enum mathfun_bytecode {
 */
 };
 
+struct mathfun_parser;
+
+struct mathfun_codegen {
+	size_t argc;
+	size_t maxstack;
+	size_t currstack;
+	size_t code_size;
+	size_t code_used;
+	mathfun_code *code;
+};
+
 int                  mathfun_context_grow(struct mathfun_context *ctx);
-struct mathfun_decl *mathfun_context_get(struct mathfun_context *ctx, const char *name);
+const struct mathfun_decl *mathfun_context_get(const struct mathfun_context *ctx, const char *name);
 struct mathfun_expr *mathfun_context_parse(const struct mathfun_context *ctx,
 	const char *argnames[], size_t argc, const char *code);
-int mathfun_context_codegen(const struct mathfun_context *ctx,
-	struct mathfun_expr *expr,
-	struct mathfun *mathfun);
+int mathfun_expr_codegen(struct mathfun_expr *expr, struct mathfun *mathfun);
 
+int mathfun_codegen(struct mathfun_codegen *codegen, struct mathfun_expr *expr, mathfun_code *ret);
+int mathfun_codegen_binary(struct mathfun_codegen *codegen, struct mathfun_expr *expr, enum mathfun_bytecode code, mathfun_code *ret);
 struct mathfun_expr *mathfun_expr_alloc(enum mathfun_expr_type type);
 void                 mathfun_expr_free(struct mathfun_expr *expr);
 struct mathfun_expr *mathfun_expr_optimize(struct mathfun_expr *expr);
 
-mathfun_value mathfun_exec(struct mathfun *mathfun);
+mathfun_value mathfun_exec(const struct mathfun *mathfun, mathfun_value regs[]);
+mathfun_value mathfun_expr_exec(const struct mathfun_expr *expr, mathfun_value args[]);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
