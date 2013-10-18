@@ -22,10 +22,17 @@ extern "C" {
 #define MATHFUN_VALUE_CODES (1 + ((sizeof(mathfun_value) - 1) / sizeof(mathfun_code)))
 
 #define MATHFUN_MOD(A,B) \
-	mathfun_value __mathfun_mod_i = floor((A)/(B)); \
-	mathfun_value mathfun_mod_result = (A) - __mathfun_mod_i * (B); \
-	if (((A) < 0.0) != ((B) < 0.0)) { \
-		mathfun_mod_result -= (B); \
+	mathfun_value mathfun_mod_result; \
+	if ((B) == 0.0) { \
+		errno = EDOM; \
+		mathfun_mod_result = NAN; \
+	} \
+	else { \
+		mathfun_value __mathfun_mod_i = floor((mathfun_value)(A)/(mathfun_value)(B)); \
+		mathfun_mod_result = (mathfun_value)(A) - __mathfun_mod_i * (mathfun_value)(B); \
+		if (((mathfun_value)(A) < 0.0) != ((mathfun_value)(B) < 0.0)) { \
+			mathfun_mod_result = mathfun_mod_result - (mathfun_value)(B); \
+		} \
 	}
 
 #if (defined(_WIN16) || defined(_WIN32) || defined(_WIN64)) && !defined(__CYGWIN__)

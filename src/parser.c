@@ -272,6 +272,7 @@ struct mathfun_expr *mathfun_parse_atom(struct mathfun_parser *parser) {
 			const struct mathfun_decl *decl = mathfun_context_get(parser->ctx, identifier);
 
 			if (!decl || decl->type != DECL_CONST) {
+				errno = EINVAL; // no such const/arg
 				return NULL;
 			}
 
@@ -289,6 +290,7 @@ struct mathfun_expr *mathfun_parse_atom(struct mathfun_parser *parser) {
 			const struct mathfun_decl *decl = mathfun_context_get(parser->ctx, identifier);
 
 			if (!decl || decl->type != DECL_FUNCT) {
+				errno = EINVAL; // no such function
 				return NULL;
 			}
 
