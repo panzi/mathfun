@@ -323,11 +323,11 @@ int mathfun_expr_codegen(struct mathfun_expr *expr, struct mathfun *mathfun) {
 		return errnum;
 	}
 
-	if (codegen.maxstack > MATHFUN_REGS_MAX) {
+	if (codegen.maxstack >= MATHFUN_REGS_MAX) {
 		return errno = ERANGE;
 	}
 
-	mathfun->framesize = codegen.maxstack;
+	mathfun->framesize = codegen.maxstack + 1;
 	mathfun->code      = codegen.code;
 
 	codegen.code = NULL;
@@ -340,6 +340,7 @@ int mathfun_dump(const struct mathfun *mathfun, FILE *stream) {
 	const mathfun_code *code = mathfun->code;
 
 	for (;;) {
+		fprintf(stream, "0x%08"PRIuPTR": ", code - mathfun->code);
 		switch (*code) {
 			case NOP:
 				if (fprintf(stream, "nop\n") < 0)
@@ -365,14 +366,17 @@ int mathfun_dump(const struct mathfun *mathfun, FILE *stream) {
 				break;
 
 			case CALL:
-				if (fprintf(stream, "call 0x%"PRIxPTR", %"PRIuPTR", %"PRIuPTR"\n",
-					(uintptr_t)*(mathfun_binding_funct*)(code + 1),
-					code[MATHFUN_FUNCT_CODES + 1],
-					code[MATHFUN_FUNCT_CODES + 2]) < 0) {
+			{
+				mathfun_binding_funct funct = *(mathfun_binding_funct*)(code + 1);
+				mathfun_code firstarg = code[MATHFUN_FUNCT_CODES + 1];
+				mathfun_code ret = code[MATHFUN_FUNCT_CODES + 2];
+				// TODO: use optional mathfun_context to get function name
+				if (fprintf(stream, "call 0x%"PRIxPTR", %"PRIuPTR", %"PRIuPTR"\n", (uintptr_t)funct, firstarg, ret) < 0) {
 					return errno;
 				}
 				code += 3 + MATHFUN_FUNCT_CODES;
 				break;
+			}
 
 			case NEG:
 				if (fprintf(stream, "neg %"PRIuPTR", %"PRIuPTR"\n", code[1], code[2]) < 0)

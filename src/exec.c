@@ -139,8 +139,8 @@ do_val:
 			case CALL:
 do_call:
 			{
-				mathfun_binding_funct funct = *(mathfun_binding_funct)(code + 1);
-				code += MATHFUN_FUNCT_CODES;
+				mathfun_binding_funct funct = *(mathfun_binding_funct*)(code + 1);
+				code += 1 + MATHFUN_FUNCT_CODES;
 				mathfun_code firstarg = *(code ++);
 				mathfun_code ret      = *(code ++);
 				regs[ret] = funct(regs + firstarg);

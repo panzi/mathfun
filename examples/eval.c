@@ -51,6 +51,7 @@ int main(int argc, char *argv[]) {
 	}
 	errno = 0;
 	mathfun_value value = mathfun_acall(&mathfun, funct_args);
+	mathfun_cleanup(&mathfun);
 	free(funct_args);
 	
 	if (isnan(value) && errno != 0) {
