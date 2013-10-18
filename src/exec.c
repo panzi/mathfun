@@ -59,9 +59,14 @@ mathfun_value mathfun_expr_exec(const struct mathfun_expr *expr, const mathfun_v
 	return NAN;
 }
 
+#ifndef __GNUC__
+#	define __attribute__(X)
+#endif
+
 #pragma GCC diagnostic ignored "-pedantic"
 #pragma GCC diagnostic ignored "-Wunused-label"
-mathfun_value mathfun_exec(const struct mathfun *mathfun, mathfun_value regs[]) {
+mathfun_value mathfun_exec(const struct mathfun *mathfun, mathfun_value regs[]) 
+__attribute__((__noinline__,__noclone__)) {
 	const mathfun_code *code = mathfun->code;
 
 #ifdef __GNUC__

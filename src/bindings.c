@@ -1,200 +1,204 @@
 #include "mathfun_intern.h"
 
-mathfun_value mathfun_funct_acos(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_acos(const mathfun_value args[]) {
 	return acos(args[0]);
 }
 
-mathfun_value mathfun_funct_acosh(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_acosh(const mathfun_value args[]) {
 	return acosh(args[0]);
 }
 
-mathfun_value mathfun_funct_asin(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_asin(const mathfun_value args[]) {
 	return asin(args[0]);
 }
 
-mathfun_value mathfun_funct_asinh(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_asinh(const mathfun_value args[]) {
 	return asinh(args[0]);
 }
 
-mathfun_value mathfun_funct_atan(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_atan(const mathfun_value args[]) {
 	return atan(args[0]);
 }
 
-mathfun_value mathfun_funct_atan2(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_atan2(const mathfun_value args[]) {
 	return atan2(args[0], args[1]);
 }
 
-mathfun_value mathfun_funct_atanh(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_atanh(const mathfun_value args[]) {
 	return atanh(args[0]);
 }
 
-mathfun_value mathfun_funct_cbrt(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_cbrt(const mathfun_value args[]) {
 	return cbrt(args[0]);
 }
 
-mathfun_value mathfun_funct_ceil(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_ceil(const mathfun_value args[]) {
 	return ceil(args[0]);
 }
 
-mathfun_value mathfun_funct_copysign(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_copysign(const mathfun_value args[]) {
 	return copysign(args[0], args[1]);
 }
 
-mathfun_value mathfun_funct_cos(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_cos(const mathfun_value args[]) {
 	return cos(args[0]);
 }
 
-mathfun_value mathfun_funct_cosh(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_cosh(const mathfun_value args[]) {
 	return cosh(args[0]);
 }
 
-mathfun_value mathfun_funct_erf(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_erf(const mathfun_value args[]) {
 	return erf(args[0]);
 }
 
-mathfun_value mathfun_funct_erfc(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_erfc(const mathfun_value args[]) {
 	return erfc(args[0]);
 }
 
-mathfun_value mathfun_funct_exp(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_exp(const mathfun_value args[]) {
 	return exp(args[0]);
 }
 
-mathfun_value mathfun_funct_exp2(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_exp2(const mathfun_value args[]) {
 	return exp2(args[0]);
 }
 
-mathfun_value mathfun_funct_expm1(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_expm1(const mathfun_value args[]) {
 	return expm1(args[0]);
 }
 
-mathfun_value mathfun_funct_abs(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_abs(const mathfun_value args[]) {
 	return fabs(args[0]);
 }
 
-mathfun_value mathfun_funct_fdim(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_fdim(const mathfun_value args[]) {
 	return fdim(args[0], args[1]);
 }
 
-mathfun_value mathfun_funct_floor(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_floor(const mathfun_value args[]) {
 	return floor(args[0]);
 }
 
-mathfun_value mathfun_funct_fma(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_fma(const mathfun_value args[]) {
 	return fma(args[0], args[1], args[2]);
 }
 
-mathfun_value mathfun_funct_max(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_fmod(const mathfun_value args[]) {
+	return fmod(args[0], args[1]);
+}
+
+static mathfun_value mathfun_funct_max(const mathfun_value args[]) {
 	mathfun_value x = args[0];
 	mathfun_value y = args[1];
 	return (x >= y || isnan(x)) ? x : y;
 //	return fmax(args[0], args[1]);
 }
 
-mathfun_value mathfun_funct_min(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_min(const mathfun_value args[]) {
 	mathfun_value x = args[0];
 	mathfun_value y = args[1];
 	return (x <= y || isnan(y)) ? x : y;
 //	return fmin(args[0], args[1]);
 }
 
-mathfun_value mathfun_funct_hypot(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_hypot(const mathfun_value args[]) {
 	return hypot(args[0], args[1]);
 }
 
-mathfun_value mathfun_funct_j0(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_j0(const mathfun_value args[]) {
 	return j0(args[0]);
 }
 
-mathfun_value mathfun_funct_j1(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_j1(const mathfun_value args[]) {
 	return j1(args[0]);
 }
 
-mathfun_value mathfun_funct_jn(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_jn(const mathfun_value args[]) {
 	return jn((int)args[0], args[1]);
 }
 
-mathfun_value mathfun_funct_ldexp(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_ldexp(const mathfun_value args[]) {
 	return ldexp(args[0], (int)args[1]);
 }
 
-mathfun_value mathfun_funct_log(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_log(const mathfun_value args[]) {
 	return log(args[0]);
 }
 
-mathfun_value mathfun_funct_log10(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_log10(const mathfun_value args[]) {
 	return log10(args[0]);
 }
 
-mathfun_value mathfun_funct_log1p(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_log1p(const mathfun_value args[]) {
 	return log1p(args[0]);
 }
 
-mathfun_value mathfun_funct_log2(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_log2(const mathfun_value args[]) {
 	return log2(args[0]);
 }
 
-mathfun_value mathfun_funct_logb(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_logb(const mathfun_value args[]) {
 	return logb(args[0]);
 }
 
-mathfun_value mathfun_funct_nearbyint(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_nearbyint(const mathfun_value args[]) {
 	return nearbyint(args[0]);
 }
 
-mathfun_value mathfun_funct_nextafter(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_nextafter(const mathfun_value args[]) {
 	return nextafter(args[0], args[1]);
 }
 
-mathfun_value mathfun_funct_remainder(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_remainder(const mathfun_value args[]) {
 	return remainder(args[0], args[1]);
 }
 
-mathfun_value mathfun_funct_round(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_round(const mathfun_value args[]) {
 	return round(args[0]);
 }
 
-mathfun_value mathfun_funct_scalbln(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_scalbln(const mathfun_value args[]) {
 	return scalbln(args[0], (long)args[1]);
 }
 
-mathfun_value mathfun_funct_sin(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_sin(const mathfun_value args[]) {
 	return sin(args[0]);
 }
 
-mathfun_value mathfun_funct_sinh(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_sinh(const mathfun_value args[]) {
 	return sinh(args[0]);
 }
 
-mathfun_value mathfun_funct_sqrt(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_sqrt(const mathfun_value args[]) {
 	return sqrt(args[0]);
 }
 
-mathfun_value mathfun_funct_tan(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_tan(const mathfun_value args[]) {
 	return tan(args[0]);
 }
 
-mathfun_value mathfun_funct_tanh(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_tanh(const mathfun_value args[]) {
 	return tanh(args[0]);
 }
 
-mathfun_value mathfun_funct_tgamma(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_tgamma(const mathfun_value args[]) {
 	return tgamma(args[0]);
 }
 
-mathfun_value mathfun_funct_trunc(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_trunc(const mathfun_value args[]) {
 	return trunc(args[0]);
 }
 
-mathfun_value mathfun_funct_y0(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_y0(const mathfun_value args[]) {
 	return y0(args[0]);
 }
 
-mathfun_value mathfun_funct_y1(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_y1(const mathfun_value args[]) {
 	return y1(args[0]);
 }
 
-mathfun_value mathfun_funct_yn(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_yn(const mathfun_value args[]) {
 	return yn((int)args[0], args[1]);
 }
 
@@ -202,22 +206,6 @@ int mathfun_context_define_default(struct mathfun_context *ctx) {
 	int errnum = 0;
 
 	// Constants
-	if ((errnum = mathfun_context_define_const(ctx, "NaN", NAN)) != 0) {
-		return errnum;
-	}
-
-	if ((errnum = mathfun_context_define_const(ctx, "nan", NAN)) != 0) {
-		return errnum;
-	}
-
-	if ((errnum = mathfun_context_define_const(ctx, "Infinity", INFINITY)) != 0) {
-		return errnum;
-	}
-
-	if ((errnum = mathfun_context_define_const(ctx, "inf", INFINITY)) != 0) {
-		return errnum;
-	}
-	
 	if ((errnum = mathfun_context_define_const(ctx, "e", M_E)) != 0) {
 		return errnum;
 	}
@@ -352,6 +340,10 @@ int mathfun_context_define_default(struct mathfun_context *ctx) {
 	}
 
 	if ((errnum = mathfun_context_define_funct(ctx, "fma", mathfun_funct_fma, 3)) != 0) {
+		return errnum;
+	}
+
+	if ((errnum = mathfun_context_define_funct(ctx, "fmod", mathfun_funct_fmod, 2)) != 0) {
 		return errnum;
 	}
 

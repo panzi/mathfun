@@ -12,7 +12,7 @@
 // power        ::= atom ["**" u_expr]
 // atom         ::= identifier ("(" [expression ("," expression)*] ")")? | number | "(" expression ")"
 // identifier   ::= (alpha|"_")(alnum|"_")*
-// number       ::= "Infinity" | "NaN" | ["-"]("0"|"1"..."9"digit*)["."digit*][("e"|"E")["+"|"-"]digit+]
+// number       ::= "Inf" | "NaN" | ["-"]("0"|"1"..."9"digit*)["."digit*][("e"|"E")["+"|"-"]digit+]
 //
 // or just use strtod for number
 
@@ -253,6 +253,19 @@ struct mathfun_expr *mathfun_parse_atom(struct mathfun_parser *parser) {
 	else {
 		const char *identifier = mathfun_parse_identifier(parser);
 		if (!identifier) return NULL;
+
+		if (strcasecmp(identifier, "nan") == 0) {
+			struct mathfun_expr *expr = mathfun_expr_alloc(EX_CONST);
+			if (!expr) return NULL;
+			expr->ex.value = NAN;
+			return expr;
+		}
+		else if (strcasecmp(identifier, "inf") == 0) {
+			struct mathfun_expr *expr = mathfun_expr_alloc(EX_CONST);
+			if (!expr) return NULL;
+			expr->ex.value = INFINITY;
+			return expr;
+		}
 
 		size_t argind = 0;
 		for (; argind < parser->argc; ++ argind) {
