@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	size_t funct_argc = argc - 2;
+	const size_t funct_argc = argc - 2;
 	struct mathfun mathfun;
 	int errnum = mathfun_compile(&mathfun, (const char**)argv + 1, funct_argc, argv[argc - 1]);
 	if (errnum != 0) {

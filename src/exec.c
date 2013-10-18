@@ -3,7 +3,7 @@
 #include "mathfun_intern.h"
 
 // tree interpreter, for one time execution and debugging
-mathfun_value mathfun_expr_exec(const struct mathfun_expr *expr, mathfun_value args[]) {
+mathfun_value mathfun_expr_exec(const struct mathfun_expr *expr, const mathfun_value args[]) {
 	switch (expr->type) {
 		case EX_CONST:
 			return expr->ex.value;
@@ -55,6 +55,7 @@ mathfun_value mathfun_expr_exec(const struct mathfun_expr *expr, mathfun_value a
 		               mathfun_expr_exec(expr->ex.binary.right, args));
 	}
 	// internal error
+	errno = EINVAL;
 	return NAN;
 }
 

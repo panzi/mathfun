@@ -47,6 +47,7 @@ mathfun_value mathfun_vcall(const struct mathfun *mathfun, va_list ap);
 int mathfun_dump(const struct mathfun *mathfun, FILE *stream);
 
 mathfun_value mathfun_run(const char *code, ...);
+mathfun_value mathfun_arun(const char *argnames[], size_t argc, const char *code, const mathfun_value args[]);
 
 mathfun_value mathfun_mod(mathfun_value x, mathfun_value y);
 

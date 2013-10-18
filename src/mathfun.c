@@ -163,7 +163,6 @@ mathfun_value mathfun_vcall(const struct mathfun *mathfun, va_list ap) {
 // mathfun_value value = mathfun_run("sin(x) * y", "x", "y", NULL, 1.4, 2.5);
 mathfun_value mathfun_run(const char *code, ...) {
 	va_list ap;
-	struct mathfun_context ctx;
 	size_t argcap = 32;
 	const char **argnames = calloc(argcap, sizeof(char*));
 	size_t argc = 0;
@@ -207,42 +206,32 @@ mathfun_value mathfun_run(const char *code, ...) {
 
 	va_end(ap);
 
+	mathfun_value value = mathfun_arun(argnames, argc, code, args);
+
+	free(args);
+	free(argnames);
+
+	return value;
+}
+
+mathfun_value mathfun_arun(const char *argnames[], size_t argc, const char *code, const mathfun_value args[]) {
+	struct mathfun_context ctx;
+
 	int errnum = mathfun_context_init(&ctx, true);
-	if (errnum != 0) {
-		free(argnames);
-		free(args);
+	if (errnum != 0) return NAN;
+
+	struct mathfun_expr *expr = mathfun_context_parse(&ctx, argnames, argc, code);
+
+	if (!expr) {
+		mathfun_context_cleanup(&ctx);
 		return NAN;
 	}
 
 	// it's only executed once, so any optimizations and byte code
 	// compilations would only add overhead
-	struct mathfun_expr *expr = mathfun_context_parse(&ctx, argnames, argc, code);
-
-	if (!expr) {
-		mathfun_context_cleanup(&ctx);
-		free(args);
-		free(argnames);
-		return NAN;
-	}
-
 	mathfun_value value = mathfun_expr_exec(expr, args);
 
-/*
-	struct mathfun mathfun;
-	errnum = mathfun_context_compile(&ctx, argnames, argc, code, &mathfun);
-	if (errnum != 0) {
-		mathfun_context_cleanup(&ctx);
-		free(argnames);
-		return NAN;
-	}
-
-	mathfun_value value = mathfun_vcall(&mathfun, ap);
-	mathfun_cleanup(&mathfun);
-*/
-
 	mathfun_context_cleanup(&ctx);
-	free(args);
-	free(argnames);
 
 	return value;
 }

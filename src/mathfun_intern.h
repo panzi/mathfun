@@ -161,7 +161,7 @@ void                 mathfun_expr_free(struct mathfun_expr *expr);
 struct mathfun_expr *mathfun_expr_optimize(struct mathfun_expr *expr);
 
 mathfun_value mathfun_exec(const struct mathfun *mathfun, mathfun_value regs[]);
-mathfun_value mathfun_expr_exec(const struct mathfun_expr *expr, mathfun_value args[]);
+mathfun_value mathfun_expr_exec(const struct mathfun_expr *expr, const mathfun_value args[]);
 
 #ifdef __cplusplus
 }
