@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
 	struct mathfun mathfun;
 	int errnum = mathfun_compile(&mathfun, (const char**)argv + 1, funct_argc, argv[argc - 1]);
 	if (errnum != 0) {
-		fprintf(stderr, "error creating mathfun context: %s\n", strerror(errnum));
+		fprintf(stderr, "error compiling expression: %s\n", strerror(errnum));
 		return 1;
 	}
 
