@@ -105,9 +105,9 @@ void mathfun_codegen_cleanup(struct mathfun_codegen *codegen) {
 }
 
 int mathfun_codegen_ensure(struct mathfun_codegen *codegen, size_t n) {
-	size_t size = codegen->code_used + n;
+	const size_t size = codegen->code_used + n;
 	if (size > codegen->code_size) {
-		mathfun_code *code = realloc(codegen->code, size);
+		mathfun_code *code = realloc(codegen->code, size * sizeof(mathfun_code));
 
 		if (!code) return ENOMEM;
 
@@ -342,30 +342,30 @@ int mathfun_dump(const struct mathfun *mathfun, FILE *stream) {
 	for (;;) {
 		switch (*code) {
 			case NOP:
-				if (fprintf(stream, "NOP\n") < 0)
+				if (fprintf(stream, "nop\n") < 0)
 					return errno;
 				++ code;
 				break;
 
 			case RET:
-				if (fprintf(stream, "RET %"PRIuPTR"\n", code[1]) < 0)
+				if (fprintf(stream, "ret %"PRIuPTR"\n", code[1]) < 0)
 					return errno;
 				return 0;
 
 			case MOV:
-				if (fprintf(stream, "MOV %"PRIuPTR", %"PRIuPTR"\n", code[1], code[2]) < 0)
+				if (fprintf(stream, "mov %"PRIuPTR", %"PRIuPTR"\n", code[1], code[2]) < 0)
 					return errno;
 				code += 3;
 				break;
 
 			case VAL:
-				if (fprintf(stream, "VAL %g, %"PRIuPTR"\n", *(mathfun_value*)(code + 1), code[1 + MATHFUN_VALUE_CODES]) < 0)
+				if (fprintf(stream, "val %.22g, %"PRIuPTR"\n", *(mathfun_value*)(code + 1), code[1 + MATHFUN_VALUE_CODES]) < 0)
 					return errno;
 				code += 2 + MATHFUN_VALUE_CODES;
 				break;
 
 			case CALL:
-				if (fprintf(stream, "CALL 0x%"PRIxPTR", %"PRIuPTR", %"PRIuPTR"\n",
+				if (fprintf(stream, "call 0x%"PRIxPTR", %"PRIuPTR", %"PRIuPTR"\n",
 					(uintptr_t)*(mathfun_binding_funct*)(code + 1),
 					code[MATHFUN_FUNCT_CODES + 1],
 					code[MATHFUN_FUNCT_CODES + 2]) < 0) {
@@ -375,43 +375,43 @@ int mathfun_dump(const struct mathfun *mathfun, FILE *stream) {
 				break;
 
 			case NEG:
-				if (fprintf(stream, "NEG %"PRIuPTR", %"PRIuPTR"\n", code[1], code[2]) < 0)
+				if (fprintf(stream, "neg %"PRIuPTR", %"PRIuPTR"\n", code[1], code[2]) < 0)
 					return errno;
 				code += 3;
 				break;
 
 			case ADD:
-				if (fprintf(stream, "ADD %"PRIuPTR", %"PRIuPTR", %"PRIuPTR"\n", code[1], code[2], code[3]) < 0)
+				if (fprintf(stream, "add %"PRIuPTR", %"PRIuPTR", %"PRIuPTR"\n", code[1], code[2], code[3]) < 0)
 					return errno;
 				code += 4;
 				break;
 
 			case SUB:
-				if (fprintf(stream, "SUB %"PRIuPTR", %"PRIuPTR", %"PRIuPTR"\n", code[1], code[2], code[3]) < 0)
+				if (fprintf(stream, "sub %"PRIuPTR", %"PRIuPTR", %"PRIuPTR"\n", code[1], code[2], code[3]) < 0)
 					return errno;
 				code += 4;
 				break;
 
 			case MUL:
-				if (fprintf(stream, "ADD %"PRIuPTR", %"PRIuPTR", %"PRIuPTR"\n", code[1], code[2], code[3]) < 0)
+				if (fprintf(stream, "add %"PRIuPTR", %"PRIuPTR", %"PRIuPTR"\n", code[1], code[2], code[3]) < 0)
 					return errno;
 				code += 4;
 				break;
 
 			case DIV:
-				if (fprintf(stream, "DIV %"PRIuPTR", %"PRIuPTR", %"PRIuPTR"\n", code[1], code[2], code[3]) < 0)
+				if (fprintf(stream, "div %"PRIuPTR", %"PRIuPTR", %"PRIuPTR"\n", code[1], code[2], code[3]) < 0)
 					return errno;
 				code += 4;
 				break;
 
 			case MOD:
-				if (fprintf(stream, "MOD %"PRIuPTR", %"PRIuPTR", %"PRIuPTR"\n", code[1], code[2], code[3]) < 0)
+				if (fprintf(stream, "mod %"PRIuPTR", %"PRIuPTR", %"PRIuPTR"\n", code[1], code[2], code[3]) < 0)
 					return errno;
 				code += 4;
 				break;
 
 			case POW:
-				if (fprintf(stream, "POW %"PRIuPTR", %"PRIuPTR", %"PRIuPTR"\n", code[1], code[2], code[3]) < 0)
+				if (fprintf(stream, "pow %"PRIuPTR", %"PRIuPTR", %"PRIuPTR"\n", code[1], code[2], code[3]) < 0)
 					return errno;
 				code += 4;
 				break;

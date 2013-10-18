@@ -32,11 +32,12 @@ void mathfun_context_cleanup(struct mathfun_context *ctx) {
 }
 
 int mathfun_context_grow(struct mathfun_context *ctx) {
-	size_t size = ctx->decl_capacity * 2;
+	const size_t size = ctx->decl_capacity * 2;
 	struct mathfun_decl *decls = realloc(ctx->decls, size * sizeof(struct mathfun_decl));
 
 	if (!decls) return ENOMEM;
 
+	ctx->decls         = decls;
 	ctx->decl_capacity = size;
 	return 0;
 }
@@ -249,6 +250,7 @@ mathfun_value mathfun_run(const char *code, ...) {
 int mathfun_context_compile(const struct mathfun_context *ctx,
 	const char *argnames[], size_t argc, const char *code,
 	struct mathfun *mathfun) {
+	errno = 0;
 	struct mathfun_expr *expr = mathfun_context_parse(ctx, argnames, argc, code);
 
 	memset(mathfun, 0, sizeof(struct mathfun));
@@ -311,6 +313,8 @@ struct mathfun_expr *mathfun_expr_alloc(enum mathfun_expr_type type) {
 }
 
 void mathfun_expr_free(struct mathfun_expr *expr) {
+	if (!expr) return;
+
 	switch (expr->type) {
 		case EX_CONST:
 		case EX_ARG:
@@ -327,7 +331,7 @@ void mathfun_expr_free(struct mathfun_expr *expr) {
 			break;
 
 		case EX_NEG:
-			free(expr->ex.unary.expr);
+			mathfun_expr_free(expr->ex.unary.expr);
 			expr->ex.unary.expr = NULL;
 			break;
 
@@ -337,8 +341,8 @@ void mathfun_expr_free(struct mathfun_expr *expr) {
 		case EX_DIV:
 		case EX_MOD:
 		case EX_POW:
-			free(expr->ex.binary.left);
-			free(expr->ex.binary.right);
+			mathfun_expr_free(expr->ex.binary.left);
+			mathfun_expr_free(expr->ex.binary.right);
 			expr->ex.binary.left  = NULL;
 			expr->ex.binary.right = NULL;
 			break;

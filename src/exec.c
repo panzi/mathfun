@@ -15,8 +15,7 @@ mathfun_value mathfun_expr_exec(const struct mathfun_expr *expr, mathfun_value a
 		{
 			mathfun_value *funct_args = malloc(expr->ex.funct.argc * sizeof(mathfun_value));
 			if (!funct_args) {
-				perror("malloc");
-				return NAN;
+				return NAN; // ENOMEM
 			}
 			for (size_t i = 0; i < expr->ex.funct.argc; ++ i) {
 				funct_args[i] = mathfun_expr_exec(expr->ex.funct.args[i], args);
