@@ -59,54 +59,61 @@ mathfun_value mathfun_expr_exec(const struct mathfun_expr *expr, const mathfun_v
 	return NAN;
 }
 
+#pragma GCC diagnostic ignored "-pedantic"
+#pragma GCC diagnostic ignored "-Wunused-label"
 mathfun_value mathfun_exec(const struct mathfun *mathfun, mathfun_value regs[]) {
-#ifdef __GNUC__
-	static const void *jump_table[] = {
-		/* NOP  */ &&do_nop,
-		/* RET  */ &&do_ret,
-		/* MOV  */ &&do_mov,
-		/* VAL  */ &&do_val,
-		/* CALL */ &&do_call,
-		/* NEG  */ &&do_neg,
-		/* ADD  */ &&do_add,
-		/* SUB  */ &&do_sub,
-		/* MUL  */ &&do_mul,
-		/* DIV  */ &&do_div,
-		/* MOD  */ &&do_mod,
-		/* POW  */ &&do_pow
-	};
-#endif
 	const mathfun_code *code = mathfun->code;
 
-	for (;;) {
 #ifdef __GNUC__
-		goto *jump_table[*code];
+	// http://gcc.gnu.org/onlinedocs/gcc/Labels-as-Values.html
+	// use offsets instead of absolute addresses to reduce the number of
+	// dynamic relocations for code in shared libraries
+	static const intptr_t jump_table[] = {
+		/* NOP  */ &&do_nop  - &&do_add,
+		/* RET  */ &&do_ret  - &&do_add,
+		/* MOV  */ &&do_mov  - &&do_add,
+		/* VAL  */ &&do_val  - &&do_add,
+		/* CALL */ &&do_call - &&do_add,
+		/* NEG  */ &&do_neg  - &&do_add,
+		/* ADD  */ &&do_add  - &&do_add,
+		/* SUB  */ &&do_sub  - &&do_add,
+		/* MUL  */ &&do_mul  - &&do_add,
+		/* DIV  */ &&do_div  - &&do_add,
+		/* MOD  */ &&do_mod  - &&do_add,
+		/* POW  */ &&do_pow  - &&do_add
+	};
+
+#	define DISPATCH goto *(&&do_add + jump_table[*code]);
+	DISPATCH;
+#else
+#	define DISPATCH break;
 #endif
 
+	for (;;) {
 		switch (*code) {
 			case ADD:
 do_add:
 				regs[code[3]] = regs[code[1]] + regs[code[2]];
 				code += 4;
-				break;
+				DISPATCH;
 
 			case SUB:
 do_sub:
 				regs[code[3]] = regs[code[1]] - regs[code[2]];
 				code += 4;
-				break;
+				DISPATCH;
 
 			case MUL:
 do_mul:
 				regs[code[3]] = regs[code[1]] * regs[code[2]];
 				code += 4;
-				break;
+				DISPATCH;
 
 			case DIV:
 do_div:
 				regs[code[3]] = regs[code[1]] / regs[code[2]];
 				code += 4;
-				break;
+				DISPATCH;
 
 			case MOD:
 do_mod:
@@ -116,25 +123,25 @@ do_mod:
 				MATHFUN_MOD(left, right);
 				regs[code[3]] = mathfun_mod_result;
 				code += 4;
-				break;
+				DISPATCH;
 			}
 			case POW:
 do_pow:
 				regs[code[3]] = pow(regs[code[1]], regs[code[2]]);
 				code += 4;
-				break;
+				DISPATCH;
 
 			case NEG:
 do_neg:
 				regs[code[2]] = -regs[code[1]];
 				code += 3;
-				break;
+				DISPATCH;
 
 			case VAL:
 do_val:
 				regs[code[1 + MATHFUN_VALUE_CODES]] = *(mathfun_value*)(code + 1);
 				code += 2 + MATHFUN_VALUE_CODES;
-				break;
+				DISPATCH;
 
 			case CALL:
 do_call:
@@ -144,13 +151,13 @@ do_call:
 				mathfun_code firstarg = *(code ++);
 				mathfun_code ret      = *(code ++);
 				regs[ret] = funct(regs + firstarg);
-				break;
+				DISPATCH;
 			}	
 			case MOV:
 do_mov:
 				regs[code[2]] = regs[code[1]];
 				code += 3;
-				break;
+				DISPATCH;
 
 			case RET:
 do_ret:
@@ -159,7 +166,8 @@ do_ret:
 			case NOP:
 do_nop:
 				++ code;
-				break;
+				DISPATCH;
 		}
 	}
 }
+#pragma GCC diagnostic pop
