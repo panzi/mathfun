@@ -231,6 +231,7 @@ mathfun_value mathfun_arun(const char *argnames[], size_t argc, const char *code
 	// compilations would only add overhead
 	mathfun_value value = mathfun_expr_exec(expr, args);
 
+	mathfun_expr_free(expr);
 	mathfun_context_cleanup(&ctx);
 
 	return value;
