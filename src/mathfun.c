@@ -53,6 +53,17 @@ const struct mathfun_decl *mathfun_context_get(const struct mathfun_context *ctx
 	return NULL;
 }
 
+const char *mathfun_context_funct_name(const struct mathfun_context *ctx, mathfun_binding_funct funct) {
+	for (size_t i = 0; i < ctx->decl_used; ++ i) {
+		const struct mathfun_decl *decl = &ctx->decls[i];
+		if (decl->type == DECL_FUNCT && decl->decl.funct.funct == funct) {
+			return decl->name;
+		}
+	}
+
+	return NULL;
+}
+
 bool mathfun_valid_name(const char *name) {
 	if (!isalpha(*name) && *name != '_') {
 		return false;

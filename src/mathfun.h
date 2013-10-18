@@ -34,6 +34,7 @@ void mathfun_context_cleanup(struct mathfun_context *ctx);
 int mathfun_context_define_default(struct mathfun_context *ctx);
 int mathfun_context_define_const(struct mathfun_context *ctx, const char *name, mathfun_value value);
 int mathfun_context_define_funct(struct mathfun_context *ctx, const char *name, mathfun_binding_funct funct, size_t argc);
+const char *mathfun_context_funct_name(const struct mathfun_context *ctx, mathfun_binding_funct funct);
 int mathfun_context_undefine(struct mathfun_context *ctx, const char *name);
 int mathfun_context_compile(const struct mathfun_context *ctx,
 	const char *argnames[], size_t argc, const char *code,
@@ -44,7 +45,7 @@ int mathfun_compile(struct mathfun *mathfun, const char *argnames[], size_t argc
 mathfun_value mathfun_call(const struct mathfun *mathfun, ...);
 mathfun_value mathfun_acall(const struct mathfun *mathfun, const mathfun_value args[]);
 mathfun_value mathfun_vcall(const struct mathfun *mathfun, va_list ap);
-int mathfun_dump(const struct mathfun *mathfun, FILE *stream);
+int mathfun_dump(const struct mathfun *mathfun, FILE *stream, const struct mathfun_context *ctx);
 
 mathfun_value mathfun_run(const char *code, ...);
 mathfun_value mathfun_arun(const char *argnames[], size_t argc, const char *code, const mathfun_value args[]);

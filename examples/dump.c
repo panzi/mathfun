@@ -10,15 +10,24 @@ int main(int argc, char *argv[]) {
 	}
 
 	const size_t funct_argc = argc - 2;
+	struct mathfun_context ctx;
 	struct mathfun mathfun;
-	int errnum = mathfun_compile(&mathfun, (const char**)argv + 1, funct_argc, argv[argc - 1]);
+	int errnum = mathfun_context_init(&ctx, true);
 	if (errnum != 0) {
-		fprintf(stderr, "error compiling expression: %s\n", strerror(errnum));
+		perror("error creating mathfun context");
 		return 1;
 	}
 
-	mathfun_dump(&mathfun, stdout);
+	errnum = mathfun_context_compile(&ctx, (const char**)argv + 1, funct_argc, argv[argc - 1], &mathfun);
+	if (errnum != 0) {
+		mathfun_context_cleanup(&ctx);
+		perror("error compiling expression");
+		return 1;
+	}
+
+	mathfun_dump(&mathfun, stdout, &ctx);
 	mathfun_cleanup(&mathfun);
+	mathfun_context_cleanup(&ctx);
 
 	return 0;
 }

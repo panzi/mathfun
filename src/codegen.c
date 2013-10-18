@@ -336,7 +336,7 @@ int mathfun_expr_codegen(struct mathfun_expr *expr, struct mathfun *mathfun) {
 	return 0;
 }
 
-int mathfun_dump(const struct mathfun *mathfun, FILE *stream) {
+int mathfun_dump(const struct mathfun *mathfun, FILE *stream, const struct mathfun_context *ctx) {
 	const mathfun_code *code = mathfun->code;
 
 	for (;;) {
@@ -370,11 +370,22 @@ int mathfun_dump(const struct mathfun *mathfun, FILE *stream) {
 				mathfun_binding_funct funct = *(mathfun_binding_funct*)(code + 1);
 				mathfun_code firstarg = code[MATHFUN_FUNCT_CODES + 1];
 				mathfun_code ret = code[MATHFUN_FUNCT_CODES + 2];
+				code += 3 + MATHFUN_FUNCT_CODES;
+
+				if (ctx) {
+					const char *name = mathfun_context_funct_name(ctx, funct);
+					if (name) {
+						if (fprintf(stream, "call %s, %"PRIuPTR", %"PRIuPTR"\n", name, firstarg, ret) < 0) {
+							return errno;
+						}
+						break;
+					}
+				}
+
 				// TODO: use optional mathfun_context to get function name
 				if (fprintf(stream, "call 0x%"PRIxPTR", %"PRIuPTR", %"PRIuPTR"\n", (uintptr_t)funct, firstarg, ret) < 0) {
 					return errno;
 				}
-				code += 3 + MATHFUN_FUNCT_CODES;
 				break;
 			}
 
@@ -397,7 +408,7 @@ int mathfun_dump(const struct mathfun *mathfun, FILE *stream) {
 				break;
 
 			case MUL:
-				if (fprintf(stream, "add %"PRIuPTR", %"PRIuPTR", %"PRIuPTR"\n", code[1], code[2], code[3]) < 0)
+				if (fprintf(stream, "mul %"PRIuPTR", %"PRIuPTR", %"PRIuPTR"\n", code[1], code[2], code[3]) < 0)
 					return errno;
 				code += 4;
 				break;
