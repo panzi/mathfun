@@ -59,20 +59,18 @@ mathfun_value mathfun_expr_exec(const struct mathfun_expr *expr, const mathfun_v
 	return NAN;
 }
 
-#ifndef __GNUC__
-#	define __attribute__(X)
-#endif
-
 #pragma GCC diagnostic ignored "-pedantic"
 #pragma GCC diagnostic ignored "-Wunused-label"
-mathfun_value mathfun_exec(const struct mathfun *mathfun, mathfun_value regs[]) 
-__attribute__((__noinline__,__noclone__)) {
+mathfun_value mathfun_exec(const struct mathfun *mathfun, mathfun_value regs[]) {
 	const mathfun_code *code = mathfun->code;
 
 #ifdef __GNUC__
 	// http://gcc.gnu.org/onlinedocs/gcc/Labels-as-Values.html
 	// use offsets instead of absolute addresses to reduce the number of
 	// dynamic relocations for code in shared libraries
+	//
+	// TODO: same for llvm clang
+	// http://blog.llvm.org/2010/01/address-of-label-and-indirect-branches.html
 	static const intptr_t jump_table[] = {
 		/* NOP  */ &&do_nop  - &&do_add,
 		/* RET  */ &&do_ret  - &&do_add,

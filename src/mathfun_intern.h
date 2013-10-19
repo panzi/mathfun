@@ -21,6 +21,10 @@ extern "C" {
 #define MATHFUN_FUNCT_CODES (1 + ((sizeof(mathfun_binding_funct) - 1) / sizeof(mathfun_code)))
 #define MATHFUN_VALUE_CODES (1 + ((sizeof(mathfun_value) - 1) / sizeof(mathfun_code)))
 
+#ifndef __GNUC__
+#	define __attribute__(X)
+#endif
+
 #define MATHFUN_MOD(A,B) \
 	mathfun_value mathfun_mod_result; \
 	if ((B) == 0.0) { \
@@ -167,7 +171,7 @@ struct mathfun_expr *mathfun_expr_alloc(enum mathfun_expr_type type);
 void                 mathfun_expr_free(struct mathfun_expr *expr);
 struct mathfun_expr *mathfun_expr_optimize(struct mathfun_expr *expr);
 
-mathfun_value mathfun_exec(const struct mathfun *mathfun, mathfun_value regs[]);
+mathfun_value mathfun_exec(const struct mathfun *mathfun, mathfun_value regs[]) __attribute__((__noinline__,__noclone__));
 mathfun_value mathfun_expr_exec(const struct mathfun_expr *expr, const mathfun_value args[]);
 
 #ifdef __cplusplus

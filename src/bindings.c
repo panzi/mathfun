@@ -230,6 +230,10 @@ int mathfun_context_define_default(struct mathfun_context *ctx) {
 		return errnum;
 	}
 
+	if ((errnum = mathfun_context_define_const(ctx, "tau", 2*M_PI)) != 0) {
+		return errnum;
+	}
+
 	if ((errnum = mathfun_context_define_const(ctx, "pi_2", M_PI_2)) != 0) {
 		return errnum;
 	}
@@ -242,7 +246,7 @@ int mathfun_context_define_default(struct mathfun_context *ctx) {
 		return errnum;
 	}
 
-	if ((errnum = mathfun_context_define_const(ctx, "_2_pi", M_PI)) != 0) {
+	if ((errnum = mathfun_context_define_const(ctx, "_2_pi", M_2_PI)) != 0) {
 		return errnum;
 	}
 
