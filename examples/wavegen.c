@@ -59,35 +59,27 @@ struct riff_wave_header {
 };
 #pragma pack(pop)
 
-static int define_funct(struct mathfun_context *ctx, const char *name, mathfun_binding_funct funct, size_t argc) {
-	int errnum = mathfun_context_define_funct(ctx, name, funct, argc);
-	if (errnum != 0) {
-		fprintf(stderr, "error defining function %s: %s\n", name, strerror(errnum));
-	}
-	return errnum;
-}
-
 static unsigned int to_full_byte(int bits) {
 	int rem = bits % 8;
 	return rem == 0 ? bits : bits + (8 - rem);
 }
 
-int mathfun_wavegen(const char *filename, FILE *stream, uint32_t sample_rate, uint16_t bits_per_sample,
+bool mathfun_wavegen(const char *filename, FILE *stream, uint32_t sample_rate, uint16_t bits_per_sample,
 	uint16_t channels, uint32_t samples, const struct mathfun channel_functs[], bool write_header) {
 
 	if (sample_rate == 0) {
 		fprintf(stderr, "illegal sample rate: %u\n", sample_rate);
-		return EINVAL;
+		return false;
 	}
 
 	if (bits_per_sample == 0) {
 		fprintf(stderr, "illegal number of bits per sample: %u\n", bits_per_sample);
-		return EINVAL;
+		return false;
 	}
 
 	if (channels == 0) {
 		fprintf(stderr, "illegal number of channels: %u\n", channels);
-		return EINVAL;
+		return false;
 	}
 
 	const int mid        = 1 << (bits_per_sample - 1);
@@ -100,7 +92,7 @@ int mathfun_wavegen(const char *filename, FILE *stream, uint32_t sample_rate, ui
 
 	if (!sample_buf) {
 		perror("allocating sample buffer");
-		return ENOMEM;
+		return false;
 	}
 
 	if (write_header) {
@@ -151,42 +143,38 @@ int mathfun_wavegen(const char *filename, FILE *stream, uint32_t sample_rate, ui
 	
 	free(sample_buf);
 	
-	return 0;
+	return true;
 }
 
-int wavegen(const char *filename, FILE *stream, uint32_t sample_rate, uint16_t bits_per_sample,
+bool wavegen(const char *filename, FILE *stream, uint32_t sample_rate, uint16_t bits_per_sample,
 	uint16_t channels, uint32_t samples, const char *channel_functs[], bool write_header) {
 	struct mathfun_context ctx;
-	int errnum = mathfun_context_init(&ctx, true);
 
-	if (errnum != 0) {
-		perror("error creating mathfun context");
-		return errnum;
+	if (!mathfun_context_init(&ctx, true) ||
+		!mathfun_context_define_funct(&ctx, "sq",      square_wave,   1) ||
+		!mathfun_context_define_funct(&ctx, "tri",     triangle_wave, 1) ||
+		!mathfun_context_define_funct(&ctx, "saw",     sawtooth_wave, 1) ||
+		!mathfun_context_define_funct(&ctx, "fadein",  fadein,        2) ||
+		!mathfun_context_define_funct(&ctx, "fadeout", fadeout,       2)) {
+		mathfun_error_log(stderr);
+		return false;
 	}
-
-	if ((errnum = define_funct(&ctx, "sq",      square_wave,   1)) != 0) return errnum;
-	if ((errnum = define_funct(&ctx, "tri",     triangle_wave, 1)) != 0) return errnum;
-	if ((errnum = define_funct(&ctx, "saw",     sawtooth_wave, 1)) != 0) return errnum;
-	if ((errnum = define_funct(&ctx, "fadein",  fadein,        2)) != 0) return errnum;
-	if ((errnum = define_funct(&ctx, "fadeout", fadeout,       2)) != 0) return errnum;
 
 	struct mathfun *functs = calloc(channels, sizeof(struct mathfun));
 	const char *argnames[] = { "t" };
 	for (size_t i = 0; i < channels; ++ i) {
-		errnum = mathfun_context_compile(&ctx, argnames, 1, channel_functs[i], functs + i);
-
-		if (errnum != 0) {
-			fprintf(stderr, "error compiling function \"%s\": %s\n", channel_functs[i], strerror(errnum));
+		if (!mathfun_context_compile(&ctx, argnames, 1, channel_functs[i], functs + i)) {
+			mathfun_error_log(stderr);
 			for (; i > 0; -- i) {
 				mathfun_cleanup(functs + i - 1);
 			}
 			free(functs);
 			mathfun_context_cleanup(&ctx);
-			return errnum;
+			return false;
 		}
 	}
 
-	errnum = mathfun_wavegen(filename, stream, sample_rate, bits_per_sample, channels, samples, functs, write_header);
+	bool ok = mathfun_wavegen(filename, stream, sample_rate, bits_per_sample, channels, samples, functs, write_header);
 	
 	for (size_t i = channels; i > 0; -- i) {
 		mathfun_cleanup(functs + i - 1);
@@ -194,12 +182,12 @@ int wavegen(const char *filename, FILE *stream, uint32_t sample_rate, uint16_t b
 	free(functs);
 	mathfun_context_cleanup(&ctx);
 
-	return errnum;
+	return ok;
 }
 
 void usage(int argc, const char *argv[]) {
 	printf(
-		"Usage: %s <WAVE-FILENAME> <SAMPLE-RATE> <BITS-PER-SAMPLE> <SAMPLES> <WAVE-FUNCTION>...\n",
+		"Usage: %s <wave-filename> <sample-rate> <bits-per-sample> <samples> <wave-function>...\n",
 		argc > 0 ? argv[0] : "wavegen");
 }
 
@@ -238,9 +226,9 @@ int main(int argc, const char *argv[]) {
 		return 1;
 	}
 
-	int errnum;
+	bool ok;
 	if (strcmp(filename, "-") == 0) {
-		errnum = wavegen("<stdout>", stdout, sample_rate, bits_per_sample, channels, samples, functs, true);
+		ok = wavegen("<stdout>", stdout, sample_rate, bits_per_sample, channels, samples, functs, true);
 	}
 	else {
 		FILE *stream = fopen(filename, "wb");
@@ -250,10 +238,10 @@ int main(int argc, const char *argv[]) {
 			return 1;
 		}
 		
-		errnum = wavegen(filename, stream, sample_rate, bits_per_sample, channels, samples, functs, true);
+		ok = wavegen(filename, stream, sample_rate, bits_per_sample, channels, samples, functs, true);
 
 		fclose(stream);
 	}
 
-	return errnum == 0 ? 0 : 1;
+	return ok ? 0 : 1;
 }

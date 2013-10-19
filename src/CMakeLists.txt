@@ -1,4 +1,4 @@
-set(MATHFUN_SRCS bindings.c codegen.c exec.c mathfun.c parser.c)
+set(MATHFUN_SRCS bindings.c codegen.c exec.c mathfun.c parser.c error.c)
 
 add_library(mathfun_objs OBJECT ${MATHFUN_SRCS})
 #add_library(mathfun SHARED $<TARGET_OBJECTS:mathfun_objs>)

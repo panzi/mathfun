@@ -26,18 +26,21 @@ extern "C" {
 #	define __attribute__(X)
 #endif
 
+#define _MATHFUN_MOD(A,B) \
+	mathfun_value __mathfun_mod_i = floor((mathfun_value)(A)/(mathfun_value)(B)); \
+	mathfun_mod_result = (mathfun_value)(A) - __mathfun_mod_i * (mathfun_value)(B); \
+	if (((mathfun_value)(A) < 0.0) != ((mathfun_value)(B) < 0.0)) { \
+		mathfun_mod_result = mathfun_mod_result - (mathfun_value)(B); \
+	}
+
 #define MATHFUN_MOD(A,B) \
 	mathfun_value mathfun_mod_result; \
 	if ((B) == 0.0) { \
-		errno = EDOM; \
+		mathfun_raise_error(MATHFUN_DOMAIN_ERROR); \
 		mathfun_mod_result = NAN; \
 	} \
 	else { \
-		mathfun_value __mathfun_mod_i = floor((mathfun_value)(A)/(mathfun_value)(B)); \
-		mathfun_mod_result = (mathfun_value)(A) - __mathfun_mod_i * (mathfun_value)(B); \
-		if (((mathfun_value)(A) < 0.0) != ((mathfun_value)(B) < 0.0)) { \
-			mathfun_mod_result = mathfun_mod_result - (mathfun_value)(B); \
-		} \
+		_MATHFUN_MOD(A,B) \
 	}
 
 #if (defined(_WIN16) || defined(_WIN32) || defined(_WIN64)) && !defined(__CYGWIN__)
@@ -128,28 +131,22 @@ enum mathfun_bytecode {
 	DIV  =  9,   // reg, reg, reg  divide
 	MOD  = 10,   // reg, reg, reg  modulo division
 	POW  = 11    // reg, reg, reg  power
-
-/* maybe later
-	EQ,    // reg, reg, reg  equal
-	NEQ,   // reg, reg, reg  not equal
-	BEQ,   // reg, reg, reg  boolean values equal
-	BNEQ,  // reg, reg, reg  boolean values not equal
-	LT,    // reg, reg, reg  lower than
-	GT,    // reg, reg, reg  greater than
-	LTE,   // reg, reg, reg  lower than or equal
-	GTE,   // reg, reg, reg  greater than or equal
-
-	ISNAN, // reg, reg
-	ISINF, // reg, reg
-	ISFIN, // reg, reg
-
-	BR,    // codeptr        unconditional branch
-	CBR,   // codeptr, reg   conditional branch (branch if true)
-	NBR    // codeptr, reg   conditional branch (branch if false)
-*/
 };
 
-struct mathfun_parser;
+struct strbuf {
+	char  *data;
+	size_t size;
+	size_t used;
+};
+
+struct mathfun_parser {
+	const struct mathfun_context *ctx;
+	const char **argnames;
+	size_t argc;
+	const char *code;
+	const char *ptr;
+	struct strbuf buf;
+};
 
 struct mathfun_codegen {
 	size_t argc;
@@ -160,26 +157,31 @@ struct mathfun_codegen {
 	mathfun_code *code;
 };
 
-int mathfun_context_grow(struct mathfun_context *ctx);
+bool mathfun_context_grow(struct mathfun_context *ctx);
 const struct mathfun_decl *mathfun_context_get(const struct mathfun_context *ctx, const char *name);
 struct mathfun_expr *mathfun_context_parse(const struct mathfun_context *ctx,
 	const char *argnames[], size_t argc, const char *code);
-int mathfun_expr_codegen(struct mathfun_expr *expr, struct mathfun *mathfun);
+bool mathfun_expr_codegen(struct mathfun_expr *expr, struct mathfun *mathfun);
 
-int mathfun_codegen(struct mathfun_codegen *codegen, struct mathfun_expr *expr, mathfun_code *ret);
-int mathfun_codegen_binary(struct mathfun_codegen *codegen, struct mathfun_expr *expr,
+bool mathfun_codegen(struct mathfun_codegen *codegen, struct mathfun_expr *expr, mathfun_code *ret);
+bool mathfun_codegen_binary(struct mathfun_codegen *codegen, struct mathfun_expr *expr,
 	enum mathfun_bytecode code, mathfun_code *ret);
 struct mathfun_expr *mathfun_expr_alloc(enum mathfun_expr_type type);
 void                 mathfun_expr_free(struct mathfun_expr *expr);
 struct mathfun_expr *mathfun_expr_optimize(struct mathfun_expr *expr);
+mathfun_value        mathfun_expr_exec(const struct mathfun_expr *expr, const mathfun_value args[]);
 
-mathfun_value mathfun_exec(const struct mathfun *mathfun, mathfun_value regs[]) __attribute__((__noinline__,__noclone__));
-mathfun_value mathfun_expr_exec(const struct mathfun_expr *expr, const mathfun_value args[]);
+mathfun_value mathfun_exec(const struct mathfun *mathfun, mathfun_value regs[])
+	__attribute__((__noinline__,__noclone__));
 
-void mathfun_log_error(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
-void mathfun_log_verror(const char *fmt, va_list ap);
-void mathfun_log_parser_error(const struct mathfun_parser *parser, const char *errpos, const char *fmt, ...)
-	__attribute__ ((format (printf, 3, 4)));
+const char *mathfun_find_identifier_end(const char *str);
+
+void mathfun_raise_error(enum mathfun_error_type type);
+void mathfun_raise_name_error(enum mathfun_error_type type, const char *name);
+void mathfun_raise_parser_error(const struct mathfun_parser *parser,
+	enum mathfun_error_type type, const char *errpos);
+void mathfun_raise_parser_argc_error(const struct mathfun_parser *parser,
+	const char *errpos, size_t expected, size_t got);
 
 #ifdef __cplusplus
 }

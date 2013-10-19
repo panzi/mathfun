@@ -44,18 +44,18 @@ int main(int argc, char *argv[]) {
 	}
 
 	struct mathfun mathfun;
-	int errnum = mathfun_compile(&mathfun, (const char**)argnames, funct_argc, argv[argc - 1]);
-	if (errnum != 0) {
-		fprintf(stderr, "error compiling expression: %s\n", strerror(errnum));
+	if (!mathfun_compile(&mathfun, (const char**)argnames, funct_argc, argv[argc - 1])) {
+		mathfun_error_log(stderr);
 		return 1;
 	}
-	errno = 0;
+
+	mathfun_error_clear();
 	mathfun_value value = mathfun_acall(&mathfun, funct_args);
 	mathfun_cleanup(&mathfun);
 	free(funct_args);
 	
-	if (isnan(value) && errno != 0) {
-		perror("error evaluating expression");
+	if (mathfun_error_type()) {
+		mathfun_error_log(stderr);
 		return 1;
 	}
 

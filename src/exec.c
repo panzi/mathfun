@@ -15,7 +15,8 @@ mathfun_value mathfun_expr_exec(const struct mathfun_expr *expr, const mathfun_v
 		{
 			mathfun_value *funct_args = malloc(expr->ex.funct.argc * sizeof(mathfun_value));
 			if (!funct_args) {
-				return NAN; // ENOMEM
+				mathfun_raise_error(MATHFUN_MEMORY_ERROR);
+				return NAN;
 			}
 			for (size_t i = 0; i < expr->ex.funct.argc; ++ i) {
 				funct_args[i] = mathfun_expr_exec(expr->ex.funct.args[i], args);
@@ -47,15 +48,21 @@ mathfun_value mathfun_expr_exec(const struct mathfun_expr *expr, const mathfun_v
 		{
 			mathfun_value left  = mathfun_expr_exec(expr->ex.binary.left, args);
 			mathfun_value right = mathfun_expr_exec(expr->ex.binary.right, args);
-			MATHFUN_MOD(left, right);
+
+			if (right == 0.0) {
+				mathfun_raise_error(MATHFUN_DOMAIN_ERROR);
+				return NAN;
+			}
+
+			mathfun_value mathfun_mod_result;
+			_MATHFUN_MOD(left, right);
 			return mathfun_mod_result;
 		}
 		case EX_POW:
 			return pow(mathfun_expr_exec(expr->ex.binary.left, args),
 		               mathfun_expr_exec(expr->ex.binary.right, args));
 	}
-	// internal error
-	errno = EINVAL;
+	mathfun_raise_error(MATHFUN_INTERNAL_ERROR);
 	return NAN;
 }
 
@@ -123,7 +130,14 @@ do_mod:
 			{
 				mathfun_value left  = regs[code[1]];
 				mathfun_value right = regs[code[2]];
-				MATHFUN_MOD(left, right);
+				mathfun_value mathfun_mod_result;
+				
+				if (right == 0.0) {
+					mathfun_raise_error(MATHFUN_DOMAIN_ERROR);
+					return NAN;
+				}
+
+				_MATHFUN_MOD(left, right);
 				regs[code[3]] = mathfun_mod_result;
 				code += 4;
 				DISPATCH;

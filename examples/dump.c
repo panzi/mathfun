@@ -12,20 +12,22 @@ int main(int argc, char *argv[]) {
 	const size_t funct_argc = argc - 2;
 	struct mathfun_context ctx;
 	struct mathfun mathfun;
-	int errnum = mathfun_context_init(&ctx, true);
-	if (errnum != 0) {
-		perror("error creating mathfun context");
+
+	if (!mathfun_context_init(&ctx, true)) {
+		mathfun_error_log(stderr);
 		return 1;
 	}
 
-	errnum = mathfun_context_compile(&ctx, (const char**)argv + 1, funct_argc, argv[argc - 1], &mathfun);
-	if (errnum != 0) {
+	if (!mathfun_context_compile(&ctx, (const char**)argv + 1, funct_argc, argv[argc - 1], &mathfun)) {
+		mathfun_error_log(stderr);
 		mathfun_context_cleanup(&ctx);
-		perror("error compiling expression");
 		return 1;
 	}
 
-	mathfun_dump(&mathfun, stdout, &ctx);
+	if (!mathfun_dump(&mathfun, stdout, &ctx)) {
+		mathfun_error_log(stderr);
+	}
+
 	mathfun_cleanup(&mathfun);
 	mathfun_context_cleanup(&ctx);
 
