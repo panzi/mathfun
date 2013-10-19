@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <inttypes.h>
+#include <stdarg.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -159,20 +160,26 @@ struct mathfun_codegen {
 	mathfun_code *code;
 };
 
-int                  mathfun_context_grow(struct mathfun_context *ctx);
+int mathfun_context_grow(struct mathfun_context *ctx);
 const struct mathfun_decl *mathfun_context_get(const struct mathfun_context *ctx, const char *name);
 struct mathfun_expr *mathfun_context_parse(const struct mathfun_context *ctx,
 	const char *argnames[], size_t argc, const char *code);
 int mathfun_expr_codegen(struct mathfun_expr *expr, struct mathfun *mathfun);
 
 int mathfun_codegen(struct mathfun_codegen *codegen, struct mathfun_expr *expr, mathfun_code *ret);
-int mathfun_codegen_binary(struct mathfun_codegen *codegen, struct mathfun_expr *expr, enum mathfun_bytecode code, mathfun_code *ret);
+int mathfun_codegen_binary(struct mathfun_codegen *codegen, struct mathfun_expr *expr,
+	enum mathfun_bytecode code, mathfun_code *ret);
 struct mathfun_expr *mathfun_expr_alloc(enum mathfun_expr_type type);
 void                 mathfun_expr_free(struct mathfun_expr *expr);
 struct mathfun_expr *mathfun_expr_optimize(struct mathfun_expr *expr);
 
 mathfun_value mathfun_exec(const struct mathfun *mathfun, mathfun_value regs[]) __attribute__((__noinline__,__noclone__));
 mathfun_value mathfun_expr_exec(const struct mathfun_expr *expr, const mathfun_value args[]);
+
+void mathfun_log_error(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
+void mathfun_log_verror(const char *fmt, va_list ap);
+void mathfun_log_parser_error(const struct mathfun_parser *parser, const char *errpos, const char *fmt, ...)
+	__attribute__ ((format (printf, 3, 4)));
 
 #ifdef __cplusplus
 }

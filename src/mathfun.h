@@ -1,11 +1,25 @@
 #ifndef MATHFUN_H__
 #define MATHFUN_H__
 
+#pragma once
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <math.h>
+
+#define _MATHFUN_STR(V) #V
+#define MATHFUN_STR(V) _MATHFUN_STR(V)
+
+#define MATHFUN_VERSION_MAJOR 1
+#define MATHFUN_VERSION_MINOR 0
+#define MATHFUN_VERSION_PATCH 0
+
+#define MATHFUN_VERSION \
+	MATHFUN_STR(MATHFUN_VERSION_MAJOR) "." \
+	MATHFUN_STR(MATHFUN_VERSION_MINOR) "." \
+	MATHFUN_STR(MATHFUN_VERSION_PATCH)
 
 #ifdef __cplusplus
 extern "C" {
@@ -14,6 +28,14 @@ extern "C" {
 typedef uintptr_t mathfun_code;
 typedef double mathfun_value;
 typedef mathfun_value (*mathfun_binding_funct)(const mathfun_value args[]);
+
+enum mathfun_loglevel {
+	MATHFUN_LOG_NONE   = 0,
+	MATHFUN_LOG_ERRORS = 1
+};
+
+extern enum mathfun_loglevel mathfun_loglevel;
+extern FILE *mathfun_logfile;
 
 struct mathfun_decl;
 

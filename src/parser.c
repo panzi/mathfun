@@ -103,6 +103,44 @@ static void skipws(struct mathfun_parser *parser) {
 	parser->ptr = ptr;
 }
 
+void mathfun_log_parser_error(const struct mathfun_parser *parser, const char *errpos, const char *fmt, ...) {
+	if (mathfun_loglevel >= MATHFUN_LOG_ERRORS) {
+		int lineno = 1;
+		int column = 1;
+
+		if (errpos == NULL) {
+			errpos = parser->ptr;
+		}
+
+		const char *ptr = parser->code;
+		for (; ptr < errpos; ++ ptr) {
+			if (*ptr == '\n') {
+				++ lineno;
+				column = 1;
+			}
+			else {
+				++ column;
+			}
+		}
+
+		va_list ap;
+		const char *endl = strchr(errpos, '\n');
+		int n = endl ? endl - parser->code : (int)strlen(parser->code);
+
+		mathfun_log_error("%d:%d: parser error: ", lineno, column);
+
+		va_start(ap, fmt);
+		mathfun_log_verror(fmt, ap);
+		va_end(ap);
+
+		mathfun_log_error("\n%.*s\n", n, parser->code);
+		for (-- column; column > 0; -- column) {
+			mathfun_log_error("-");
+		}
+		mathfun_log_error("^\n");
+	}
+}
+
 struct mathfun_expr *mathfun_parse_a_expr(struct mathfun_parser *parser) {
 	struct mathfun_expr *expr = mathfun_parse_m_expr(parser);
 
@@ -240,6 +278,7 @@ struct mathfun_expr *mathfun_parse_atom(struct mathfun_parser *parser) {
 		if (!expr) return NULL;
 		if (*parser->ptr != ')') {
 			// missing ')'
+			mathfun_log_parser_error(parser, NULL, "expected ')'");
 			mathfun_expr_free(expr);
 			return NULL;
 		}
@@ -251,6 +290,7 @@ struct mathfun_expr *mathfun_parse_atom(struct mathfun_parser *parser) {
 		return mathfun_parse_number(parser);
 	}
 	else {
+		const char *beforeid = parser->ptr;
 		const char *identifier = mathfun_parse_identifier(parser);
 		if (!identifier) return NULL;
 
@@ -286,6 +326,7 @@ struct mathfun_expr *mathfun_parse_atom(struct mathfun_parser *parser) {
 
 			if (!decl || decl->type != DECL_CONST) {
 				errno = EINVAL; // no such const/arg
+				mathfun_log_parser_error(parser, beforeid, "no argument or constant with name '%s' found", identifier);
 				return NULL;
 			}
 
@@ -304,6 +345,7 @@ struct mathfun_expr *mathfun_parse_atom(struct mathfun_parser *parser) {
 
 			if (!decl || decl->type != DECL_FUNCT) {
 				errno = EINVAL; // no such function
+				mathfun_log_parser_error(parser, beforeid, "no function with name '%s' found", identifier);
 				return NULL;
 			}
 
@@ -349,6 +391,7 @@ struct mathfun_expr *mathfun_parse_atom(struct mathfun_parser *parser) {
 
 			if (*parser->ptr != ')') {
 				// missing ')'
+				mathfun_log_parser_error(parser, NULL, "expected ')'");
 				mathfun_expr_free(expr);
 				return NULL;
 			}
@@ -391,6 +434,7 @@ const char *mathfun_parse_identifier(struct mathfun_parser *parser) {
 
 	if (!isalpha(*parser->ptr) && *parser->ptr != '_') {
 		errno = EINVAL;
+		mathfun_log_parser_error(parser, NULL, "expected identifier or number");
 		return NULL;
 	}
 	++ parser->ptr;
@@ -427,6 +471,7 @@ struct mathfun_expr *mathfun_context_parse(const struct mathfun_context *ctx,
 		skipws(&parser);
 		if (*parser.ptr) {
 			// trailing garbage
+			mathfun_log_parser_error(&parser, NULL, "trailing garbage");
 			mathfun_expr_free(expr);
 			errno = EINVAL;
 			return NULL;

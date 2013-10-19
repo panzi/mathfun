@@ -5,6 +5,23 @@
 
 #include "mathfun_intern.h"
 
+enum mathfun_loglevel mathfun_loglevel = MATHFUN_LOG_ERRORS;
+FILE *mathfun_logfile = NULL;
+
+void mathfun_log_error(const char *fmt, ...) {
+	va_list ap;
+	va_start(ap, fmt);
+	mathfun_log_verror(fmt, ap);
+	va_end(ap);
+}
+
+void mathfun_log_verror(const char *fmt, va_list ap) {
+	if (mathfun_loglevel >= MATHFUN_LOG_ERRORS) {
+		FILE *logf = mathfun_logfile ? mathfun_logfile : stderr;
+		vfprintf(logf, fmt, ap);
+	}
+}
+
 int mathfun_context_init(struct mathfun_context *ctx, bool define_default) {
 	ctx->decl_capacity = 256;
 	ctx->decl_used     =   0;
