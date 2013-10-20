@@ -46,6 +46,7 @@ int main(int argc, char *argv[]) {
 	struct mathfun mathfun;
 	if (!mathfun_compile(&mathfun, (const char**)argnames, funct_argc, argv[argc - 1])) {
 		mathfun_error_log(stderr);
+		free(funct_args);
 		return 1;
 	}
 
