@@ -21,8 +21,22 @@ mathfun_value mathfun_expr_exec(const struct mathfun_expr *expr, const mathfun_v
 			for (size_t i = 0; i < expr->ex.funct.argc; ++ i) {
 				funct_args[i] = mathfun_expr_exec(expr->ex.funct.args[i], args);
 			}
+			errno = 0;
 			mathfun_value value = expr->ex.funct.funct(funct_args);
 			free(funct_args);
+
+			switch (errno) {
+				case 0: break; // good
+				case ERANGE:
+				case EDOM:
+					mathfun_raise_math_error(errno);
+					break;
+
+				default:
+					mathfun_raise_error(MATHFUN_C_ERROR);
+					break;
+			}
+
 			return value;
 		}
 		case EX_NEG:
@@ -50,7 +64,7 @@ mathfun_value mathfun_expr_exec(const struct mathfun_expr *expr, const mathfun_v
 			mathfun_value right = mathfun_expr_exec(expr->ex.binary.right, args);
 
 			if (right == 0.0) {
-				mathfun_raise_error(MATHFUN_DOMAIN_ERROR);
+				mathfun_raise_math_error(EDOM);
 				return NAN;
 			}
 
@@ -133,7 +147,9 @@ do_mod:
 				mathfun_value mathfun_mod_result;
 				
 				if (right == 0.0) {
-					mathfun_raise_error(MATHFUN_DOMAIN_ERROR);
+					// consistenly just act c-like here
+					// caller has to handle everything
+					errno = EDOM;
 					return NAN;
 				}
 

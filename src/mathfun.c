@@ -178,9 +178,13 @@ mathfun_value mathfun_acall(const struct mathfun *mathfun, const mathfun_value a
 
 	memcpy(regs, args, mathfun->argc * sizeof(mathfun_value));
 
+	errno = 0;
 	mathfun_value value = mathfun_exec(mathfun, regs);
-
 	free(regs);
+
+	if (errno != 0) {
+		mathfun_raise_c_error();
+	}
 
 	return value;
 }
@@ -197,9 +201,13 @@ mathfun_value mathfun_vcall(const struct mathfun *mathfun, va_list ap) {
 		regs[i] = va_arg(ap, mathfun_value);
 	}
 
+	errno = 0;
 	mathfun_value value = mathfun_exec(mathfun, regs);
-
 	free(regs);
+
+	if (errno != 0) {
+		mathfun_raise_c_error();
+	}
 
 	return value;
 }
@@ -291,7 +299,14 @@ mathfun_value mathfun_arun(const char *argnames[], size_t argc, const char *code
 bool mathfun_context_compile(const struct mathfun_context *ctx,
 	const char *argnames[], size_t argc, const char *code,
 	struct mathfun *mathfun) {
-	errno = 0;
+
+	for (size_t i = 0; i < argc; ++ i) {
+		if (!mathfun_valid_name(argnames[i])) {
+			mathfun_raise_name_error(MATHFUN_ILLEGAL_NAME, argnames[i]);
+			return false;
+		}
+	}
+
 	struct mathfun_expr *expr = mathfun_context_parse(ctx, argnames, argc, code);
 
 	memset(mathfun, 0, sizeof(struct mathfun));
@@ -300,7 +315,7 @@ bool mathfun_context_compile(const struct mathfun_context *ctx,
 	struct mathfun_expr *opt = mathfun_expr_optimize(expr);
 
 	if (!opt) {
-		mathfun_expr_free(expr);
+		// expr is freed by mathfun_expr_optimize on error
 		return false;
 	}
 

@@ -3,23 +3,60 @@
 
 #include "mathfun_intern.h"
 
-typedef mathfun_value (*mathfun_binary_op)(mathfun_value a, mathfun_value b);
+typedef bool (*mathfun_binary_op)(mathfun_value a, mathfun_value b, mathfun_value *res);
 
-static mathfun_value mathfun_add(mathfun_value a, mathfun_value b) { return a + b; }
-static mathfun_value mathfun_sub(mathfun_value a, mathfun_value b) { return a - b; }
-static mathfun_value mathfun_mul(mathfun_value a, mathfun_value b) { return a * b; }
-static mathfun_value mathfun_div(mathfun_value a, mathfun_value b) { return a / b; }
+static bool mathfun_opt_add(mathfun_value a, mathfun_value b, mathfun_value *res) { *res = a + b; return true; }
+static bool mathfun_opt_sub(mathfun_value a, mathfun_value b, mathfun_value *res) { *res = a - b; return true; }
+static bool mathfun_opt_mul(mathfun_value a, mathfun_value b, mathfun_value *res) { *res = a * b; return true; }
+static bool mathfun_opt_div(mathfun_value a, mathfun_value b, mathfun_value *res) { *res = a / b; return true; }
+
+static bool mathfun_opt_mod(mathfun_value a, mathfun_value b, mathfun_value *res) {
+	if (b == 0.0) {
+		mathfun_raise_math_error(EDOM);
+		return false;
+	}
+	else {
+		mathfun_value mathfun_mod_result;
+		_MATHFUN_MOD(a,b);
+		*res = mathfun_mod_result;
+		return true;
+	}
+}
+
+static bool mathfun_opt_pow(mathfun_value a, mathfun_value b, mathfun_value *res) {
+	errno = 0;
+	*res = pow(a, b);
+	if (errno != 0) {
+		mathfun_raise_c_error();
+		return false;
+	}
+	return true;
+}
 
 static struct mathfun_expr *mathfun_expr_optimize_binary(struct mathfun_expr *expr,
 	mathfun_binary_op op, bool has_neutral, mathfun_value neutral, bool commutative) {
-	expr->ex.binary.left  = mathfun_expr_optimize(expr->ex.binary.left);
+
+	expr->ex.binary.left = mathfun_expr_optimize(expr->ex.binary.left);
+	if (!expr->ex.binary.left) {
+		mathfun_expr_free(expr);
+		return NULL;
+	}
+
 	expr->ex.binary.right = mathfun_expr_optimize(expr->ex.binary.right);
+	if (!expr->ex.binary.right) {
+		mathfun_expr_free(expr);
+		return NULL;
+	}
 
 	if (expr->ex.binary.left->type  == EX_CONST &&
 		expr->ex.binary.right->type == EX_CONST) {
-		mathfun_value value = op(
-			expr->ex.binary.left->ex.value,
-			expr->ex.binary.right->ex.value);
+		
+		mathfun_value value = 0;
+		if (!op(expr->ex.binary.left->ex.value, expr->ex.binary.right->ex.value, &value)) {
+			mathfun_expr_free(expr);
+			return NULL;
+		}
+
 		mathfun_expr_free(expr->ex.binary.left);
 		mathfun_expr_free(expr->ex.binary.right);
 		expr->type = EX_CONST;
@@ -43,7 +80,6 @@ static struct mathfun_expr *mathfun_expr_optimize_binary(struct mathfun_expr *ex
 	return expr;
 }
 
-
 struct mathfun_expr *mathfun_expr_optimize(struct mathfun_expr *expr) {
 	switch (expr->type) {
 		case EX_CONST:
@@ -56,7 +92,11 @@ struct mathfun_expr *mathfun_expr_optimize(struct mathfun_expr *expr) {
 			for (size_t i = 0; i < expr->ex.funct.argc; ++ i) {
 				struct mathfun_expr *child = expr->ex.funct.args[i] =
 					mathfun_expr_optimize(expr->ex.funct.args[i]);
-				if (child->type != EX_CONST) {
+				if (!child) {
+					mathfun_expr_free(expr);
+					return NULL;
+				}
+				else if (child->type != EX_CONST) {
 					allconst = false;
 				}
 			}
@@ -66,17 +106,32 @@ struct mathfun_expr *mathfun_expr_optimize(struct mathfun_expr *expr) {
 				for (size_t i = 0; i < expr->ex.funct.argc; ++ i) {
 					args[i] = expr->ex.funct.args[i]->ex.value;
 				}
+
+				// math errors are communicated via errno
+				// XXX: buggy. see NOTES in man math_error
+				errno = 0;
 				mathfun_value value = expr->ex.funct.funct(args);
+
 				free(args);
 				expr->type = EX_CONST;
 				expr->ex.value = value;
+
+				if (errno != 0) {
+					mathfun_raise_c_error();
+					mathfun_expr_free(expr);
+					return NULL;
+				}
 			}
 			return expr;
 		}
 
 		case EX_NEG:
 			expr->ex.unary.expr = mathfun_expr_optimize(expr->ex.unary.expr);
-			if (expr->ex.unary.expr->type == EX_NEG) {
+			if (!expr->ex.unary.expr) {
+				mathfun_expr_free(expr);
+				return NULL;
+			}
+			else if (expr->ex.unary.expr->type == EX_NEG) {
 				struct mathfun_expr *child = expr->ex.unary.expr->ex.unary.expr;
 				expr->ex.unary.expr->ex.unary.expr = NULL;
 				mathfun_expr_free(expr);
@@ -91,12 +146,12 @@ struct mathfun_expr *mathfun_expr_optimize(struct mathfun_expr *expr) {
 			}
 			return expr;
 
-		case EX_ADD: return mathfun_expr_optimize_binary(expr, mathfun_add, true,    0, true);
-		case EX_SUB: return mathfun_expr_optimize_binary(expr, mathfun_sub, true,    0, false);
-		case EX_MUL: return mathfun_expr_optimize_binary(expr, mathfun_mul, true,    1, true);
-		case EX_DIV: return mathfun_expr_optimize_binary(expr, mathfun_div, true,    1, false);
-		case EX_MOD: return mathfun_expr_optimize_binary(expr, mathfun_mod, false, NAN, false);
-		case EX_POW: return mathfun_expr_optimize_binary(expr, pow,         true,    1, false);
+		case EX_ADD: return mathfun_expr_optimize_binary(expr, mathfun_opt_add, true,    0, true);
+		case EX_SUB: return mathfun_expr_optimize_binary(expr, mathfun_opt_sub, true,    0, false);
+		case EX_MUL: return mathfun_expr_optimize_binary(expr, mathfun_opt_mul, true,    1, true);
+		case EX_DIV: return mathfun_expr_optimize_binary(expr, mathfun_opt_div, true,    1, false);
+		case EX_MOD: return mathfun_expr_optimize_binary(expr, mathfun_opt_mod, false, NAN, false);
+		case EX_POW: return mathfun_expr_optimize_binary(expr, mathfun_opt_pow, true,    1, false);
 	}
 
 	return expr;

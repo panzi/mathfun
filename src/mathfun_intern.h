@@ -36,7 +36,7 @@ extern "C" {
 #define MATHFUN_MOD(A,B) \
 	mathfun_value mathfun_mod_result; \
 	if ((B) == 0.0) { \
-		mathfun_raise_error(MATHFUN_DOMAIN_ERROR); \
+		mathfun_raise_math_error(EDOM); \
 		mathfun_mod_result = NAN; \
 	} \
 	else { \
@@ -178,6 +178,8 @@ const char *mathfun_find_identifier_end(const char *str);
 
 void mathfun_raise_error(enum mathfun_error_type type);
 void mathfun_raise_name_error(enum mathfun_error_type type, const char *name);
+void mathfun_raise_math_error(int errnum);
+void mathfun_raise_c_error();
 void mathfun_raise_parser_error(const struct mathfun_parser *parser,
 	enum mathfun_error_type type, const char *errpos);
 void mathfun_raise_parser_argc_error(const struct mathfun_parser *parser,
