@@ -185,6 +185,8 @@ void mathfun_raise_parser_error(const struct mathfun_parser *parser,
 void mathfun_raise_parser_argc_error(const struct mathfun_parser *parser,
 	const char *errpos, size_t expected, size_t got);
 
+bool mathfun_validate_argnames(const char *argnames[], size_t argc);
+
 #ifdef __cplusplus
 }
 #endif

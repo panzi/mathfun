@@ -185,6 +185,10 @@ void mathfun_error_log(FILE *stream) {
 			fprintf(stream, "error: illegal name: '%s'\n", mathfun_error.str);
 			break;
 
+		case MATHFUN_DUPLICATE_ARGUMENT:
+			fprintf(stream, "error: duplicate argument: '%s'\n", mathfun_error.str);
+			break;
+
 		case MATHFUN_NAME_EXISTS:
 			fprintf(stream, "error: name already exists: '%s'\n", mathfun_error.str);
 			break;

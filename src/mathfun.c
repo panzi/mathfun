@@ -82,6 +82,23 @@ bool mathfun_valid_name(const char *name) {
 	return strcasecmp(name,"inf") != 0 && strcasecmp(name,"nan") != 0;
 }
 
+bool mathfun_validate_argnames(const char *argnames[], size_t argc) {
+	for (size_t i = 0; i < argc; ++ i) {
+		const char *argname = argnames[i];
+		if (!mathfun_valid_name(argname)) {
+			mathfun_raise_name_error(MATHFUN_ILLEGAL_NAME, argname);
+			return false;
+		}
+		for (size_t j = 0; j < i; ++ j) {
+			if (strcmp(argname, argnames[j]) == 0) {
+				mathfun_raise_name_error(MATHFUN_DUPLICATE_ARGUMENT, argname);
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
 bool mathfun_context_define_const(struct mathfun_context *ctx, const char *name, mathfun_value value) {
 	if (!mathfun_valid_name(name)) {
 		mathfun_raise_name_error(MATHFUN_ILLEGAL_NAME, name);
@@ -299,13 +316,7 @@ mathfun_value mathfun_arun(const char *argnames[], size_t argc, const char *code
 bool mathfun_context_compile(const struct mathfun_context *ctx,
 	const char *argnames[], size_t argc, const char *code,
 	struct mathfun *mathfun) {
-
-	for (size_t i = 0; i < argc; ++ i) {
-		if (!mathfun_valid_name(argnames[i])) {
-			mathfun_raise_name_error(MATHFUN_ILLEGAL_NAME, argnames[i]);
-			return false;
-		}
-	}
+	if (!mathfun_validate_argnames(argnames, argc)) return false;
 
 	struct mathfun_expr *expr = mathfun_context_parse(ctx, argnames, argc, code);
 

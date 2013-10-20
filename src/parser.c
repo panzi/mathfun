@@ -424,12 +424,7 @@ const char *mathfun_parse_identifier(struct mathfun_parser *parser) {
 
 struct mathfun_expr *mathfun_context_parse(const struct mathfun_context *ctx,
 	const char *argnames[], size_t argc, const char *code) {
-	for (size_t i = 0; i < argc; ++ i) {
-		if (!mathfun_valid_name(argnames[i])) {
-			mathfun_raise_name_error(MATHFUN_ILLEGAL_NAME, argnames[i]);
-			return NULL;
-		}
-	}
+	if (!mathfun_validate_argnames(argnames, argc)) return NULL;
 
 	struct mathfun_parser parser = { ctx, argnames, argc, code, code, {NULL, 0, 0} };
 	if (!strbuf_init(&parser.buf)) return NULL;
