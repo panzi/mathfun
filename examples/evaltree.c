@@ -43,12 +43,12 @@ int main(int argc, char *argv[]) {
 		*assign = 0;
 	}
 
-	mathfun_error_clear();
-	mathfun_value value = mathfun_arun((const char **)argnames, funct_argc, argv[argc - 1], funct_args);
+	mathfun_error_info error = NULL;
+	mathfun_value value = mathfun_arun((const char **)argnames, funct_argc, argv[argc - 1], funct_args, &error);
 	free(funct_args);
 	
-	if (mathfun_error_type()) {
-		mathfun_error_log(stderr);
+	if (error) {
+		mathfun_error_log_and_cleanup(&error, stderr);
 		return 1;
 	}
 

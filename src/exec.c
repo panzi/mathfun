@@ -3,7 +3,8 @@
 #include "mathfun_intern.h"
 
 // tree interpreter, for one time execution and debugging
-mathfun_value mathfun_expr_exec(const struct mathfun_expr *expr, const mathfun_value args[]) {
+mathfun_value mathfun_expr_exec(const struct mathfun_expr *expr, const mathfun_value args[],
+	mathfun_error_info *error) {
 	switch (expr->type) {
 		case EX_CONST:
 			return expr->ex.value;
@@ -15,11 +16,11 @@ mathfun_value mathfun_expr_exec(const struct mathfun_expr *expr, const mathfun_v
 		{
 			mathfun_value *funct_args = malloc(expr->ex.funct.argc * sizeof(mathfun_value));
 			if (!funct_args) {
-				mathfun_raise_error(MATHFUN_MEMORY_ERROR);
+				mathfun_raise_error(error, MATHFUN_MEMORY_ERROR);
 				return NAN;
 			}
 			for (size_t i = 0; i < expr->ex.funct.argc; ++ i) {
-				funct_args[i] = mathfun_expr_exec(expr->ex.funct.args[i], args);
+				funct_args[i] = mathfun_expr_exec(expr->ex.funct.args[i], args, error);
 			}
 			errno = 0;
 			mathfun_value value = expr->ex.funct.funct(funct_args);
@@ -29,54 +30,54 @@ mathfun_value mathfun_expr_exec(const struct mathfun_expr *expr, const mathfun_v
 				case 0: break; // good
 				case ERANGE:
 				case EDOM:
-					mathfun_raise_math_error(errno);
+					mathfun_raise_math_error(error, errno);
 					break;
 
 				default:
-					mathfun_raise_error(MATHFUN_C_ERROR);
+					mathfun_raise_error(error, MATHFUN_C_ERROR);
 					break;
 			}
 
 			return value;
 		}
 		case EX_NEG:
-			return -mathfun_expr_exec(expr->ex.unary.expr, args);
+			return -mathfun_expr_exec(expr->ex.unary.expr, args, error);
 
 		case EX_ADD:
-			return mathfun_expr_exec(expr->ex.binary.left, args) +
-			       mathfun_expr_exec(expr->ex.binary.right, args);
+			return mathfun_expr_exec(expr->ex.binary.left, args, error) +
+			       mathfun_expr_exec(expr->ex.binary.right, args, error);
 
 		case EX_SUB:
-			return mathfun_expr_exec(expr->ex.binary.left, args) -
-			       mathfun_expr_exec(expr->ex.binary.right, args);
+			return mathfun_expr_exec(expr->ex.binary.left, args, error) -
+			       mathfun_expr_exec(expr->ex.binary.right, args, error);
 
 		case EX_MUL:
-			return mathfun_expr_exec(expr->ex.binary.left, args) *
-			       mathfun_expr_exec(expr->ex.binary.right, args);
+			return mathfun_expr_exec(expr->ex.binary.left, args, error) *
+			       mathfun_expr_exec(expr->ex.binary.right, args, error);
 
 		case EX_DIV:
-			return mathfun_expr_exec(expr->ex.binary.left, args) /
-			       mathfun_expr_exec(expr->ex.binary.right, args);
+			return mathfun_expr_exec(expr->ex.binary.left, args, error) /
+			       mathfun_expr_exec(expr->ex.binary.right, args, error);
 
 		case EX_MOD:
 		{
-			mathfun_value left  = mathfun_expr_exec(expr->ex.binary.left, args);
-			mathfun_value right = mathfun_expr_exec(expr->ex.binary.right, args);
+			mathfun_value left  = mathfun_expr_exec(expr->ex.binary.left, args, error);
+			mathfun_value right = mathfun_expr_exec(expr->ex.binary.right, args, error);
 
 			if (right == 0.0) {
-				mathfun_raise_math_error(EDOM);
+				mathfun_raise_math_error(error, EDOM);
 				return NAN;
 			}
 
 			mathfun_value mathfun_mod_result;
-			_MATHFUN_MOD(left, right);
+			MATHFUN_MOD(left, right);
 			return mathfun_mod_result;
 		}
 		case EX_POW:
-			return pow(mathfun_expr_exec(expr->ex.binary.left, args),
-		               mathfun_expr_exec(expr->ex.binary.right, args));
+			return pow(mathfun_expr_exec(expr->ex.binary.left, args, error),
+		               mathfun_expr_exec(expr->ex.binary.right, args, error));
 	}
-	mathfun_raise_error(MATHFUN_INTERNAL_ERROR);
+	mathfun_raise_error(error, MATHFUN_INTERNAL_ERROR);
 	return NAN;
 }
 
@@ -153,7 +154,7 @@ do_mod:
 					return NAN;
 				}
 
-				_MATHFUN_MOD(left, right);
+				MATHFUN_MOD(left, right);
 				regs[code[3]] = mathfun_mod_result;
 				code += 4;
 				DISPATCH;

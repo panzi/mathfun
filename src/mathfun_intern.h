@@ -26,21 +26,11 @@ extern "C" {
 #	define __attribute__(X)
 #endif
 
-#define _MATHFUN_MOD(A,B) \
+#define MATHFUN_MOD(A,B) \
 	mathfun_value __mathfun_mod_i = floor((mathfun_value)(A)/(mathfun_value)(B)); \
 	mathfun_mod_result = (mathfun_value)(A) - __mathfun_mod_i * (mathfun_value)(B); \
 	if (((mathfun_value)(A) < 0.0) != ((mathfun_value)(B) < 0.0)) { \
 		mathfun_mod_result = mathfun_mod_result - (mathfun_value)(B); \
-	}
-
-#define MATHFUN_MOD(A,B) \
-	mathfun_value mathfun_mod_result; \
-	if ((B) == 0.0) { \
-		mathfun_raise_math_error(EDOM); \
-		mathfun_mod_result = NAN; \
-	} \
-	else { \
-		_MATHFUN_MOD(A,B) \
 	}
 
 #if (defined(_WIN16) || defined(_WIN32) || defined(_WIN64)) && !defined(__CYGWIN__)
@@ -133,19 +123,25 @@ enum mathfun_bytecode {
 	POW  = 11    // reg, reg, reg  power
 };
 
-struct strbuf {
-	char  *data;
-	size_t size;
-	size_t used;
+struct mathfun_error {
+	enum mathfun_error_type type;
+	int         errnum;
+	size_t      lineno;
+	size_t      column;
+	const char *str;
+	const char *errpos;
+	size_t      errlen;
+	size_t      argc;
+	size_t      expected_argc;
 };
 
 struct mathfun_parser {
 	const struct mathfun_context *ctx;
 	const char **argnames;
-	size_t argc;
-	const char *code;
-	const char *ptr;
-	struct strbuf buf;
+	size_t       argc;
+	const char  *code;
+	const char  *ptr;
+	mathfun_error_info *error;
 };
 
 struct mathfun_codegen {
@@ -155,37 +151,43 @@ struct mathfun_codegen {
 	size_t code_size;
 	size_t code_used;
 	mathfun_code *code;
+	mathfun_error_info *error;
 };
 
-bool mathfun_context_grow(struct mathfun_context *ctx);
+bool mathfun_context_grow(struct mathfun_context *ctx, mathfun_error_info *error);
 const struct mathfun_decl *mathfun_context_get(const struct mathfun_context *ctx, const char *name);
+const struct mathfun_decl *mathfun_context_getn(const struct mathfun_context *ctx, const char *name, size_t n);
 struct mathfun_expr *mathfun_context_parse(const struct mathfun_context *ctx,
-	const char *argnames[], size_t argc, const char *code);
-bool mathfun_expr_codegen(struct mathfun_expr *expr, struct mathfun *mathfun);
+	const char *argnames[], size_t argc, const char *code, mathfun_error_info *error);
+bool mathfun_expr_codegen(struct mathfun_expr *expr, struct mathfun *mathfun, mathfun_error_info *error);
 
 bool mathfun_codegen(struct mathfun_codegen *codegen, struct mathfun_expr *expr, mathfun_code *ret);
 bool mathfun_codegen_binary(struct mathfun_codegen *codegen, struct mathfun_expr *expr,
 	enum mathfun_bytecode code, mathfun_code *ret);
-struct mathfun_expr *mathfun_expr_alloc(enum mathfun_expr_type type);
+struct mathfun_expr *mathfun_expr_alloc(enum mathfun_expr_type type, mathfun_error_info *error);
 void                 mathfun_expr_free(struct mathfun_expr *expr);
-struct mathfun_expr *mathfun_expr_optimize(struct mathfun_expr *expr);
-mathfun_value        mathfun_expr_exec(const struct mathfun_expr *expr, const mathfun_value args[]);
+struct mathfun_expr *mathfun_expr_optimize(struct mathfun_expr *expr, mathfun_error_info *error);
+mathfun_value        mathfun_expr_exec(const struct mathfun_expr *expr, const mathfun_value args[],
+	mathfun_error_info *error);
 
 mathfun_value mathfun_exec(const struct mathfun *mathfun, mathfun_value regs[])
 	__attribute__((__noinline__,__noclone__));
 
 const char *mathfun_find_identifier_end(const char *str);
 
-void mathfun_raise_error(enum mathfun_error_type type);
-void mathfun_raise_name_error(enum mathfun_error_type type, const char *name);
-void mathfun_raise_math_error(int errnum);
-void mathfun_raise_c_error();
+struct mathfun_error *mathfun_error_alloc(enum mathfun_error_type type);
+void mathfun_raise_error(mathfun_error_info *error, enum mathfun_error_type type);
+void mathfun_raise_name_error(mathfun_error_info *error, enum mathfun_error_type type, const char *name);
+void mathfun_raise_math_error(mathfun_error_info *error, int errnum);
+void mathfun_raise_c_error(mathfun_error_info *error);
+
 void mathfun_raise_parser_error(const struct mathfun_parser *parser,
 	enum mathfun_error_type type, const char *errpos);
+
 void mathfun_raise_parser_argc_error(const struct mathfun_parser *parser,
 	const char *errpos, size_t expected, size_t got);
 
-bool mathfun_validate_argnames(const char *argnames[], size_t argc);
+bool mathfun_validate_argnames(const char *argnames[], size_t argc, mathfun_error_info *error);
 
 #ifdef __cplusplus
 }

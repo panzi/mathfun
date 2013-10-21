@@ -21,68 +21,8 @@ struct mathfun_expr *mathfun_parse_m_expr(struct mathfun_parser *parser);
 struct mathfun_expr *mathfun_parse_u_expr(struct mathfun_parser *parser);
 struct mathfun_expr *mathfun_parse_power(struct mathfun_parser *parser);
 struct mathfun_expr *mathfun_parse_atom(struct mathfun_parser *parser);
-const char          *mathfun_parse_identifier(struct mathfun_parser *parser);
+size_t               mathfun_parse_identifier(struct mathfun_parser *parser);
 struct mathfun_expr *mathfun_parse_number(struct mathfun_parser *parser);
-
-static bool strbuf_init(struct strbuf *buf) {
-	buf->data = NULL;
-	buf->size = 0;
-	buf->used = 0;
-
-	size_t size = 256;
-	buf->data = malloc(size);
-
-	if (!buf->data) {
-		mathfun_raise_error(MATHFUN_MEMORY_ERROR);
-		return false;
-	}
-
-	buf->size = size;
-	return true;
-}
-
-static bool strbuf_ensure(struct strbuf *buf, size_t n) {
-	if (buf->used + n > buf->size) {
-		size_t size = buf->used + n;
-		size_t rem  = size % 256;
-		size += rem == 0 ? 256 : rem;
-		char *data = realloc(buf->data, size);
-
-		if (!data) {
-			mathfun_raise_error(MATHFUN_MEMORY_ERROR);
-			return false;
-		}
-
-		buf->data = data;
-		buf->size = size;
-	}
-	return true;
-}
-
-static bool strbuf_append(struct strbuf *buf, const char *str, size_t n) {
-	if (!strbuf_ensure(buf, n)) return false;
-	memcpy(buf->data + buf->used, str, n);
-	buf->used += n;
-	return true;
-}
-
-static bool strbuf_append_nil(struct strbuf *buf) {
-	if (!strbuf_ensure(buf, 1)) return false;
-	buf->data[buf->used] = 0;
-	++ buf->used;
-	return true;
-}
-
-static void strbuf_clear(struct strbuf *buf) {
-	buf->used = 0;
-}
-
-static void strbuf_cleanup(struct strbuf *buf) {
-	free(buf->data);
-	buf->data = NULL;
-	buf->size = 0;
-	buf->used = 0;
-}
 
 static void skipws(struct mathfun_parser *parser) {
 	const char *ptr = parser->ptr;
@@ -107,7 +47,7 @@ struct mathfun_expr *mathfun_parse_a_expr(struct mathfun_parser *parser) {
 				mathfun_expr_free(left);
 				return NULL;
 			}
-			expr = mathfun_expr_alloc(ch == '+' ? EX_ADD : EX_SUB);
+			expr = mathfun_expr_alloc(ch == '+' ? EX_ADD : EX_SUB, parser->error);
 			if (!expr) {
 				mathfun_expr_free(left);
 				mathfun_expr_free(right);
@@ -141,7 +81,7 @@ struct mathfun_expr *mathfun_parse_m_expr(struct mathfun_parser *parser) {
 				mathfun_expr_free(left);
 				return NULL;
 			}
-			expr = mathfun_expr_alloc(ch == '*' ? EX_MUL : ch == '/' ? EX_DIV : EX_MOD);
+			expr = mathfun_expr_alloc(ch == '*' ? EX_MUL : ch == '/' ? EX_DIV : EX_MOD, parser->error);
 			if (!expr) {
 				mathfun_expr_free(left);
 				mathfun_expr_free(right);
@@ -168,7 +108,7 @@ struct mathfun_expr *mathfun_parse_u_expr(struct mathfun_parser *parser) {
 
 		if (ch == '-') {
 			struct mathfun_expr *child = expr;
-			expr = mathfun_expr_alloc(EX_NEG);
+			expr = mathfun_expr_alloc(EX_NEG, parser->error);
 
 			if (!expr) {
 				mathfun_expr_free(child);
@@ -203,7 +143,7 @@ struct mathfun_expr *mathfun_parse_power(struct mathfun_parser *parser) {
 			return NULL;
 		}
 
-		expr = mathfun_expr_alloc(EX_POW);
+		expr = mathfun_expr_alloc(EX_POW, parser->error);
 		if (!expr) {
 			mathfun_expr_free(left);
 			mathfun_expr_free(right);
@@ -240,17 +180,17 @@ struct mathfun_expr *mathfun_parse_atom(struct mathfun_parser *parser) {
 	}
 	else {
 		const char *idstart = parser->ptr;
-		const char *identifier = mathfun_parse_identifier(parser);
-		if (!identifier) return NULL;
+		const size_t idlen = mathfun_parse_identifier(parser);
+		if (idlen == 0) return NULL;
 
-		if (strcasecmp(identifier, "nan") == 0) {
-			struct mathfun_expr *expr = mathfun_expr_alloc(EX_CONST);
+		if (idlen == 3 && strncasecmp(idstart, "nan", idlen) == 0) {
+			struct mathfun_expr *expr = mathfun_expr_alloc(EX_CONST, parser->error);
 			if (!expr) return NULL;
 			expr->ex.value = NAN;
 			return expr;
 		}
-		else if (strcasecmp(identifier, "inf") == 0) {
-			struct mathfun_expr *expr = mathfun_expr_alloc(EX_CONST);
+		else if (idlen == 3 && strncasecmp(idstart, "inf", idlen) == 0) {
+			struct mathfun_expr *expr = mathfun_expr_alloc(EX_CONST, parser->error);
 			if (!expr) return NULL;
 			expr->ex.value = INFINITY;
 			return expr;
@@ -258,20 +198,21 @@ struct mathfun_expr *mathfun_parse_atom(struct mathfun_parser *parser) {
 
 		size_t argind = 0;
 		for (; argind < parser->argc; ++ argind) {
-			if (strcmp(parser->argnames[argind], identifier) == 0) {
+			const char *argname = parser->argnames[argind];
+			if (strncmp(argname, idstart, idlen) == 0 && !argname[idlen]) {
 				break;
 			}
 		}
 
 		if (*parser->ptr != '(') {
 			if (argind < parser->argc) {
-				struct mathfun_expr *expr = mathfun_expr_alloc(EX_ARG);
+				struct mathfun_expr *expr = mathfun_expr_alloc(EX_ARG, parser->error);
 				if (!expr) return NULL;
 				expr->ex.arg = argind;
 				return expr;
 			}
 
-			const struct mathfun_decl *decl = mathfun_context_get(parser->ctx, identifier);
+			const struct mathfun_decl *decl = mathfun_context_getn(parser->ctx, idstart, idlen);
 
 			if (!decl) {
 				mathfun_raise_parser_error(parser, MATHFUN_PARSER_UNDEFINED_REFERENCE, idstart);
@@ -283,7 +224,7 @@ struct mathfun_expr *mathfun_parse_atom(struct mathfun_parser *parser) {
 				return NULL;
 			}
 
-			struct mathfun_expr *expr = mathfun_expr_alloc(EX_CONST);
+			struct mathfun_expr *expr = mathfun_expr_alloc(EX_CONST, parser->error);
 			if (!expr) return NULL;
 
 			expr->ex.value = decl->decl.value;
@@ -294,7 +235,7 @@ struct mathfun_expr *mathfun_parse_atom(struct mathfun_parser *parser) {
 			return NULL;
 		}
 		else {
-			const struct mathfun_decl *decl = mathfun_context_get(parser->ctx, identifier);
+			const struct mathfun_decl *decl = mathfun_context_getn(parser->ctx, idstart, idlen);
 
 			if (!decl) {
 				mathfun_raise_parser_error(parser, MATHFUN_PARSER_UNDEFINED_REFERENCE, idstart);
@@ -306,7 +247,7 @@ struct mathfun_expr *mathfun_parse_atom(struct mathfun_parser *parser) {
 				return NULL;
 			}
 
-			struct mathfun_expr *expr = mathfun_expr_alloc(EX_CALL);
+			struct mathfun_expr *expr = mathfun_expr_alloc(EX_CALL, parser->error);
 			size_t size = 0;
 
 			if (!expr) return NULL;
@@ -381,7 +322,7 @@ struct mathfun_expr *mathfun_parse_number(struct mathfun_parser *parser) {
 
 	skipws(parser);
 
-	struct mathfun_expr *expr = mathfun_expr_alloc(EX_CONST);
+	struct mathfun_expr *expr = mathfun_expr_alloc(EX_CONST, parser->error);
 	if (!expr) return NULL;
 
 	expr->ex.value = value;
@@ -401,38 +342,30 @@ const char *mathfun_find_identifier_end(const char *str) {
 	return str;
 }
 
-const char *mathfun_parse_identifier(struct mathfun_parser *parser) {
+size_t mathfun_parse_identifier(struct mathfun_parser *parser) {
 	const char *from = parser->ptr;
 	parser->ptr = mathfun_find_identifier_end(from);
 
 	if (from == parser->ptr) {
 		mathfun_raise_parser_error(parser, MATHFUN_PARSER_EXPECTED_IDENTIFIER, from);
-		return NULL;
+		return 0;
 	}
 
-	strbuf_clear(&parser->buf);
-
-	if (!strbuf_append(&parser->buf, from, parser->ptr - from) ||
-		!strbuf_append_nil(&parser->buf)) {
-		return NULL;
-	}
+	size_t n = parser->ptr - from;
 
 	skipws(parser);
 
-	return parser->buf.data;
+	return n;
 }
 
 struct mathfun_expr *mathfun_context_parse(const struct mathfun_context *ctx,
-	const char *argnames[], size_t argc, const char *code) {
-	if (!mathfun_validate_argnames(argnames, argc)) return NULL;
+	const char *argnames[], size_t argc, const char *code, mathfun_error_info *error) {
+	if (!mathfun_validate_argnames(argnames, argc, error)) return NULL;
 
-	struct mathfun_parser parser = { ctx, argnames, argc, code, code, {NULL, 0, 0} };
-	if (!strbuf_init(&parser.buf)) return NULL;
+	struct mathfun_parser parser = { ctx, argnames, argc, code, code, error };
 
 	skipws(&parser);
 	struct mathfun_expr *expr = mathfun_parse_a_expr(&parser);
-
-	strbuf_cleanup(&parser.buf);
 
 	if (expr) {
 		skipws(&parser);

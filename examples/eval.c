@@ -44,19 +44,19 @@ int main(int argc, char *argv[]) {
 	}
 
 	struct mathfun mathfun;
-	if (!mathfun_compile(&mathfun, (const char**)argnames, funct_argc, argv[argc - 1])) {
-		mathfun_error_log(stderr);
+	mathfun_error_info error = NULL;
+	if (!mathfun_compile(&mathfun, (const char**)argnames, funct_argc, argv[argc - 1], &error)) {
+		mathfun_error_log_and_cleanup(&error, stderr);
 		free(funct_args);
 		return 1;
 	}
 
-	mathfun_error_clear();
-	mathfun_value value = mathfun_acall(&mathfun, funct_args);
+	mathfun_value value = mathfun_acall(&mathfun, funct_args, &error);
 	mathfun_cleanup(&mathfun);
 	free(funct_args);
-	
-	if (mathfun_error_type()) {
-		mathfun_error_log(stderr);
+
+	if (error) {
+		mathfun_error_log_and_cleanup(&error, stderr);
 		return 1;
 	}
 

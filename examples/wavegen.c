@@ -126,7 +126,8 @@ bool mathfun_wavegen(const char *filename, FILE *stream, uint32_t sample_rate, u
 		const mathfun_value args[] = { (mathfun_value)sample / (mathfun_value)sample_rate };
 		for (size_t channel = 0; channel < channels; ++ channel) {
 			const struct mathfun *funct = channel_functs + channel;
-			int vol = (int)(max_volume * mathfun_acall(funct, args)) << shift;
+			// ignore math errors here
+			int vol = (int)(max_volume * mathfun_acall(funct, args, NULL)) << shift;
 			if (bits_per_sample <= 8) {
 				vol += mid;
 			}
@@ -149,22 +150,23 @@ bool mathfun_wavegen(const char *filename, FILE *stream, uint32_t sample_rate, u
 bool wavegen(const char *filename, FILE *stream, uint32_t sample_rate, uint16_t bits_per_sample,
 	uint16_t channels, uint32_t samples, const char *channel_functs[], bool write_header) {
 	struct mathfun_context ctx;
+	mathfun_error_info error = NULL;
 
-	if (!mathfun_context_init(&ctx, true) ||
-		!mathfun_context_define_funct(&ctx, "sq",      square_wave,   1) ||
-		!mathfun_context_define_funct(&ctx, "tri",     triangle_wave, 1) ||
-		!mathfun_context_define_funct(&ctx, "saw",     sawtooth_wave, 1) ||
-		!mathfun_context_define_funct(&ctx, "fadein",  fadein,        2) ||
-		!mathfun_context_define_funct(&ctx, "fadeout", fadeout,       2)) {
-		mathfun_error_log(stderr);
+	if (!mathfun_context_init(&ctx, true, &error) ||
+		!mathfun_context_define_funct(&ctx, "sq",      square_wave,   1, &error) ||
+		!mathfun_context_define_funct(&ctx, "tri",     triangle_wave, 1, &error) ||
+		!mathfun_context_define_funct(&ctx, "saw",     sawtooth_wave, 1, &error) ||
+		!mathfun_context_define_funct(&ctx, "fadein",  fadein,        2, &error) ||
+		!mathfun_context_define_funct(&ctx, "fadeout", fadeout,       2, &error)) {
+		mathfun_error_log_and_cleanup(&error, stderr);
 		return false;
 	}
 
 	struct mathfun *functs = calloc(channels, sizeof(struct mathfun));
 	const char *argnames[] = { "t" };
 	for (size_t i = 0; i < channels; ++ i) {
-		if (!mathfun_context_compile(&ctx, argnames, 1, channel_functs[i], functs + i)) {
-			mathfun_error_log(stderr);
+		if (!mathfun_context_compile(&ctx, argnames, 1, channel_functs[i], functs + i, &error)) {
+			mathfun_error_log_and_cleanup(&error, stderr);
 			for (; i > 0; -- i) {
 				mathfun_cleanup(functs + i - 1);
 			}

@@ -3,46 +3,66 @@
 
 #include "mathfun_intern.h"
 
-typedef bool (*mathfun_binary_op)(mathfun_value a, mathfun_value b, mathfun_value *res);
+typedef bool (*mathfun_binary_op)(mathfun_value a, mathfun_value b, mathfun_value *res, mathfun_error_info *error);
 
-static bool mathfun_opt_add(mathfun_value a, mathfun_value b, mathfun_value *res) { *res = a + b; return true; }
-static bool mathfun_opt_sub(mathfun_value a, mathfun_value b, mathfun_value *res) { *res = a - b; return true; }
-static bool mathfun_opt_mul(mathfun_value a, mathfun_value b, mathfun_value *res) { *res = a * b; return true; }
-static bool mathfun_opt_div(mathfun_value a, mathfun_value b, mathfun_value *res) { *res = a / b; return true; }
+static bool mathfun_opt_add(mathfun_value a, mathfun_value b, mathfun_value *res, mathfun_error_info *error) {
+	(void)error;
+	*res = a + b;
+	return true;
+}
 
-static bool mathfun_opt_mod(mathfun_value a, mathfun_value b, mathfun_value *res) {
+static bool mathfun_opt_sub(mathfun_value a, mathfun_value b, mathfun_value *res, mathfun_error_info *error) {
+	(void)error;
+	*res = a - b;
+	return true;
+}
+
+static bool mathfun_opt_mul(mathfun_value a, mathfun_value b, mathfun_value *res, mathfun_error_info *error) {
+	(void)error;
+	*res = a * b;
+	return true;
+}
+
+static bool mathfun_opt_div(mathfun_value a, mathfun_value b, mathfun_value *res, mathfun_error_info *error) {
+	(void)error;
+	*res = a / b;
+	return true;
+}
+
+static bool mathfun_opt_mod(mathfun_value a, mathfun_value b, mathfun_value *res, mathfun_error_info *error) {
 	if (b == 0.0) {
-		mathfun_raise_math_error(EDOM);
+		mathfun_raise_math_error(error, EDOM);
 		return false;
 	}
 	else {
 		mathfun_value mathfun_mod_result;
-		_MATHFUN_MOD(a,b);
+		MATHFUN_MOD(a,b);
 		*res = mathfun_mod_result;
 		return true;
 	}
 }
 
-static bool mathfun_opt_pow(mathfun_value a, mathfun_value b, mathfun_value *res) {
+static bool mathfun_opt_pow(mathfun_value a, mathfun_value b, mathfun_value *res, mathfun_error_info *error) {
 	errno = 0;
 	*res = pow(a, b);
 	if (errno != 0) {
-		mathfun_raise_c_error();
+		mathfun_raise_c_error(error);
 		return false;
 	}
 	return true;
 }
 
 static struct mathfun_expr *mathfun_expr_optimize_binary(struct mathfun_expr *expr,
-	mathfun_binary_op op, bool has_neutral, mathfun_value neutral, bool commutative) {
+	mathfun_binary_op op, bool has_neutral, mathfun_value neutral, bool commutative,
+	mathfun_error_info *error) {
 
-	expr->ex.binary.left = mathfun_expr_optimize(expr->ex.binary.left);
+	expr->ex.binary.left = mathfun_expr_optimize(expr->ex.binary.left, error);
 	if (!expr->ex.binary.left) {
 		mathfun_expr_free(expr);
 		return NULL;
 	}
 
-	expr->ex.binary.right = mathfun_expr_optimize(expr->ex.binary.right);
+	expr->ex.binary.right = mathfun_expr_optimize(expr->ex.binary.right, error);
 	if (!expr->ex.binary.right) {
 		mathfun_expr_free(expr);
 		return NULL;
@@ -52,7 +72,7 @@ static struct mathfun_expr *mathfun_expr_optimize_binary(struct mathfun_expr *ex
 		expr->ex.binary.right->type == EX_CONST) {
 		
 		mathfun_value value = 0;
-		if (!op(expr->ex.binary.left->ex.value, expr->ex.binary.right->ex.value, &value)) {
+		if (!op(expr->ex.binary.left->ex.value, expr->ex.binary.right->ex.value, &value, error)) {
 			mathfun_expr_free(expr);
 			return NULL;
 		}
@@ -80,7 +100,7 @@ static struct mathfun_expr *mathfun_expr_optimize_binary(struct mathfun_expr *ex
 	return expr;
 }
 
-struct mathfun_expr *mathfun_expr_optimize(struct mathfun_expr *expr) {
+struct mathfun_expr *mathfun_expr_optimize(struct mathfun_expr *expr, mathfun_error_info *error) {
 	switch (expr->type) {
 		case EX_CONST:
 		case EX_ARG:
@@ -91,7 +111,7 @@ struct mathfun_expr *mathfun_expr_optimize(struct mathfun_expr *expr) {
 			bool allconst = true;
 			for (size_t i = 0; i < expr->ex.funct.argc; ++ i) {
 				struct mathfun_expr *child = expr->ex.funct.args[i] =
-					mathfun_expr_optimize(expr->ex.funct.args[i]);
+					mathfun_expr_optimize(expr->ex.funct.args[i], error);
 				if (!child) {
 					mathfun_expr_free(expr);
 					return NULL;
@@ -117,7 +137,7 @@ struct mathfun_expr *mathfun_expr_optimize(struct mathfun_expr *expr) {
 				expr->ex.value = value;
 
 				if (errno != 0) {
-					mathfun_raise_c_error();
+					mathfun_raise_c_error(error);
 					mathfun_expr_free(expr);
 					return NULL;
 				}
@@ -126,7 +146,7 @@ struct mathfun_expr *mathfun_expr_optimize(struct mathfun_expr *expr) {
 		}
 
 		case EX_NEG:
-			expr->ex.unary.expr = mathfun_expr_optimize(expr->ex.unary.expr);
+			expr->ex.unary.expr = mathfun_expr_optimize(expr->ex.unary.expr, error);
 			if (!expr->ex.unary.expr) {
 				mathfun_expr_free(expr);
 				return NULL;
@@ -146,12 +166,12 @@ struct mathfun_expr *mathfun_expr_optimize(struct mathfun_expr *expr) {
 			}
 			return expr;
 
-		case EX_ADD: return mathfun_expr_optimize_binary(expr, mathfun_opt_add, true,    0, true);
-		case EX_SUB: return mathfun_expr_optimize_binary(expr, mathfun_opt_sub, true,    0, false);
-		case EX_MUL: return mathfun_expr_optimize_binary(expr, mathfun_opt_mul, true,    1, true);
-		case EX_DIV: return mathfun_expr_optimize_binary(expr, mathfun_opt_div, true,    1, false);
-		case EX_MOD: return mathfun_expr_optimize_binary(expr, mathfun_opt_mod, false, NAN, false);
-		case EX_POW: return mathfun_expr_optimize_binary(expr, mathfun_opt_pow, true,    1, false);
+		case EX_ADD: return mathfun_expr_optimize_binary(expr, mathfun_opt_add, true,    0, true,  error);
+		case EX_SUB: return mathfun_expr_optimize_binary(expr, mathfun_opt_sub, true,    0, false, error);
+		case EX_MUL: return mathfun_expr_optimize_binary(expr, mathfun_opt_mul, true,    1, true,  error);
+		case EX_DIV: return mathfun_expr_optimize_binary(expr, mathfun_opt_div, true,    1, false, error);
+		case EX_MOD: return mathfun_expr_optimize_binary(expr, mathfun_opt_mod, false, NAN, false, error);
+		case EX_POW: return mathfun_expr_optimize_binary(expr, mathfun_opt_pow, true,    1, false, error);
 	}
 
 	return expr;
@@ -168,7 +188,7 @@ bool mathfun_codegen_ensure(struct mathfun_codegen *codegen, size_t n) {
 		mathfun_code *code = realloc(codegen->code, size * sizeof(mathfun_code));
 
 		if (!code) {
-			mathfun_raise_error(MATHFUN_MEMORY_ERROR);
+			mathfun_raise_error(codegen->error, MATHFUN_MEMORY_ERROR);
 			return false;
 		}
 
@@ -338,13 +358,13 @@ bool mathfun_codegen(struct mathfun_codegen *codegen, struct mathfun_expr *expr,
 			return mathfun_codegen_binary(codegen, expr, POW, ret);
 	}
 
-	mathfun_raise_error(MATHFUN_INTERNAL_ERROR);
+	mathfun_raise_error(codegen->error, MATHFUN_INTERNAL_ERROR);
 	return false;
 }
 
-bool mathfun_expr_codegen(struct mathfun_expr *expr, struct mathfun *mathfun) {
+bool mathfun_expr_codegen(struct mathfun_expr *expr, struct mathfun *mathfun, mathfun_error_info *error) {
 	if (mathfun->argc > MATHFUN_REGS_MAX) {
-		mathfun_raise_error(MATHFUN_TOO_MANY_ARGUMENTS);
+		mathfun_raise_error(error, MATHFUN_TOO_MANY_ARGUMENTS);
 		return false;
 	}
 
@@ -352,12 +372,13 @@ bool mathfun_expr_codegen(struct mathfun_expr *expr, struct mathfun *mathfun) {
 
 	memset(&codegen, 0, sizeof(struct mathfun_codegen));
 
-	codegen.argc = codegen.currstack = codegen.maxstack = mathfun->argc;
+	codegen.argc  = codegen.currstack = codegen.maxstack = mathfun->argc;
 	codegen.code_size = 16;
-	codegen.code = calloc(codegen.code_size, sizeof(mathfun_code));
+	codegen.code  = calloc(codegen.code_size, sizeof(mathfun_code));
+	codegen.error = error;
 
 	if (!codegen.code) {
-		mathfun_raise_error(MATHFUN_MEMORY_ERROR);
+		mathfun_raise_error(error, MATHFUN_MEMORY_ERROR);
 		mathfun_codegen_cleanup(&codegen);
 		return false;
 	}
@@ -370,7 +391,7 @@ bool mathfun_expr_codegen(struct mathfun_expr *expr, struct mathfun *mathfun) {
 	}
 
 	if (codegen.maxstack >= MATHFUN_REGS_MAX) {
-		mathfun_raise_error(MATHFUN_EXCEEDS_MAX_FRAME_SIZE);
+		mathfun_raise_error(error, MATHFUN_EXCEEDS_MAX_FRAME_SIZE);
 		return false;
 	}
 
@@ -383,44 +404,35 @@ bool mathfun_expr_codegen(struct mathfun_expr *expr, struct mathfun *mathfun) {
 	return true;
 }
 
-bool mathfun_dump(const struct mathfun *mathfun, FILE *stream, const struct mathfun_context *ctx) {
+#define MATHFUN_DUMP(ARGS) \
+	if (fprintf ARGS < 0) { \
+		mathfun_raise_error(error, MATHFUN_IO_ERROR); \
+		return false; \
+	}
+
+bool mathfun_dump(const struct mathfun *mathfun, FILE *stream, const struct mathfun_context *ctx, mathfun_error_info *error) {
 	const mathfun_code *code = mathfun->code;
 
 	for (;;) {
-		if (fprintf(stream, "0x%08"PRIuPTR": ", code - mathfun->code) < 0) {
-			mathfun_raise_error(MATHFUN_IO_ERROR);
-			return false;
-		}
+		MATHFUN_DUMP((stream, "0x%08"PRIuPTR": ", code - mathfun->code));
 		switch (*code) {
 			case NOP:
-				if (fprintf(stream, "nop\n") < 0) {
-					mathfun_raise_error(MATHFUN_IO_ERROR);
-					return false;
-				}
+				MATHFUN_DUMP((stream, "nop\n"));
 				++ code;
 				break;
 
 			case RET:
-				if (fprintf(stream, "ret %"PRIuPTR"\n", code[1]) < 0) {
-					mathfun_raise_error(MATHFUN_IO_ERROR);
-					return false;
-				}
+				MATHFUN_DUMP((stream, "ret %"PRIuPTR"\n", code[1]));
 				return true;
 
 			case MOV:
-				if (fprintf(stream, "mov %"PRIuPTR", %"PRIuPTR"\n", code[1], code[2]) < 0) {
-					mathfun_raise_error(MATHFUN_IO_ERROR);
-					return false;
-				}
+				MATHFUN_DUMP((stream, "mov %"PRIuPTR", %"PRIuPTR"\n", code[1], code[2]));
 				code += 3;
 				break;
 
 			case VAL:
-				if (fprintf(stream, "val %.22g, %"PRIuPTR"\n", *(mathfun_value*)(code + 1),
-					code[1 + MATHFUN_VALUE_CODES]) < 0) {
-					mathfun_raise_error(MATHFUN_IO_ERROR);
-					return false;
-				}
+				MATHFUN_DUMP((stream, "val %.22g, %"PRIuPTR"\n", *(mathfun_value*)(code + 1),
+					code[1 + MATHFUN_VALUE_CODES]));
 				code += 2 + MATHFUN_VALUE_CODES;
 				break;
 
@@ -434,86 +446,59 @@ bool mathfun_dump(const struct mathfun *mathfun, FILE *stream, const struct math
 				if (ctx) {
 					const char *name = mathfun_context_funct_name(ctx, funct);
 					if (name) {
-						if (fprintf(stream, "call %s, %"PRIuPTR", %"PRIuPTR"\n", name, firstarg, ret) < 0) {
-							mathfun_raise_error(MATHFUN_IO_ERROR);
-							return false;
-						}
+						MATHFUN_DUMP((stream, "call %s, %"PRIuPTR", %"PRIuPTR"\n", name, firstarg, ret));
 						break;
 					}
 				}
 
-				if (fprintf(stream, "call 0x%"PRIxPTR", %"PRIuPTR", %"PRIuPTR"\n",
-					(uintptr_t)funct, firstarg, ret) < 0) {
-					mathfun_raise_error(MATHFUN_IO_ERROR);
-					return false;
-				}
+				MATHFUN_DUMP((stream, "call 0x%"PRIxPTR", %"PRIuPTR", %"PRIuPTR"\n",
+					(uintptr_t)funct, firstarg, ret));
 				break;
 			}
 
 			case NEG:
-				if (fprintf(stream, "neg %"PRIuPTR", %"PRIuPTR"\n", code[1], code[2]) < 0) {
-					mathfun_raise_error(MATHFUN_IO_ERROR);
-					return false;
-				}
+				MATHFUN_DUMP((stream, "neg %"PRIuPTR", %"PRIuPTR"\n", code[1], code[2]));
 				code += 3;
 				break;
 
 			case ADD:
-				if (fprintf(stream, "add %"PRIuPTR", %"PRIuPTR", %"PRIuPTR"\n",
-					code[1], code[2], code[3]) < 0) {
-					mathfun_raise_error(MATHFUN_IO_ERROR);
-					return false;
-				}
+				MATHFUN_DUMP((stream, "add %"PRIuPTR", %"PRIuPTR", %"PRIuPTR"\n",
+					code[1], code[2], code[3]));
 				code += 4;
 				break;
 
 			case SUB:
-				if (fprintf(stream, "sub %"PRIuPTR", %"PRIuPTR", %"PRIuPTR"\n",
-					code[1], code[2], code[3]) < 0) {
-					mathfun_raise_error(MATHFUN_IO_ERROR);
-					return false;
-				}
+				MATHFUN_DUMP((stream, "sub %"PRIuPTR", %"PRIuPTR", %"PRIuPTR"\n",
+					code[1], code[2], code[3]));
 				code += 4;
 				break;
 
 			case MUL:
-				if (fprintf(stream, "mul %"PRIuPTR", %"PRIuPTR", %"PRIuPTR"\n",
-					code[1], code[2], code[3]) < 0) {
-					mathfun_raise_error(MATHFUN_IO_ERROR);
-					return false;
-				}
+				MATHFUN_DUMP((stream, "mul %"PRIuPTR", %"PRIuPTR", %"PRIuPTR"\n",
+					code[1], code[2], code[3]));
 				code += 4;
 				break;
 
 			case DIV:
-				if (fprintf(stream, "div %"PRIuPTR", %"PRIuPTR", %"PRIuPTR"\n",
-					code[1], code[2], code[3]) < 0) {
-					mathfun_raise_error(MATHFUN_IO_ERROR);
-					return false;
-				}
+				MATHFUN_DUMP((stream, "div %"PRIuPTR", %"PRIuPTR", %"PRIuPTR"\n",
+					code[1], code[2], code[3]));
 				code += 4;
 				break;
 
 			case MOD:
-				if (fprintf(stream, "mod %"PRIuPTR", %"PRIuPTR", %"PRIuPTR"\n",
-					code[1], code[2], code[3]) < 0) {
-					mathfun_raise_error(MATHFUN_IO_ERROR);
-					return false;
-				}
+				MATHFUN_DUMP((stream, "mod %"PRIuPTR", %"PRIuPTR", %"PRIuPTR"\n",
+					code[1], code[2], code[3]));
 				code += 4;
 				break;
 
 			case POW:
-				if (fprintf(stream, "pow %"PRIuPTR", %"PRIuPTR", %"PRIuPTR"\n",
-					code[1], code[2], code[3]) < 0) {
-					mathfun_raise_error(MATHFUN_IO_ERROR);
-					return false;
-				}
+				MATHFUN_DUMP((stream, "pow %"PRIuPTR", %"PRIuPTR", %"PRIuPTR"\n",
+					code[1], code[2], code[3]));
 				code += 4;
 				break;
 
-			default:
-				mathfun_raise_error(MATHFUN_INTERNAL_ERROR);
+			default: // assert?
+				mathfun_raise_error(error, MATHFUN_INTERNAL_ERROR);
 				return false;
 		}
 	}

@@ -55,6 +55,9 @@ enum mathfun_error_type {
 };
 
 struct mathfun_decl;
+struct mathfun_error;
+
+typedef const struct mathfun_error *mathfun_error_info;
 
 struct mathfun_context {
 	struct mathfun_decl *decls;
@@ -68,35 +71,42 @@ struct mathfun {
 	mathfun_code *code;
 };
 
-bool mathfun_context_init(struct mathfun_context *ctx, bool define_default);
+bool mathfun_context_init(struct mathfun_context *ctx, bool define_default, mathfun_error_info *error);
 void mathfun_context_cleanup(struct mathfun_context *ctx);
-bool mathfun_context_define_default(struct mathfun_context *ctx);
-bool mathfun_context_define_const(struct mathfun_context *ctx, const char *name, mathfun_value value);
-bool mathfun_context_define_funct(struct mathfun_context *ctx, const char *name, mathfun_binding_funct funct, size_t argc);
+bool mathfun_context_define_default(struct mathfun_context *ctx, mathfun_error_info *error);
+bool mathfun_context_define_const(struct mathfun_context *ctx, const char *name, mathfun_value value,
+	mathfun_error_info *error);
+bool mathfun_context_define_funct(struct mathfun_context *ctx, const char *name, mathfun_binding_funct funct, size_t argc,
+	mathfun_error_info *error);
 const char *mathfun_context_funct_name(const struct mathfun_context *ctx, mathfun_binding_funct funct);
-bool mathfun_context_undefine(struct mathfun_context *ctx, const char *name);
+bool mathfun_context_undefine(struct mathfun_context *ctx, const char *name,
+	mathfun_error_info *error);
 bool mathfun_context_compile(const struct mathfun_context *ctx,
 	const char *argnames[], size_t argc, const char *code,
-	struct mathfun *mathfun);
+	struct mathfun *mathfun, mathfun_error_info *error);
 
 void mathfun_cleanup(struct mathfun *mathfun);
-bool mathfun_compile(struct mathfun *mathfun, const char *argnames[], size_t argc, const char *code);
-mathfun_value mathfun_call(const struct mathfun *mathfun, ...);
-mathfun_value mathfun_acall(const struct mathfun *mathfun, const mathfun_value args[]);
-mathfun_value mathfun_vcall(const struct mathfun *mathfun, va_list ap);
-bool mathfun_dump(const struct mathfun *mathfun, FILE *stream, const struct mathfun_context *ctx);
+bool mathfun_compile(struct mathfun *mathfun, const char *argnames[], size_t argc, const char *code,
+	mathfun_error_info *error);
+mathfun_value mathfun_call(const struct mathfun *mathfun, mathfun_error_info *error, ...);
+mathfun_value mathfun_acall(const struct mathfun *mathfun, const mathfun_value args[], mathfun_error_info *error);
+mathfun_value mathfun_vcall(const struct mathfun *mathfun, va_list ap, mathfun_error_info *error);
+bool mathfun_dump(const struct mathfun *mathfun, FILE *stream, const struct mathfun_context *ctx,
+	mathfun_error_info *error);
 
-mathfun_value mathfun_run(const char *code, ...);
-mathfun_value mathfun_arun(const char *argnames[], size_t argc, const char *code, const mathfun_value args[]);
+mathfun_value mathfun_run(const char *code, mathfun_error_info *error, ...);
+mathfun_value mathfun_arun(const char *argnames[], size_t argc, const char *code, const mathfun_value args[],
+	mathfun_error_info *error);
 
-enum mathfun_error_type mathfun_error_type();
-int    mathfun_error_errno();
-size_t mathfun_error_lineno();
-size_t mathfun_error_column();
-size_t mathfun_error_errpos();
-size_t mathfun_error_errlen();
-void   mathfun_error_clear();
-void   mathfun_error_log(FILE *stream);
+enum mathfun_error_type mathfun_error_type(mathfun_error_info error);
+int    mathfun_error_errno(mathfun_error_info error);
+size_t mathfun_error_lineno(mathfun_error_info error);
+size_t mathfun_error_column(mathfun_error_info error);
+size_t mathfun_error_errpos(mathfun_error_info error);
+size_t mathfun_error_errlen(mathfun_error_info error);
+void   mathfun_error_log(mathfun_error_info error, FILE *stream);
+void   mathfun_error_log_and_cleanup(mathfun_error_info *error, FILE *stream);
+void   mathfun_error_cleanup(mathfun_error_info *error);
 
 bool          mathfun_valid_name(const char *name);
 mathfun_value mathfun_mod(mathfun_value x, mathfun_value y);
