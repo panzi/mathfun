@@ -43,16 +43,16 @@ int main(int argc, char *argv[]) {
 		*assign = 0;
 	}
 
-	struct mathfun mathfun;
-	mathfun_error_info error = NULL;
-	if (!mathfun_compile(&mathfun, (const char**)argnames, funct_argc, argv[argc - 1], &error)) {
+	mathfun fun;
+	mathfun_error_p error = NULL;
+	if (!mathfun_compile(&fun, (const char**)argnames, funct_argc, argv[argc - 1], &error)) {
 		mathfun_error_log_and_cleanup(&error, stderr);
 		free(funct_args);
 		return 1;
 	}
 
-	mathfun_value value = mathfun_acall(&mathfun, funct_args, &error);
-	mathfun_cleanup(&mathfun);
+	mathfun_value value = mathfun_acall(&fun, funct_args, &error);
+	mathfun_cleanup(&fun);
 	free(funct_args);
 
 	if (error) {

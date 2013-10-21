@@ -202,7 +202,7 @@ static mathfun_value mathfun_funct_yn(const mathfun_value args[]) {
 	return yn((int)args[0], args[1]);
 }
 
-bool mathfun_context_define_default(struct mathfun_context *ctx, mathfun_error_info *error) {
+bool mathfun_context_define_default(mathfun_context *ctx, mathfun_error_p *error) {
 	// Constants
 	if (!mathfun_context_define_const(ctx, "e", M_E, error)) {
 		return false;

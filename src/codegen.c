@@ -3,33 +3,33 @@
 
 #include "mathfun_intern.h"
 
-typedef bool (*mathfun_binary_op)(mathfun_value a, mathfun_value b, mathfun_value *res, mathfun_error_info *error);
+typedef bool (*mathfun_binary_op)(mathfun_value a, mathfun_value b, mathfun_value *res, mathfun_error_p *error);
 
-static bool mathfun_opt_add(mathfun_value a, mathfun_value b, mathfun_value *res, mathfun_error_info *error) {
+static bool mathfun_opt_add(mathfun_value a, mathfun_value b, mathfun_value *res, mathfun_error_p *error) {
 	(void)error;
 	*res = a + b;
 	return true;
 }
 
-static bool mathfun_opt_sub(mathfun_value a, mathfun_value b, mathfun_value *res, mathfun_error_info *error) {
+static bool mathfun_opt_sub(mathfun_value a, mathfun_value b, mathfun_value *res, mathfun_error_p *error) {
 	(void)error;
 	*res = a - b;
 	return true;
 }
 
-static bool mathfun_opt_mul(mathfun_value a, mathfun_value b, mathfun_value *res, mathfun_error_info *error) {
+static bool mathfun_opt_mul(mathfun_value a, mathfun_value b, mathfun_value *res, mathfun_error_p *error) {
 	(void)error;
 	*res = a * b;
 	return true;
 }
 
-static bool mathfun_opt_div(mathfun_value a, mathfun_value b, mathfun_value *res, mathfun_error_info *error) {
+static bool mathfun_opt_div(mathfun_value a, mathfun_value b, mathfun_value *res, mathfun_error_p *error) {
 	(void)error;
 	*res = a / b;
 	return true;
 }
 
-static bool mathfun_opt_mod(mathfun_value a, mathfun_value b, mathfun_value *res, mathfun_error_info *error) {
+static bool mathfun_opt_mod(mathfun_value a, mathfun_value b, mathfun_value *res, mathfun_error_p *error) {
 	if (b == 0.0) {
 		mathfun_raise_math_error(error, EDOM);
 		return false;
@@ -42,7 +42,7 @@ static bool mathfun_opt_mod(mathfun_value a, mathfun_value b, mathfun_value *res
 	}
 }
 
-static bool mathfun_opt_pow(mathfun_value a, mathfun_value b, mathfun_value *res, mathfun_error_info *error) {
+static bool mathfun_opt_pow(mathfun_value a, mathfun_value b, mathfun_value *res, mathfun_error_p *error) {
 	errno = 0;
 	*res = pow(a, b);
 	if (errno != 0) {
@@ -52,9 +52,9 @@ static bool mathfun_opt_pow(mathfun_value a, mathfun_value b, mathfun_value *res
 	return true;
 }
 
-static struct mathfun_expr *mathfun_expr_optimize_binary(struct mathfun_expr *expr,
+static mathfun_expr *mathfun_expr_optimize_binary(mathfun_expr *expr,
 	mathfun_binary_op op, bool has_neutral, mathfun_value neutral, bool commutative,
-	mathfun_error_info *error) {
+	mathfun_error_p *error) {
 
 	expr->ex.binary.left = mathfun_expr_optimize(expr->ex.binary.left, error);
 	if (!expr->ex.binary.left) {
@@ -84,14 +84,14 @@ static struct mathfun_expr *mathfun_expr_optimize_binary(struct mathfun_expr *ex
 	}
 	else if (has_neutral) {
 		if (expr->ex.binary.right->type == EX_CONST && expr->ex.binary.right->ex.value == neutral) {
-			struct mathfun_expr *left = expr->ex.binary.left;
+			mathfun_expr *left = expr->ex.binary.left;
 			expr->ex.binary.left = NULL;
 			mathfun_expr_free(expr);
 			expr = left;
 		}
 		else if (commutative && expr->ex.binary.left->type == EX_CONST &&
 			expr->ex.binary.left->ex.value == neutral) {
-			struct mathfun_expr *right = expr->ex.binary.right;
+			mathfun_expr *right = expr->ex.binary.right;
 			expr->ex.binary.right = NULL;
 			mathfun_expr_free(expr);
 			expr = right;
@@ -100,7 +100,7 @@ static struct mathfun_expr *mathfun_expr_optimize_binary(struct mathfun_expr *ex
 	return expr;
 }
 
-struct mathfun_expr *mathfun_expr_optimize(struct mathfun_expr *expr, mathfun_error_info *error) {
+mathfun_expr *mathfun_expr_optimize(mathfun_expr *expr, mathfun_error_p *error) {
 	switch (expr->type) {
 		case EX_CONST:
 		case EX_ARG:
@@ -110,7 +110,7 @@ struct mathfun_expr *mathfun_expr_optimize(struct mathfun_expr *expr, mathfun_er
 		{
 			bool allconst = true;
 			for (size_t i = 0; i < expr->ex.funct.argc; ++ i) {
-				struct mathfun_expr *child = expr->ex.funct.args[i] =
+				mathfun_expr *child = expr->ex.funct.args[i] =
 					mathfun_expr_optimize(expr->ex.funct.args[i], error);
 				if (!child) {
 					mathfun_expr_free(expr);
@@ -152,13 +152,13 @@ struct mathfun_expr *mathfun_expr_optimize(struct mathfun_expr *expr, mathfun_er
 				return NULL;
 			}
 			else if (expr->ex.unary.expr->type == EX_NEG) {
-				struct mathfun_expr *child = expr->ex.unary.expr->ex.unary.expr;
+				mathfun_expr *child = expr->ex.unary.expr->ex.unary.expr;
 				expr->ex.unary.expr->ex.unary.expr = NULL;
 				mathfun_expr_free(expr);
 				return child;
 			}
 			else if (expr->ex.unary.expr->type == EX_CONST) {
-				struct mathfun_expr *child = expr->ex.unary.expr;
+				mathfun_expr *child = expr->ex.unary.expr;
 				expr->ex.unary.expr = NULL;
 				mathfun_expr_free(expr);
 				child->ex.value = -child->ex.value;
@@ -177,12 +177,12 @@ struct mathfun_expr *mathfun_expr_optimize(struct mathfun_expr *expr, mathfun_er
 	return expr;
 }
 
-void mathfun_codegen_cleanup(struct mathfun_codegen *codegen) {
+void mathfun_codegen_cleanup(mathfun_codegen *codegen) {
 	free(codegen->code);
 	codegen->code = NULL;
 }
 
-bool mathfun_codegen_ensure(struct mathfun_codegen *codegen, size_t n) {
+bool mathfun_codegen_ensure(mathfun_codegen *codegen, size_t n) {
 	const size_t size = codegen->code_used + n;
 	if (size > codegen->code_size) {
 		mathfun_code *code = realloc(codegen->code, size * sizeof(mathfun_code));
@@ -198,7 +198,7 @@ bool mathfun_codegen_ensure(struct mathfun_codegen *codegen, size_t n) {
 	return true;
 }
 
-bool mathfun_codegen_align(struct mathfun_codegen *codegen, size_t offset, size_t align) {
+bool mathfun_codegen_align(mathfun_codegen *codegen, size_t offset, size_t align) {
 	for (;;) {
 		uintptr_t ptr = (uintptr_t)(codegen->code + codegen->code_used + offset);
 		uintptr_t aligned = ptr & ~(align - 1);
@@ -209,7 +209,7 @@ bool mathfun_codegen_align(struct mathfun_codegen *codegen, size_t offset, size_
 	return true;
 }
 
-bool mathfun_codegen_append(struct mathfun_codegen *codegen, enum mathfun_bytecode code, ...) {
+bool mathfun_codegen_append(mathfun_codegen *codegen, enum mathfun_bytecode code, ...) {
 	va_list ap;
 	size_t argc = 0;
 
@@ -272,23 +272,23 @@ bool mathfun_codegen_append(struct mathfun_codegen *codegen, enum mathfun_byteco
 }
 
 bool mathfun_codegen_binary(
-	struct mathfun_codegen *codegen,
-	struct mathfun_expr *expr,
+	mathfun_codegen *codegen,
+	mathfun_expr *expr,
 	enum mathfun_bytecode code,
 	mathfun_code *ret) {
 	mathfun_code leftret  = codegen->currstack;
 	mathfun_code rightret;
 
-	if (!mathfun_codegen(codegen, expr->ex.binary.left, &leftret)) return false;
+	if (!mathfun_codegen_expr(codegen, expr->ex.binary.left, &leftret)) return false;
 
 	if (leftret < codegen->currstack) {
 		// returned an argument, can use unchanged currstack for right expression
 		rightret = codegen->currstack;
-		if (!mathfun_codegen(codegen, expr->ex.binary.right, &rightret)) return false;
+		if (!mathfun_codegen_expr(codegen, expr->ex.binary.right, &rightret)) return false;
 	}
 	else {
 		rightret = ++ codegen->currstack;
-		if (!mathfun_codegen(codegen, expr->ex.binary.right, &rightret)) return false;
+		if (!mathfun_codegen_expr(codegen, expr->ex.binary.right, &rightret)) return false;
 
 		// doing this *after* the codegen for the right expression
 		// optimizes the case where no extra register is needed (e.g. it
@@ -303,7 +303,7 @@ bool mathfun_codegen_binary(
 	return mathfun_codegen_append(codegen, code, leftret, rightret, *ret);
 }
 
-bool mathfun_codegen(struct mathfun_codegen *codegen, struct mathfun_expr *expr, mathfun_code *ret) {
+bool mathfun_codegen_expr(mathfun_codegen *codegen, mathfun_expr *expr, mathfun_code *ret) {
 	switch (expr->type) {
 		case EX_CONST:
 			return mathfun_codegen_append(codegen, VAL, expr->ex.value, *ret);
@@ -316,9 +316,9 @@ bool mathfun_codegen(struct mathfun_codegen *codegen, struct mathfun_expr *expr,
 		{
 			const size_t firstarg = codegen->currstack;
 			for (size_t i = 0; i < expr->ex.funct.argc; ++ i) {
-				struct mathfun_expr *arg = expr->ex.funct.args[i];
+				mathfun_expr *arg = expr->ex.funct.args[i];
 				mathfun_code argret = codegen->currstack;
-				if (!mathfun_codegen(codegen, arg, &argret)) return false;
+				if (!mathfun_codegen_expr(codegen, arg, &argret)) return false;
 				if (argret != codegen->currstack &&
 					!mathfun_codegen_append(codegen, MOV, argret, codegen->currstack)) {
 					return false;
@@ -336,7 +336,7 @@ bool mathfun_codegen(struct mathfun_codegen *codegen, struct mathfun_expr *expr,
 		case EX_NEG:
 		{
 			mathfun_code negret = *ret;
-			if (!mathfun_codegen(codegen, expr->ex.unary.expr, &negret)) return false;
+			if (!mathfun_codegen_expr(codegen, expr->ex.unary.expr, &negret)) return false;
 			return mathfun_codegen_append(codegen, NEG, negret, *ret);
 		}
 		case EX_ADD:
@@ -362,15 +362,15 @@ bool mathfun_codegen(struct mathfun_codegen *codegen, struct mathfun_expr *expr,
 	return false;
 }
 
-bool mathfun_expr_codegen(struct mathfun_expr *expr, struct mathfun *mathfun, mathfun_error_info *error) {
+bool mathfun_expr_codegen(mathfun_expr *expr, mathfun *mathfun, mathfun_error_p *error) {
 	if (mathfun->argc > MATHFUN_REGS_MAX) {
 		mathfun_raise_error(error, MATHFUN_TOO_MANY_ARGUMENTS);
 		return false;
 	}
 
-	struct mathfun_codegen codegen;
+	mathfun_codegen codegen;
 
-	memset(&codegen, 0, sizeof(struct mathfun_codegen));
+	memset(&codegen, 0, sizeof(mathfun_codegen));
 
 	codegen.argc  = codegen.currstack = codegen.maxstack = mathfun->argc;
 	codegen.code_size = 16;
@@ -384,7 +384,7 @@ bool mathfun_expr_codegen(struct mathfun_expr *expr, struct mathfun *mathfun, ma
 	}
 
 	mathfun_code ret = mathfun->argc;
-	if (!mathfun_codegen(&codegen, expr, &ret) ||
+	if (!mathfun_codegen_expr(&codegen, expr, &ret) ||
 		!mathfun_codegen_append(&codegen, RET, ret)) {
 		mathfun_codegen_cleanup(&codegen);
 		return false;
@@ -410,7 +410,7 @@ bool mathfun_expr_codegen(struct mathfun_expr *expr, struct mathfun *mathfun, ma
 		return false; \
 	}
 
-bool mathfun_dump(const struct mathfun *mathfun, FILE *stream, const struct mathfun_context *ctx, mathfun_error_info *error) {
+bool mathfun_dump(const mathfun *mathfun, FILE *stream, const mathfun_context *ctx, mathfun_error_p *error) {
 	const mathfun_code *code = mathfun->code;
 
 	for (;;) {

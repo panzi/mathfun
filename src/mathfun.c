@@ -5,11 +5,11 @@
 
 #include "mathfun_intern.h"
 
-bool mathfun_context_init(struct mathfun_context *ctx, bool define_default, mathfun_error_info *error) {
+bool mathfun_context_init(mathfun_context *ctx, bool define_default, mathfun_error_p *error) {
 	ctx->decl_capacity = 256;
 	ctx->decl_used     =   0;
 
-	ctx->decls = calloc(ctx->decl_capacity, sizeof(struct mathfun_decl));
+	ctx->decls = calloc(ctx->decl_capacity, sizeof(mathfun_decl));
 
 	if (!ctx->decls) {
 		ctx->decl_capacity = 0;
@@ -24,7 +24,7 @@ bool mathfun_context_init(struct mathfun_context *ctx, bool define_default, math
 	return true;
 }
 
-void mathfun_context_cleanup(struct mathfun_context *ctx) {
+void mathfun_context_cleanup(mathfun_context *ctx) {
 	free(ctx->decls);
 
 	ctx->decls = NULL;
@@ -32,9 +32,9 @@ void mathfun_context_cleanup(struct mathfun_context *ctx) {
 	ctx->decl_used     = 0;
 }
 
-bool mathfun_context_grow(struct mathfun_context *ctx, mathfun_error_info *error) {
+bool mathfun_context_grow(mathfun_context *ctx, mathfun_error_p *error) {
 	const size_t size = ctx->decl_capacity * 2;
-	struct mathfun_decl *decls = realloc(ctx->decls, size * sizeof(struct mathfun_decl));
+	mathfun_decl *decls = realloc(ctx->decls, size * sizeof(mathfun_decl));
 
 	if (!decls) {
 		mathfun_raise_error(error, MATHFUN_MEMORY_ERROR);
@@ -46,9 +46,9 @@ bool mathfun_context_grow(struct mathfun_context *ctx, mathfun_error_info *error
 	return true;
 }
 
-const struct mathfun_decl *mathfun_context_get(const struct mathfun_context *ctx, const char *name) {
+const mathfun_decl *mathfun_context_get(const mathfun_context *ctx, const char *name) {
 	for (size_t i = 0; i < ctx->decl_used; ++ i) {
-		const struct mathfun_decl *decl = &ctx->decls[i];
+		const mathfun_decl *decl = &ctx->decls[i];
 		if (strcmp(decl->name, name) == 0) {
 			return decl;
 		}
@@ -57,9 +57,9 @@ const struct mathfun_decl *mathfun_context_get(const struct mathfun_context *ctx
 	return NULL;
 }
 
-const struct mathfun_decl *mathfun_context_getn(const struct mathfun_context *ctx, const char *name, size_t n) {
+const mathfun_decl *mathfun_context_getn(const mathfun_context *ctx, const char *name, size_t n) {
 	for (size_t i = 0; i < ctx->decl_used; ++ i) {
-		const struct mathfun_decl *decl = &ctx->decls[i];
+		const mathfun_decl *decl = &ctx->decls[i];
 		if (strncmp(decl->name, name, n) == 0 && !decl->name[n]) {
 			return decl;
 		}
@@ -68,9 +68,9 @@ const struct mathfun_decl *mathfun_context_getn(const struct mathfun_context *ct
 	return NULL;
 }
 
-const char *mathfun_context_funct_name(const struct mathfun_context *ctx, mathfun_binding_funct funct) {
+const char *mathfun_context_funct_name(const mathfun_context *ctx, mathfun_binding_funct funct) {
 	for (size_t i = 0; i < ctx->decl_used; ++ i) {
-		const struct mathfun_decl *decl = &ctx->decls[i];
+		const mathfun_decl *decl = &ctx->decls[i];
 		if (decl->type == DECL_FUNCT && decl->decl.funct.funct == funct) {
 			return decl->name;
 		}
@@ -93,7 +93,7 @@ bool mathfun_valid_name(const char *name) {
 	return strcasecmp(name,"inf") != 0 && strcasecmp(name,"nan") != 0;
 }
 
-bool mathfun_validate_argnames(const char *argnames[], size_t argc, mathfun_error_info *error) {
+bool mathfun_validate_argnames(const char *argnames[], size_t argc, mathfun_error_p *error) {
 	for (size_t i = 0; i < argc; ++ i) {
 		const char *argname = argnames[i];
 		if (!mathfun_valid_name(argname)) {
@@ -110,8 +110,8 @@ bool mathfun_validate_argnames(const char *argnames[], size_t argc, mathfun_erro
 	return true;
 }
 
-bool mathfun_context_define_const(struct mathfun_context *ctx, const char *name, mathfun_value value,
-	mathfun_error_info *error) {
+bool mathfun_context_define_const(mathfun_context *ctx, const char *name, mathfun_value value,
+	mathfun_error_p *error) {
 	if (!mathfun_valid_name(name)) {
 		mathfun_raise_name_error(error, MATHFUN_ILLEGAL_NAME, name);
 		return false;
@@ -126,7 +126,7 @@ bool mathfun_context_define_const(struct mathfun_context *ctx, const char *name,
 		return false;
 	}
 
-	struct mathfun_decl *decl = ctx->decls + ctx->decl_used;
+	mathfun_decl *decl = ctx->decls + ctx->decl_used;
 	decl->type = DECL_CONST;
 	decl->name = name;
 	decl->decl.value = value;
@@ -136,8 +136,8 @@ bool mathfun_context_define_const(struct mathfun_context *ctx, const char *name,
 	return true;
 }
 
-bool mathfun_context_define_funct(struct mathfun_context *ctx, const char *name, mathfun_binding_funct funct, size_t argc,
-	mathfun_error_info *error) {
+bool mathfun_context_define_funct(mathfun_context *ctx, const char *name, mathfun_binding_funct funct, size_t argc,
+	mathfun_error_p *error) {
 	if (!mathfun_valid_name(name)) {
 		mathfun_raise_name_error(error, MATHFUN_ILLEGAL_NAME, name);
 		return false;
@@ -157,7 +157,7 @@ bool mathfun_context_define_funct(struct mathfun_context *ctx, const char *name,
 		return false;
 	}
 
-	struct mathfun_decl *decl = ctx->decls + ctx->decl_used;
+	mathfun_decl *decl = ctx->decls + ctx->decl_used;
 	decl->type = DECL_FUNCT;
 	decl->name = name;
 	decl->decl.funct.funct = funct;
@@ -168,26 +168,26 @@ bool mathfun_context_define_funct(struct mathfun_context *ctx, const char *name,
 	return true;
 }
 
-bool mathfun_context_undefine(struct mathfun_context *ctx, const char *name, mathfun_error_info *error) {
-	struct mathfun_decl *decl = (struct mathfun_decl*)mathfun_context_get(ctx, name);
+bool mathfun_context_undefine(mathfun_context *ctx, const char *name, mathfun_error_p *error) {
+	mathfun_decl *decl = (mathfun_decl*)mathfun_context_get(ctx, name);
 
 	if (!decl) {
 		mathfun_raise_name_error(error, MATHFUN_NO_SUCH_NAME, name);
 		return false;
 	}
 
-	memmove(decl, decl + 1, (ctx->decl_used - (decl + 1 - ctx->decls)) * sizeof(struct mathfun_decl));
+	memmove(decl, decl + 1, (ctx->decl_used - (decl + 1 - ctx->decls)) * sizeof(mathfun_decl));
 
 	++ ctx->decl_used;
 	return true;
 }
 
-void mathfun_cleanup(struct mathfun *mathfun) {
+void mathfun_cleanup(mathfun *mathfun) {
 	free(mathfun->code);
 	mathfun->code = NULL;
 }
 
-mathfun_value mathfun_call(const struct mathfun *mathfun, mathfun_error_info *error, ...) {
+mathfun_value mathfun_call(const mathfun *mathfun, mathfun_error_p *error, ...) {
 	va_list ap;
 	va_start(ap, error);
 
@@ -198,7 +198,7 @@ mathfun_value mathfun_call(const struct mathfun *mathfun, mathfun_error_info *er
 	return value;
 }
 
-mathfun_value mathfun_acall(const struct mathfun *mathfun, const mathfun_value args[], mathfun_error_info *error) {
+mathfun_value mathfun_acall(const mathfun *mathfun, const mathfun_value args[], mathfun_error_p *error) {
 	mathfun_value *regs = calloc(mathfun->framesize, sizeof(mathfun_value));
 
 	if (!regs) {
@@ -219,7 +219,7 @@ mathfun_value mathfun_acall(const struct mathfun *mathfun, const mathfun_value a
 	return value;
 }
 
-mathfun_value mathfun_vcall(const struct mathfun *mathfun, va_list ap, mathfun_error_info *error) {
+mathfun_value mathfun_vcall(const mathfun *mathfun, va_list ap, mathfun_error_p *error) {
 	mathfun_value *regs = calloc(mathfun->framesize, sizeof(mathfun_value));
 
 	if (!regs) {
@@ -245,13 +245,13 @@ mathfun_value mathfun_vcall(const struct mathfun *mathfun, va_list ap, mathfun_e
 // usage:
 // result = matfun_run(expr, errorptr, argnames..., NULL, args...);
 //
-// struct mathfun_error *error = NULL;
+// mathfun_error *error = NULL;
 // mathfun_value value = mathfun_run("sin(x) * y", &error, "x", "y", NULL, 1.4, 2.5);
 //
 // or
 // 
 // mathfun_value value = mathfun_run("sin(x) * y", NULL, "x", "y", NULL, 1.4, 2.5);
-mathfun_value mathfun_run(const char *code, mathfun_error_info *error, ...) {
+mathfun_value mathfun_run(const char *code, mathfun_error_p *error, ...) {
 	va_list ap;
 	size_t argcap = 32;
 	const char **argnames = calloc(argcap, sizeof(char*));
@@ -310,12 +310,12 @@ mathfun_value mathfun_run(const char *code, mathfun_error_info *error, ...) {
 }
 
 mathfun_value mathfun_arun(const char *argnames[], size_t argc, const char *code, const mathfun_value args[],
-	mathfun_error_info *error) {
-	struct mathfun_context ctx;
+	mathfun_error_p *error) {
+	mathfun_context ctx;
 
 	if (!mathfun_context_init(&ctx, true, error)) return NAN;
 
-	struct mathfun_expr *expr = mathfun_context_parse(&ctx, argnames, argc, code, error);
+	mathfun_expr *expr = mathfun_context_parse(&ctx, argnames, argc, code, error);
 
 	if (!expr) {
 		mathfun_context_cleanup(&ctx);
@@ -332,17 +332,17 @@ mathfun_value mathfun_arun(const char *argnames[], size_t argc, const char *code
 	return value;
 }
 
-bool mathfun_context_compile(const struct mathfun_context *ctx,
+bool mathfun_context_compile(const mathfun_context *ctx,
 	const char *argnames[], size_t argc, const char *code,
-	struct mathfun *mathfun, mathfun_error_info *error) {
+	mathfun *mathfun, mathfun_error_p *error) {
 	if (!mathfun_validate_argnames(argnames, argc, error)) return false;
 
-	struct mathfun_expr *expr = mathfun_context_parse(ctx, argnames, argc, code, error);
+	mathfun_expr *expr = mathfun_context_parse(ctx, argnames, argc, code, error);
 
-	memset(mathfun, 0, sizeof(struct mathfun));
+	memset(mathfun, 0, sizeof(mathfun));
 	if (!expr) return false;
 
-	struct mathfun_expr *opt = mathfun_expr_optimize(expr, error);
+	mathfun_expr *opt = mathfun_expr_optimize(expr, error);
 
 	if (!opt) {
 		// expr is freed by mathfun_expr_optimize on error
@@ -359,9 +359,9 @@ bool mathfun_context_compile(const struct mathfun_context *ctx,
 	return ok;
 }
 
-bool mathfun_compile(struct mathfun *mathfun, const char *argnames[], size_t argc, const char *code,
-	mathfun_error_info *error) {
-	struct mathfun_context ctx;
+bool mathfun_compile(mathfun *mathfun, const char *argnames[], size_t argc, const char *code,
+	mathfun_error_p *error) {
+	mathfun_context ctx;
 	if (!mathfun_context_init(&ctx, true, error)) return false;
 
 	bool ok = mathfun_context_compile(&ctx, argnames, argc, code, mathfun, error);
@@ -370,8 +370,8 @@ bool mathfun_compile(struct mathfun *mathfun, const char *argnames[], size_t arg
 	return ok;
 }
 
-struct mathfun_expr *mathfun_expr_alloc(enum mathfun_expr_type type, mathfun_error_info *error) {
-	struct mathfun_expr *expr = calloc(1, sizeof(struct mathfun_expr));
+mathfun_expr *mathfun_expr_alloc(enum mathfun_expr_type type, mathfun_error_p *error) {
+	mathfun_expr *expr = calloc(1, sizeof(mathfun_expr));
 
 	if (!expr) {
 		mathfun_raise_error(error, MATHFUN_MEMORY_ERROR);
@@ -383,7 +383,7 @@ struct mathfun_expr *mathfun_expr_alloc(enum mathfun_expr_type type, mathfun_err
 	return expr;
 }
 
-void mathfun_expr_free(struct mathfun_expr *expr) {
+void mathfun_expr_free(mathfun_expr *expr) {
 	if (!expr) return;
 
 	switch (expr->type) {

@@ -3,8 +3,8 @@
 #include "mathfun_intern.h"
 
 // tree interpreter, for one time execution and debugging
-mathfun_value mathfun_expr_exec(const struct mathfun_expr *expr, const mathfun_value args[],
-	mathfun_error_info *error) {
+mathfun_value mathfun_expr_exec(const mathfun_expr *expr, const mathfun_value args[],
+	mathfun_error_p *error) {
 	switch (expr->type) {
 		case EX_CONST:
 			return expr->ex.value;
@@ -83,7 +83,7 @@ mathfun_value mathfun_expr_exec(const struct mathfun_expr *expr, const mathfun_v
 
 #pragma GCC diagnostic ignored "-pedantic"
 #pragma GCC diagnostic ignored "-Wunused-label"
-mathfun_value mathfun_exec(const struct mathfun *mathfun, mathfun_value regs[]) {
+mathfun_value mathfun_exec(const mathfun *mathfun, mathfun_value regs[]) {
 	const mathfun_code *code = mathfun->code;
 
 #ifdef __GNUC__

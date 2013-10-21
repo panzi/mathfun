@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
 		*assign = 0;
 	}
 
-	mathfun_error_info error = NULL;
+	mathfun_error_p error = NULL;
 	mathfun_value value = mathfun_arun((const char **)argnames, funct_argc, argv[argc - 1], funct_args, &error);
 	free(funct_args);
 	

@@ -65,7 +65,7 @@ static unsigned int to_full_byte(int bits) {
 }
 
 bool mathfun_wavegen(const char *filename, FILE *stream, uint32_t sample_rate, uint16_t bits_per_sample,
-	uint16_t channels, uint32_t samples, const struct mathfun channel_functs[], bool write_header) {
+	uint16_t channels, uint32_t samples, const mathfun channel_functs[], bool write_header) {
 
 	if (sample_rate == 0) {
 		fprintf(stderr, "illegal sample rate: %u\n", sample_rate);
@@ -125,7 +125,7 @@ bool mathfun_wavegen(const char *filename, FILE *stream, uint32_t sample_rate, u
 	for (size_t sample = 0; sample < samples; ++ sample) {
 		const mathfun_value args[] = { (mathfun_value)sample / (mathfun_value)sample_rate };
 		for (size_t channel = 0; channel < channels; ++ channel) {
-			const struct mathfun *funct = channel_functs + channel;
+			const mathfun *funct = channel_functs + channel;
 			// ignore math errors here
 			int vol = (int)(max_volume * mathfun_acall(funct, args, NULL)) << shift;
 			if (bits_per_sample <= 8) {
@@ -149,8 +149,8 @@ bool mathfun_wavegen(const char *filename, FILE *stream, uint32_t sample_rate, u
 
 bool wavegen(const char *filename, FILE *stream, uint32_t sample_rate, uint16_t bits_per_sample,
 	uint16_t channels, uint32_t samples, const char *channel_functs[], bool write_header) {
-	struct mathfun_context ctx;
-	mathfun_error_info error = NULL;
+	mathfun_context ctx;
+	mathfun_error_p error = NULL;
 
 	if (!mathfun_context_init(&ctx, true, &error) ||
 		!mathfun_context_define_funct(&ctx, "sq",      square_wave,   1, &error) ||
@@ -162,7 +162,7 @@ bool wavegen(const char *filename, FILE *stream, uint32_t sample_rate, uint16_t 
 		return false;
 	}
 
-	struct mathfun *functs = calloc(channels, sizeof(struct mathfun));
+	mathfun *functs = calloc(channels, sizeof(mathfun));
 	const char *argnames[] = { "t" };
 	for (size_t i = 0; i < channels; ++ i) {
 		if (!mathfun_context_compile(&ctx, argnames, 1, channel_functs[i], functs + i, &error)) {
