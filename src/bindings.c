@@ -182,7 +182,7 @@ static mathfun_value mathfun_funct_tanh(const mathfun_value args[]) {
 	return tanh(args[0]);
 }
 
-static mathfun_value mathfun_funct_tgamma(const mathfun_value args[]) {
+static mathfun_value mathfun_funct_gamma(const mathfun_value args[]) {
 	return tgamma(args[0]);
 }
 
@@ -437,7 +437,7 @@ bool mathfun_context_define_default(struct mathfun_context *ctx, mathfun_error_i
 		return false;
 	}
 
-	if (!mathfun_context_define_funct(ctx, "tgamma", mathfun_funct_tgamma, 1, error)) {
+	if (!mathfun_context_define_funct(ctx, "gamma", mathfun_funct_gamma, 1, error)) {
 		return false;
 	}
 
