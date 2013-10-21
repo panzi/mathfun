@@ -1,16 +1,22 @@
-cmake_minimum_required(VERSION 2.4.4)
+cmake_minimum_required(VERSION 2.8.8)
 
 project(mathfun)
 
-set(MATHFUN_MAJOR 1)
-set(MATHFUN_MINOR 0)
-set(MATHFUN_PATCH 0)
-set(MATHFUN_NAME mathfun${MATHFUN_MAJOR}${MATHFUN_MINOR})
-set(MATHFUN_VERSION ${MATHFUN_MAJOR}.${MATHFUN_MINOR}.${MATHFUN_PATCH})
-
-option(WITH_STATIC_LIB "Also build a static libraray (needed by examples)" ON)
 option(WITH_EXAMPLES "Build examples" OFF)
-option(WITH_WAVEGEN_INSTALL "Install wavegen example" OFF)
+option(WITH_WAVEGEN_INSTALL "Install wavegen binary (from examples)" OFF)
+
+set(MATHFUN_VERSION_MAJOR 1)
+set(MATHFUN_VERSION_MINOR 0)
+set(MATHFUN_VERSION_PATCH 0)
+
+set(MATHFUN_NAME mathfun${MATHFUN_VERSION_MAJOR}${MATHFUN_VERSION_MINOR})
+set(MATHFUN_VERSION ${MATHFUN_VERSION_MAJOR}.${MATHFUN_VERSION_MINOR}.${MATHFUN_VERSION_PATCH})
+
+if(BUILD_SHARED_LIBS)
+	set(MATHFUN_LIB_NAME ${MATHFUN_NAME})
+else()
+	set(MATHFUN_LIB_NAME ${MATHFUN_NAME}_static)
+endif()
 
 if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Werror -std=gnu99")
@@ -37,6 +43,9 @@ else()
 	set(M_LIBRARY "")
 endif()
 
+# for config.h
+include_directories("${PROJECT_BINARY_DIR}/src")
+
 add_subdirectory(src)
 
 if(WITH_EXAMPLES)
@@ -45,9 +54,9 @@ endif()
 
 # uninstall target
 configure_file(
-	"${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake.in"
-	"${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+	"${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in"
+	"${CMAKE_CURRENT_BINARY_DIR}/cmake/cmake_uninstall.cmake"
 	IMMEDIATE @ONLY)
 
 add_custom_target(uninstall
-	COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
+	COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_BINARY_DIR}/cmake/cmake_uninstall.cmake")

@@ -1,17 +1,12 @@
 include_directories("../src")
 
-add_executable(dump dump.c)
-target_link_libraries(dump mathfun_static)
+set(MATHFUN_EXAMPLES dump eval evaltree wavegen)
 
-add_executable(wavegen wavegen.c)
-target_link_libraries(wavegen mathfun_static)
-
-add_executable(eval eval.c)
-target_link_libraries(eval mathfun_static)
-
-add_executable(evaltree evaltree.c)
-target_link_libraries(evaltree mathfun_static)
+foreach(example ${MATHFUN_EXAMPLES})
+	add_executable(${example} ${example}.c)
+	target_link_libraries(${example} ${MATHFUN_LIB_NAME})
+endforeach()
 
 if(WITH_WAVEGEN_INSTALL)
-	install(TARGETS wavegen RUNTIME DESTINATION bin)
+	install(TARGETS wavegen RUNTIME DESTINATION "bin")
 endif()

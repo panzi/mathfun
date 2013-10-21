@@ -9,12 +9,10 @@
 #include <stdbool.h>
 #include <math.h>
 
+#include "config.h"
+
 #define _MATHFUN_STR(V) #V
 #define MATHFUN_STR(V) _MATHFUN_STR(V)
-
-#define MATHFUN_VERSION_MAJOR 1
-#define MATHFUN_VERSION_MINOR 0
-#define MATHFUN_VERSION_PATCH 0
 
 #define MATHFUN_VERSION \
 	MATHFUN_STR(MATHFUN_VERSION_MAJOR) "." \

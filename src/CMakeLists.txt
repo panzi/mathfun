@@ -1,16 +1,10 @@
-set(MATHFUN_SRCS bindings.c codegen.c exec.c mathfun.c parser.c error.c)
+configure_file(config.h.in "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
 
-add_library(mathfun_objs OBJECT ${MATHFUN_SRCS})
-#add_library(mathfun SHARED $<TARGET_OBJECTS:mathfun_objs>)
+set(MATHFUN_SRCS bindings.c codegen.c exec.c mathfun.c parser.c error.c
+	mathfun.h mathfun_intern.h config.h.in)
 
-#target_link_libraries(mathfun ${M_LIBRARY})
+add_library(${MATHFUN_LIB_NAME} ${MATHFUN_SRCS})
+target_link_libraries(${MATHFUN_LIB_NAME} ${M_LIBRARY})
 
-if(WITH_STATIC_LIB)
-	add_library(mathfun_static STATIC $<TARGET_OBJECTS:mathfun_objs>)
-	target_link_libraries(mathfun_static ${M_LIBRARY})
-
-	install(TARGETS mathfun_static DESTINATION "lib")
-endif()
-
-#install(TARGETS mathfun DESTINATION "lib")
-install(FILES mathfun.h DESTINATION "include")
+install(TARGETS ${MATHFUN_LIB_NAME} DESTINATION "lib")
+install(FILES mathfun.h DESTINATION "include/mathfun")
