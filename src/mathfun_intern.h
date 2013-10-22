@@ -89,7 +89,7 @@ struct mathfun_expr {
 	union {
 		mathfun_value value;
 
-		size_t arg;
+		mathfun_code arg;
 
 		struct {
 			mathfun_binding_funct funct;

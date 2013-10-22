@@ -314,8 +314,32 @@ bool mathfun_codegen_expr(mathfun_codegen *codegen, mathfun_expr *expr, mathfun_
 
 		case EX_CALL:
 		{
-			const size_t firstarg = codegen->currstack;
-			for (size_t i = 0; i < expr->ex.funct.argc; ++ i) {
+			mathfun_code oldstack = codegen->currstack;
+			mathfun_code firstarg = oldstack;
+			size_t i = 0;
+
+			// check if args happen to be on the "stack"
+			// This removes mov instructions when all arguments are already in the
+			// correct order in registers or the leading arguments are in registers
+			// directly before the current "stack pointer".
+			if (expr->ex.funct.argc > 0 && expr->ex.funct.args[0]->type == EX_ARG) {
+				firstarg = expr->ex.funct.args[0]->ex.arg;
+				for (i = 1; i < expr->ex.funct.argc; ++ i) {
+					mathfun_expr *arg = expr->ex.funct.args[i];
+					if (arg->type != EX_ARG || arg->ex.arg != firstarg + i) {
+						break;
+					}
+				}
+
+				if (firstarg + i != codegen->currstack && i != expr->ex.funct.argc) {
+					// didn't work out
+					firstarg = oldstack;
+					i = 0;
+				}
+			}
+
+			// codegen for the rest of the arguments
+			for (; i < expr->ex.funct.argc; ++ i) {
 				mathfun_expr *arg = expr->ex.funct.args[i];
 				mathfun_code argret = codegen->currstack;
 				if (!mathfun_codegen_expr(codegen, arg, &argret)) return false;
@@ -330,7 +354,8 @@ bool mathfun_codegen_expr(mathfun_codegen *codegen, mathfun_expr *expr, mathfun_
 					}
 				}
 			}
-			codegen->currstack = firstarg;
+			codegen->currstack = oldstack;
+
 			return mathfun_codegen_append(codegen, CALL, expr->ex.funct.funct, firstarg, *ret);
 		}	
 		case EX_NEG:
