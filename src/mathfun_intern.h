@@ -159,40 +159,49 @@ struct mathfun_codegen {
 	mathfun_error_p *error;
 };
 
-bool mathfun_context_grow(mathfun_context *ctx, mathfun_error_p *error);
-const mathfun_decl *mathfun_context_get(const mathfun_context *ctx, const char *name);
-const mathfun_decl *mathfun_context_getn(const mathfun_context *ctx, const char *name, size_t n);
-mathfun_expr *mathfun_context_parse(const mathfun_context *ctx,
-	const char *argnames[], size_t argc, const char *code, mathfun_error_p *error);
-bool mathfun_expr_codegen(mathfun_expr *expr, mathfun *mathfun, mathfun_error_p *error);
+MATHFUN_LOCAL bool mathfun_context_grow(mathfun_context *ctx, mathfun_error_p *error);
 
-bool mathfun_codegen_expr(mathfun_codegen *codegen, mathfun_expr *expr, mathfun_code *ret);
-bool mathfun_codegen_binary(mathfun_codegen *codegen, mathfun_expr *expr,
+MATHFUN_LOCAL const mathfun_decl *mathfun_context_get(const mathfun_context *ctx, const char *name);
+
+MATHFUN_LOCAL const mathfun_decl *mathfun_context_getn(const mathfun_context *ctx, const char *name, size_t n);
+
+MATHFUN_LOCAL mathfun_expr *mathfun_context_parse(const mathfun_context *ctx,
+	const char *argnames[], size_t argc, const char *code, mathfun_error_p *error);
+
+MATHFUN_LOCAL bool mathfun_expr_codegen(mathfun_expr *expr, mathfun *mathfun, mathfun_error_p *error);
+
+MATHFUN_LOCAL bool mathfun_codegen_expr(mathfun_codegen *codegen, mathfun_expr *expr, mathfun_code *ret);
+
+MATHFUN_LOCAL bool mathfun_codegen_binary(mathfun_codegen *codegen, mathfun_expr *expr,
 	enum mathfun_bytecode code, mathfun_code *ret);
-mathfun_expr *mathfun_expr_alloc(enum mathfun_expr_type type, mathfun_error_p *error);
-void                 mathfun_expr_free(mathfun_expr *expr);
-mathfun_expr *mathfun_expr_optimize(mathfun_expr *expr, mathfun_error_p *error);
-mathfun_value        mathfun_expr_exec(const mathfun_expr *expr, const mathfun_value args[],
+
+MATHFUN_LOCAL mathfun_expr *mathfun_expr_alloc(enum mathfun_expr_type type, mathfun_error_p *error);
+
+MATHFUN_LOCAL void          mathfun_expr_free(mathfun_expr *expr);
+
+MATHFUN_LOCAL mathfun_expr *mathfun_expr_optimize(mathfun_expr *expr, mathfun_error_p *error);
+
+MATHFUN_LOCAL mathfun_value mathfun_expr_exec(const mathfun_expr *expr, const mathfun_value args[],
 	mathfun_error_p *error);
 
-mathfun_value mathfun_exec(const mathfun *mathfun, mathfun_value regs[])
+MATHFUN_LOCAL mathfun_value mathfun_exec(const mathfun *mathfun, mathfun_value regs[])
 	__attribute__((__noinline__,__noclone__));
 
-const char *mathfun_find_identifier_end(const char *str);
+MATHFUN_LOCAL const char *mathfun_find_identifier_end(const char *str);
 
-mathfun_error *mathfun_error_alloc(enum mathfun_error_type type);
-void mathfun_raise_error(mathfun_error_p *error, enum mathfun_error_type type);
-void mathfun_raise_name_error(mathfun_error_p *error, enum mathfun_error_type type, const char *name);
-void mathfun_raise_math_error(mathfun_error_p *error, int errnum);
-void mathfun_raise_c_error(mathfun_error_p *error);
+MATHFUN_LOCAL mathfun_error *mathfun_error_alloc(enum mathfun_error_type type);
+MATHFUN_LOCAL void mathfun_raise_error(mathfun_error_p *error, enum mathfun_error_type type);
+MATHFUN_LOCAL void mathfun_raise_name_error(mathfun_error_p *error, enum mathfun_error_type type, const char *name);
+MATHFUN_LOCAL void mathfun_raise_math_error(mathfun_error_p *error, int errnum);
+MATHFUN_LOCAL void mathfun_raise_c_error(mathfun_error_p *error);
 
-void mathfun_raise_parser_error(const mathfun_parser *parser,
+MATHFUN_LOCAL void mathfun_raise_parser_error(const mathfun_parser *parser,
 	enum mathfun_error_type type, const char *errpos);
 
-void mathfun_raise_parser_argc_error(const mathfun_parser *parser,
+MATHFUN_LOCAL void mathfun_raise_parser_argc_error(const mathfun_parser *parser,
 	const char *errpos, size_t expected, size_t got);
 
-bool mathfun_validate_argnames(const char *argnames[], size_t argc, mathfun_error_p *error);
+MATHFUN_LOCAL bool mathfun_validate_argnames(const char *argnames[], size_t argc, mathfun_error_p *error);
 
 #ifdef __cplusplus
 }

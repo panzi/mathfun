@@ -4,6 +4,12 @@
 
 #include "mathfun_intern.h"
 
+#define skipws(parser) { \
+	const char *ptr = (parser)->ptr; \
+	while (isspace(*ptr)) ++ ptr; \
+	(parser)->ptr = ptr; \
+	}
+
 // BNF
 // expression   ::= a_expr
 // a_expr       ::= m_expr (("+"|"-") m_expr)*
@@ -23,12 +29,6 @@ static mathfun_expr *mathfun_parse_power(mathfun_parser *parser);
 static mathfun_expr *mathfun_parse_atom(mathfun_parser *parser);
 static size_t        mathfun_parse_identifier(mathfun_parser *parser);
 static mathfun_expr *mathfun_parse_number(mathfun_parser *parser);
-
-static void skipws(mathfun_parser *parser) {
-	const char *ptr = parser->ptr;
-	while (isspace(*ptr)) ++ ptr;
-	parser->ptr = ptr;
-}
 
 mathfun_expr *mathfun_parse_a_expr(mathfun_parser *parser) {
 	mathfun_expr *expr = mathfun_parse_m_expr(parser);

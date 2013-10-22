@@ -4,6 +4,7 @@ project(mathfun)
 
 option(WITH_EXAMPLES "Build examples" OFF)
 option(WITH_WAVEGEN_INSTALL "Install wavegen binary (from examples)" OFF)
+option(BUILD_SHARED_LIBS "Build Shared Libraries" OFF)
 
 set(MATHFUN_MAJOR_VERSION 1)
 set(MATHFUN_MINOR_VERSION 0)
@@ -14,7 +15,6 @@ set(MATHFUN_VERSION ${MATHFUN_MAJOR_VERSION}.${MATHFUN_MINOR_VERSION}.${MATHFUN_
 
 if(BUILD_SHARED_LIBS)
 	set(MATHFUN_LIB_NAME ${MATHFUN_NAME})
-	add_definitions(-DBUILD_SHARED_LIBS)
 else()
 	set(MATHFUN_LIB_NAME ${MATHFUN_NAME}_static)
 endif()

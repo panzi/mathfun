@@ -10,14 +10,17 @@
 #include <math.h>
 
 #include "config.h"
+#include "export.h"
 
-#define _MATHFUN_STR(V) #V
-#define MATHFUN_STR(V) _MATHFUN_STR(V)
-
-#define MATHFUN_VERSION \
-	MATHFUN_STR(MATHFUN_MAJOR_VERSION) "." \
-	MATHFUN_STR(MATHFUN_MINOR_VERSION) "." \
-	MATHFUN_STR(MATHFUN_PATCH_VERSION)
+#if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
+#	define MATHFUN_LOCAL
+#else
+#	if __GNUC__ >= 4
+#		define MATHFUN_LOCAL __attribute__ ((visibility ("hidden")))
+#	else
+#		define MATHFUN_LOCAL
+#	endif
+#endif
 
 #define MATHFUN_IS_PARSER_ERROR(ERROR) ( \
 	(ERROR) >= MATHFUN_PARSER_EXPECTED_CLOSE_PARENTHESIS && \
@@ -74,45 +77,45 @@ struct mathfun {
 	mathfun_code *code;
 };
 
-bool mathfun_context_init(mathfun_context *ctx, bool define_default, mathfun_error_p *error);
-void mathfun_context_cleanup(mathfun_context *ctx);
-bool mathfun_context_define_default(mathfun_context *ctx, mathfun_error_p *error);
-bool mathfun_context_define_const(mathfun_context *ctx, const char *name, mathfun_value value,
+MATHFUN_EXPORT bool mathfun_context_init(mathfun_context *ctx, bool define_default, mathfun_error_p *error);
+MATHFUN_EXPORT void mathfun_context_cleanup(mathfun_context *ctx);
+MATHFUN_EXPORT bool mathfun_context_define_default(mathfun_context *ctx, mathfun_error_p *error);
+MATHFUN_EXPORT bool mathfun_context_define_const(mathfun_context *ctx, const char *name, mathfun_value value,
 	mathfun_error_p *error);
-bool mathfun_context_define_funct(mathfun_context *ctx, const char *name, mathfun_binding_funct funct, size_t argc,
+MATHFUN_EXPORT bool mathfun_context_define_funct(mathfun_context *ctx, const char *name, mathfun_binding_funct funct, size_t argc,
 	mathfun_error_p *error);
-const char *mathfun_context_funct_name(const mathfun_context *ctx, mathfun_binding_funct funct);
-bool mathfun_context_undefine(mathfun_context *ctx, const char *name,
+MATHFUN_EXPORT const char *mathfun_context_funct_name(const mathfun_context *ctx, mathfun_binding_funct funct);
+MATHFUN_EXPORT bool mathfun_context_undefine(mathfun_context *ctx, const char *name,
 	mathfun_error_p *error);
-bool mathfun_context_compile(const mathfun_context *ctx,
+MATHFUN_EXPORT bool mathfun_context_compile(const mathfun_context *ctx,
 	const char *argnames[], size_t argc, const char *code,
 	mathfun *mathfun, mathfun_error_p *error);
 
-void mathfun_cleanup(mathfun *mathfun);
-bool mathfun_compile(mathfun *mathfun, const char *argnames[], size_t argc, const char *code,
+MATHFUN_EXPORT void mathfun_cleanup(mathfun *mathfun);
+MATHFUN_EXPORT bool mathfun_compile(mathfun *mathfun, const char *argnames[], size_t argc, const char *code,
 	mathfun_error_p *error);
-mathfun_value mathfun_call(const mathfun *mathfun, mathfun_error_p *error, ...);
-mathfun_value mathfun_acall(const mathfun *mathfun, const mathfun_value args[], mathfun_error_p *error);
-mathfun_value mathfun_vcall(const mathfun *mathfun, va_list ap, mathfun_error_p *error);
-bool mathfun_dump(const mathfun *mathfun, FILE *stream, const mathfun_context *ctx,
-	mathfun_error_p *error);
-
-mathfun_value mathfun_run(const char *code, mathfun_error_p *error, ...);
-mathfun_value mathfun_arun(const char *argnames[], size_t argc, const char *code, const mathfun_value args[],
+MATHFUN_EXPORT mathfun_value mathfun_call(const mathfun *mathfun, mathfun_error_p *error, ...);
+MATHFUN_EXPORT mathfun_value mathfun_acall(const mathfun *mathfun, const mathfun_value args[], mathfun_error_p *error);
+MATHFUN_EXPORT mathfun_value mathfun_vcall(const mathfun *mathfun, va_list ap, mathfun_error_p *error);
+MATHFUN_EXPORT bool mathfun_dump(const mathfun *mathfun, FILE *stream, const mathfun_context *ctx,
 	mathfun_error_p *error);
 
-enum mathfun_error_type mathfun_error_type(mathfun_error_p error);
-int    mathfun_error_errno(mathfun_error_p error);
-size_t mathfun_error_lineno(mathfun_error_p error);
-size_t mathfun_error_column(mathfun_error_p error);
-size_t mathfun_error_errpos(mathfun_error_p error);
-size_t mathfun_error_errlen(mathfun_error_p error);
-void   mathfun_error_log(mathfun_error_p error, FILE *stream);
-void   mathfun_error_log_and_cleanup(mathfun_error_p *error, FILE *stream);
-void   mathfun_error_cleanup(mathfun_error_p *error);
+MATHFUN_EXPORT mathfun_value mathfun_run(const char *code, mathfun_error_p *error, ...);
+MATHFUN_EXPORT mathfun_value mathfun_arun(const char *argnames[], size_t argc, const char *code, const mathfun_value args[],
+	mathfun_error_p *error);
 
-bool          mathfun_valid_name(const char *name);
-mathfun_value mathfun_mod(mathfun_value x, mathfun_value y);
+MATHFUN_EXPORT enum mathfun_error_type mathfun_error_type(mathfun_error_p error);
+MATHFUN_EXPORT int    mathfun_error_errno(mathfun_error_p error);
+MATHFUN_EXPORT size_t mathfun_error_lineno(mathfun_error_p error);
+MATHFUN_EXPORT size_t mathfun_error_column(mathfun_error_p error);
+MATHFUN_EXPORT size_t mathfun_error_errpos(mathfun_error_p error);
+MATHFUN_EXPORT size_t mathfun_error_errlen(mathfun_error_p error);
+MATHFUN_EXPORT void   mathfun_error_log(mathfun_error_p error, FILE *stream);
+MATHFUN_EXPORT void   mathfun_error_log_and_cleanup(mathfun_error_p *error, FILE *stream);
+MATHFUN_EXPORT void   mathfun_error_cleanup(mathfun_error_p *error);
+
+MATHFUN_EXPORT bool          mathfun_valid_name(const char *name);
+MATHFUN_EXPORT mathfun_value mathfun_mod(mathfun_value x, mathfun_value y);
 
 #ifdef __cplusplus
 }
