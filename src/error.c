@@ -7,7 +7,7 @@
 // error object will work and this is also the only way to signal a proper error in case
 // there is an ENOMEM when allocating an error object.
 static const mathfun_error mathfun_memory_error = {
-	MATHFUN_MEMORY_ERROR, ENOMEM, 0, 0, NULL, NULL, 0, 0, 0
+	MATHFUN_OUT_OF_MEMORY, ENOMEM, 0, 0, NULL, NULL, 0, 0, 0
 };
 
 enum mathfun_error_type mathfun_error_type(mathfun_error_p error) {
@@ -22,7 +22,7 @@ enum mathfun_error_type mathfun_error_type(mathfun_error_p error) {
 			return MATHFUN_MATH_ERROR;
 
 		case ENOMEM:
-			return MATHFUN_MEMORY_ERROR;
+			return MATHFUN_OUT_OF_MEMORY;
 
 		default:
 			return MATHFUN_C_ERROR;
@@ -75,7 +75,7 @@ mathfun_error *mathfun_error_alloc(enum mathfun_error_type type) {
 
 			case MATHFUN_IO_ERROR:
 			case MATHFUN_MATH_ERROR:
-			case MATHFUN_MEMORY_ERROR:
+			case MATHFUN_OUT_OF_MEMORY:
 			case MATHFUN_C_ERROR:
 				error->errnum = errno;
 				break;
@@ -91,7 +91,7 @@ mathfun_error *mathfun_error_alloc(enum mathfun_error_type type) {
 
 void mathfun_raise_error(mathfun_error_p *errptr, enum mathfun_error_type type) {
 	if (!errptr) return;
-	if (type == MATHFUN_MEMORY_ERROR || (type == MATHFUN_C_ERROR && errno == ENOMEM)) {
+	if (type == MATHFUN_OUT_OF_MEMORY || (type == MATHFUN_C_ERROR && errno == ENOMEM)) {
 		*errptr = &mathfun_memory_error;
 	}
 	else {
@@ -252,7 +252,7 @@ void mathfun_error_log(mathfun_error_p error, FILE *stream) {
 			fprintf(stream, "no error\n");
 			break;
 
-		case MATHFUN_MEMORY_ERROR:
+		case MATHFUN_OUT_OF_MEMORY:
 		case MATHFUN_IO_ERROR:
 		case MATHFUN_MATH_ERROR:
 		case MATHFUN_C_ERROR:

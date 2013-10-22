@@ -188,7 +188,7 @@ bool mathfun_codegen_ensure(mathfun_codegen *codegen, size_t n) {
 		mathfun_code *code = realloc(codegen->code, size * sizeof(mathfun_code));
 
 		if (!code) {
-			mathfun_raise_error(codegen->error, MATHFUN_MEMORY_ERROR);
+			mathfun_raise_error(codegen->error, MATHFUN_OUT_OF_MEMORY);
 			return false;
 		}
 
@@ -403,7 +403,7 @@ bool mathfun_expr_codegen(mathfun_expr *expr, mathfun *mathfun, mathfun_error_p 
 	codegen.error = error;
 
 	if (!codegen.code) {
-		mathfun_raise_error(error, MATHFUN_MEMORY_ERROR);
+		mathfun_raise_error(error, MATHFUN_OUT_OF_MEMORY);
 		mathfun_codegen_cleanup(&codegen);
 		return false;
 	}

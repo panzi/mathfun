@@ -13,7 +13,7 @@ bool mathfun_context_init(mathfun_context *ctx, bool define_default, mathfun_err
 
 	if (!ctx->decls) {
 		ctx->decl_capacity = 0;
-		mathfun_raise_error(error, MATHFUN_MEMORY_ERROR);
+		mathfun_raise_error(error, MATHFUN_OUT_OF_MEMORY);
 		return false;
 	}
 
@@ -37,7 +37,7 @@ bool mathfun_context_grow(mathfun_context *ctx, mathfun_error_p *error) {
 	mathfun_decl *decls = realloc(ctx->decls, size * sizeof(mathfun_decl));
 
 	if (!decls) {
-		mathfun_raise_error(error, MATHFUN_MEMORY_ERROR);
+		mathfun_raise_error(error, MATHFUN_OUT_OF_MEMORY);
 		return false;
 	}
 
@@ -202,7 +202,7 @@ mathfun_value mathfun_acall(const mathfun *mathfun, const mathfun_value args[], 
 	mathfun_value *regs = calloc(mathfun->framesize, sizeof(mathfun_value));
 
 	if (!regs) {
-		mathfun_raise_error(error, MATHFUN_MEMORY_ERROR);
+		mathfun_raise_error(error, MATHFUN_OUT_OF_MEMORY);
 		return NAN;
 	}
 
@@ -223,7 +223,7 @@ mathfun_value mathfun_vcall(const mathfun *mathfun, va_list ap, mathfun_error_p 
 	mathfun_value *regs = calloc(mathfun->framesize, sizeof(mathfun_value));
 
 	if (!regs) {
-		mathfun_raise_error(error, MATHFUN_MEMORY_ERROR);
+		mathfun_raise_error(error, MATHFUN_OUT_OF_MEMORY);
 		return NAN;
 	}
 
@@ -258,7 +258,7 @@ mathfun_value mathfun_run(const char *code, mathfun_error_p *error, ...) {
 	size_t argc = 0;
 
 	if (!argnames) {
-		mathfun_raise_error(error, MATHFUN_MEMORY_ERROR);
+		mathfun_raise_error(error, MATHFUN_OUT_OF_MEMORY);
 		return NAN;
 	}
 
@@ -274,7 +274,7 @@ mathfun_value mathfun_run(const char *code, mathfun_error_p *error, ...) {
 			const char **args = realloc(argnames, size * sizeof(char*));
 
 			if (!args) {
-				mathfun_raise_error(error, MATHFUN_MEMORY_ERROR);
+				mathfun_raise_error(error, MATHFUN_OUT_OF_MEMORY);
 				free(argnames);
 				return NAN;
 			}
@@ -290,7 +290,7 @@ mathfun_value mathfun_run(const char *code, mathfun_error_p *error, ...) {
 	mathfun_value *args = malloc(argc * sizeof(mathfun_value));
 
 	if (!args) {
-		mathfun_raise_error(error, MATHFUN_MEMORY_ERROR);
+		mathfun_raise_error(error, MATHFUN_OUT_OF_MEMORY);
 		free(argnames);
 		return NAN;
 	}
@@ -374,7 +374,7 @@ mathfun_expr *mathfun_expr_alloc(enum mathfun_expr_type type, mathfun_error_p *e
 	mathfun_expr *expr = calloc(1, sizeof(mathfun_expr));
 
 	if (!expr) {
-		mathfun_raise_error(error, MATHFUN_MEMORY_ERROR);
+		mathfun_raise_error(error, MATHFUN_OUT_OF_MEMORY);
 		return NULL;
 	}
 

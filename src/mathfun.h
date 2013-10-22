@@ -37,7 +37,7 @@ typedef mathfun_value (*mathfun_binding_funct)(const mathfun_value args[]);
 enum mathfun_error_type {
 	MATHFUN_OK = 0,
 	MATHFUN_IO_ERROR,
-	MATHFUN_MEMORY_ERROR,
+	MATHFUN_OUT_OF_MEMORY,
 	MATHFUN_MATH_ERROR,
 	MATHFUN_C_ERROR,
 	MATHFUN_ILLEGAL_NAME,

@@ -16,7 +16,7 @@ mathfun_value mathfun_expr_exec(const mathfun_expr *expr, const mathfun_value ar
 		{
 			mathfun_value *funct_args = malloc(expr->ex.funct.argc * sizeof(mathfun_value));
 			if (!funct_args) {
-				mathfun_raise_error(error, MATHFUN_MEMORY_ERROR);
+				mathfun_raise_error(error, MATHFUN_OUT_OF_MEMORY);
 				return NAN;
 			}
 			for (size_t i = 0; i < expr->ex.funct.argc; ++ i) {
