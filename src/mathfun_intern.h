@@ -1,7 +1,7 @@
 #ifndef MATHFUN_INTERN_H__
 #define MATHFUN_INTERN_H__
 
-// this is a internal header, hence no MATHFUN_/mathfun_ prefixes or ifdef __cplusplus
+// This is a internal header so there might be no MATHFUN_/mathfun_ prefixes.
 
 #include "mathfun.h"
 
@@ -14,9 +14,9 @@
 extern "C" {
 #endif
 
-// Assumtions:
+// assumtions:
 // sizeof(x) == 2 ** n and sizeof(x) == __alignof__(x)
-// for x in {mathfun_value, mathfun_binding_funct, size_t}
+// for x in {mathfun_value, mathfun_binding_funct}
 
 #define MATHFUN_REGS_MAX UINTPTR_MAX
 #define MATHFUN_FUNCT_CODES (1 + ((sizeof(mathfun_binding_funct) - 1) / sizeof(mathfun_code)))

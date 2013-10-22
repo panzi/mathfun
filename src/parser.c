@@ -16,13 +16,13 @@
 //
 // or just use strtod for number
 
-mathfun_expr *mathfun_parse_a_expr(mathfun_parser *parser);
-mathfun_expr *mathfun_parse_m_expr(mathfun_parser *parser);
-mathfun_expr *mathfun_parse_u_expr(mathfun_parser *parser);
-mathfun_expr *mathfun_parse_power(mathfun_parser *parser);
-mathfun_expr *mathfun_parse_atom(mathfun_parser *parser);
-size_t               mathfun_parse_identifier(mathfun_parser *parser);
-mathfun_expr *mathfun_parse_number(mathfun_parser *parser);
+static mathfun_expr *mathfun_parse_a_expr(mathfun_parser *parser);
+static mathfun_expr *mathfun_parse_m_expr(mathfun_parser *parser);
+static mathfun_expr *mathfun_parse_u_expr(mathfun_parser *parser);
+static mathfun_expr *mathfun_parse_power(mathfun_parser *parser);
+static mathfun_expr *mathfun_parse_atom(mathfun_parser *parser);
+static size_t        mathfun_parse_identifier(mathfun_parser *parser);
+static mathfun_expr *mathfun_parse_number(mathfun_parser *parser);
 
 static void skipws(mathfun_parser *parser) {
 	const char *ptr = parser->ptr;
