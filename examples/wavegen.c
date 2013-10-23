@@ -95,6 +95,24 @@ bool mathfun_wavegen(const char *filename, FILE *stream, uint32_t sample_rate, u
 		return false;
 	}
 
+	// to boost performance even more pre-allocate a big enough frame instead of
+	// allocating a new frame on each function call
+	size_t maxframesize = 0;
+	for (uint16_t channel = 0; channel < channels; ++ channel) {
+		size_t framesize = channel_functs[channel].framesize;
+		if (framesize > maxframesize) {
+			maxframesize = framesize;
+		}
+	}
+
+	mathfun_value *frame = calloc(maxframesize, sizeof(mathfun_value));
+
+	if (!frame) {
+		perror("allocating frame");
+		free(frame);
+		return false;
+	}
+
 	if (write_header) {
 		const uint16_t block_align = channels * bytes_per_sample;
 		const uint32_t data_size   = block_align * samples;
@@ -116,18 +134,21 @@ bool mathfun_wavegen(const char *filename, FILE *stream, uint32_t sample_rate, u
 		};
 
 		if (fwrite(&header, RIFF_WAVE_HEADER_SIZE, 1, stream) != 1) {
-			free(sample_buf);
 			perror(filename);
-			return errno;
+			free(frame);
+			free(sample_buf);
+			return false;
 		}
 	}
 
 	for (size_t sample = 0; sample < samples; ++ sample) {
-		const mathfun_value args[] = { (mathfun_value)sample / (mathfun_value)sample_rate };
+		const mathfun_value t = (mathfun_value)sample / (mathfun_value)sample_rate;
 		for (size_t channel = 0; channel < channels; ++ channel) {
 			const mathfun *funct = channel_functs + channel;
-			// ignore math errors here
-			int vol = (int)(max_volume * mathfun_acall(funct, args, NULL)) << shift;
+			// argument is first cell in frame:
+			frame[0] = t;
+			// ignore math errors here (would be in errno)
+			int vol = (int)(max_volume * mathfun_exec(funct, frame)) << shift;
 			if (bits_per_sample <= 8) {
 				vol += mid;
 			}
@@ -135,13 +156,15 @@ bool mathfun_wavegen(const char *filename, FILE *stream, uint32_t sample_rate, u
 				sample_buf[byte] = (vol >> (byte * 8)) & 0xFF;
 			}
 			if (fwrite(sample_buf, bytes_per_sample, 1, stream) != 1) {
-				free(sample_buf);
 				perror(filename);
-				return errno;
+				free(frame);
+				free(sample_buf);
+				return false;
 			}
 		}
 	}
-	
+
+	free(frame);
 	free(sample_buf);
 	
 	return true;

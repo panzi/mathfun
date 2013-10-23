@@ -184,9 +184,6 @@ MATHFUN_LOCAL mathfun_expr *mathfun_expr_optimize(mathfun_expr *expr, mathfun_er
 MATHFUN_LOCAL mathfun_value mathfun_expr_exec(const mathfun_expr *expr, const mathfun_value args[],
 	mathfun_error_p *error);
 
-MATHFUN_LOCAL mathfun_value mathfun_exec(const mathfun *mathfun, mathfun_value regs[])
-	__attribute__((__noinline__,__noclone__));
-
 MATHFUN_LOCAL const char *mathfun_find_identifier_end(const char *str);
 
 MATHFUN_LOCAL mathfun_error *mathfun_error_alloc(enum mathfun_error_type type);

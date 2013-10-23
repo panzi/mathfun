@@ -97,6 +97,9 @@ MATHFUN_EXPORT bool mathfun_compile(mathfun *mathfun, const char *argnames[], si
 MATHFUN_EXPORT mathfun_value mathfun_call(const mathfun *mathfun, mathfun_error_p *error, ...);
 MATHFUN_EXPORT mathfun_value mathfun_acall(const mathfun *mathfun, const mathfun_value args[], mathfun_error_p *error);
 MATHFUN_EXPORT mathfun_value mathfun_vcall(const mathfun *mathfun, va_list ap, mathfun_error_p *error);
+MATHFUN_EXPORT mathfun_value mathfun_exec(const mathfun *mathfun, mathfun_value frame[])
+	__attribute__((__noinline__,__noclone__));
+
 MATHFUN_EXPORT bool mathfun_dump(const mathfun *mathfun, FILE *stream, const mathfun_context *ctx,
 	mathfun_error_p *error);
 
