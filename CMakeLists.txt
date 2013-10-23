@@ -19,6 +19,10 @@ else()
 	set(MATHFUN_LIB_NAME ${MATHFUN_NAME}_static)
 endif()
 
+if(NOT DEFINED CMAKE_INSTALL_LIBDIR)
+	set(CMAKE_INSTALL_LIBDIR "lib")
+endif()
+
 if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Werror -std=gnu99")
 
@@ -36,13 +40,47 @@ if(NOT WIN32)
 	find_library(M_LIBRARY
 		NAMES m
 		PATHS /usr/lib /usr/local/lib)
-	if(NOT M_LIBRARY)
+	if(M_LIBRARY)
+		set(MATHFUN_PRIVATE_LIBS -l${M_LIBRARY})
+	else()
 		message(STATUS "math library 'libm' not found")
 	endif()
 else()
 	# not needed on windows
 	set(M_LIBRARY "")
 endif()
+
+# from libpng
+# Set a variable with CMake code which:
+# Creates a symlink from src to dest (if possible) or alternatively
+# copies if different.
+macro(mathfun_generate_symlink_code CODE SRC DEST)
+	if(WIN32 AND NOT CYGWIN)
+		set(_mathfun_gsc_message "Copying ${SRC} to ${DEST} if needed")
+		set(_mathfun_gsc_operation "copy_if_different")
+	else()
+		set(_mathfun_gsc_message "Symlinking ${SRC} to ${DEST}")
+		set(_mathfun_gsc_operation "create_symlink")
+	endif()
+
+	set(${CODE} "
+		message(STATUS \"${_mathfun_gsc_message}\")
+		execute_process(COMMAND \${CMAKE_COMMAND} -E ${_mathfun_gsc_operation}
+			\"${SRC}\" \"${DEST}\")
+		")
+endmacro()
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mathfun.pc.in
+	${CMAKE_CURRENT_BINARY_DIR}/${MATHFUN_NAME}.pc @ONLY)
+
+mathfun_generate_symlink_code(MATHFUN_PC_INSTALL_CODE
+  ${CMAKE_CURRENT_BINARY_DIR}/${PNGLIB_NAME}.pc
+  ${CMAKE_CURRENT_BINARY_DIR}/mathfun.pc)
+install(CODE ${MATHFUN_PC_INSTALL_CODE})
+install(FILES
+	${CMAKE_CURRENT_BINARY_DIR}/mathfun.pc
+	${CMAKE_CURRENT_BINARY_DIR}/${MATHFUN_NAME}.pc
+	DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 
 # for config.h
 include_directories("${PROJECT_BINARY_DIR}/src")

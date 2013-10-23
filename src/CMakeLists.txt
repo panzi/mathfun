@@ -14,9 +14,9 @@ generate_export_header(${MATHFUN_LIB_NAME}
 
 target_link_libraries(${MATHFUN_LIB_NAME} ${M_LIBRARY})
 
-install(TARGETS ${MATHFUN_LIB_NAME} DESTINATION "lib")
+install(TARGETS ${MATHFUN_LIB_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(FILES
 	 mathfun.h
 	"${CMAKE_CURRENT_BINARY_DIR}/config.h"
 	"${CMAKE_CURRENT_BINARY_DIR}/export.h"
-	DESTINATION "include/mathfun")
+	DESTINATION "include/${MATHFUN_NAME}")

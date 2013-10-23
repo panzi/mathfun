@@ -1,0 +1,12 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=${exec_prefix}/@CMAKE_INSTALL_LIBDIR@
+includedir=${prefix}/include/@MATHFUN_NAME@
+
+Name: mathfun
+Description: small C library to evaluate simple mathematical functions
+Version: @MATHFUN_VERSION@
+URL: https://github.com/panzi/mathfun
+Libs: -L${libdir} -l@MATHFUN_LIB_NAME@
+Libs.private: @MATHFUN_PRIVATE_LIBS@
+Cflags: -I${includedir}
