@@ -2,9 +2,10 @@ cmake_minimum_required(VERSION 2.8.8)
 
 project(mathfun)
 
-option(WITH_EXAMPLES "Build examples" OFF)
-option(WITH_WAVEGEN_INSTALL "Install wavegen binary (from examples)" OFF)
+option(BUILD_EXAMPLES "Build examples" OFF)
+option(INSTALL_WAVEGEN "Install wavegen binary (from examples)" OFF)
 option(BUILD_SHARED_LIBS "Build Shared Libraries" OFF)
+option(BUILD_DOCS "Build doxygen documentation" OFF)
 
 set(MATHFUN_MAJOR_VERSION 1)
 set(MATHFUN_MINOR_VERSION 0)
@@ -87,8 +88,23 @@ include_directories("${PROJECT_BINARY_DIR}/src")
 
 add_subdirectory(src)
 
-if(WITH_EXAMPLES)
+if(BUILD_EXAMPLES)
 	add_subdirectory(examples)
+endif()
+
+if(BUILD_DOCS)
+	find_package(Doxygen)
+	if(NOT DOXYGEN_FOUND)
+		message(FATAL_ERROR
+			"Doxygen is needed to build the documentation.")
+	endif()
+
+	configure_file(Doxyfile.in 
+		"${PROJECT_BINARY_DIR}/Doxyfile" @ONLY)
+
+	add_custom_target(docs ALL
+		COMMAND ${DOXYGEN_EXECUTABLE} ${PROJECT_BINARY_DIR}/Doxyfile
+		SOURCES ${PROJECT_BINARY_DIR}/Doxyfile)
 endif()
 
 # uninstall target

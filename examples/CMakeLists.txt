@@ -1,4 +1,4 @@
-include_directories("../src")
+include_directories("${PROJECT_SOURCE_DIR}/src")
 
 set(MATHFUN_EXAMPLES dump eval evaltree wavegen)
 
@@ -7,6 +7,6 @@ foreach(example ${MATHFUN_EXAMPLES})
 	target_link_libraries(${example} ${MATHFUN_LIB_NAME})
 endforeach()
 
-if(WITH_WAVEGEN_INSTALL)
+if(INSTALL_WAVEGEN)
 	install(TARGETS wavegen RUNTIME DESTINATION "bin")
 endif()
