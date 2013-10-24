@@ -114,7 +114,7 @@ bool mathfun_wavegen(const char *filename, FILE *stream, uint32_t sample_rate, u
 
 	if (!frame) {
 		perror("allocating frame");
-		free(frame);
+		free(sample_buf);
 		return false;
 	}
 
