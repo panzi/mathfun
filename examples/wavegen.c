@@ -39,6 +39,11 @@ static mathfun_value fadeout(const mathfun_value args[]) {
 	return x < 1 ? x*x : 1;
 }
 
+static mathfun_value mask(const mathfun_value args[]) {
+	const mathfun_value t = args[0];
+	return t >= 0 && t < args[1] ? 1 : 0;
+}
+
 #define RIFF_WAVE_HEADER_SIZE 44
 
 #pragma pack(push, 1)
@@ -145,8 +150,10 @@ bool mathfun_wavegen(const char *filename, FILE *stream, uint32_t sample_rate, u
 		const mathfun_value t = (mathfun_value)sample / (mathfun_value)sample_rate;
 		for (size_t channel = 0; channel < channels; ++ channel) {
 			const mathfun *funct = channel_functs + channel;
-			// argument is first cell in frame:
+			// arguments are the first cells in frame:
 			frame[0] = t;
+			frame[1] = sample;
+			frame[2] = channel;
 			// ignore math errors here (would be in errno)
 			int vol = (int)(max_volume * mathfun_exec(funct, frame)) << shift;
 			if (bits_per_sample <= 8) {
@@ -180,15 +187,19 @@ bool wavegen(const char *filename, FILE *stream, uint32_t sample_rate, uint16_t 
 		!mathfun_context_define_funct(&ctx, "tri",     triangle_wave, 1, &error) ||
 		!mathfun_context_define_funct(&ctx, "saw",     sawtooth_wave, 1, &error) ||
 		!mathfun_context_define_funct(&ctx, "fadein",  fadein,        2, &error) ||
-		!mathfun_context_define_funct(&ctx, "fadeout", fadeout,       2, &error)) {
+		!mathfun_context_define_funct(&ctx, "fadeout", fadeout,       2, &error) ||
+		!mathfun_context_define_funct(&ctx, "mask",    mask,          2, &error)) {
 		mathfun_error_log_and_cleanup(&error, stderr);
 		return false;
 	}
 
 	mathfun *functs = calloc(channels, sizeof(mathfun));
-	const char *argnames[] = { "t" };
+	// t ... time in seconds
+	// s ... sample
+	// c ... channel
+	const char *argnames[] = { "t", "s", "c" };
 	for (size_t i = 0; i < channels; ++ i) {
-		if (!mathfun_context_compile(&ctx, argnames, 1, channel_functs[i], functs + i, &error)) {
+		if (!mathfun_context_compile(&ctx, argnames, 3, channel_functs[i], functs + i, &error)) {
 			mathfun_error_log_and_cleanup(&error, stderr);
 			for (; i > 0; -- i) {
 				mathfun_cleanup(functs + i - 1);
@@ -199,7 +210,8 @@ bool wavegen(const char *filename, FILE *stream, uint32_t sample_rate, uint16_t 
 		}
 	}
 
-	bool ok = mathfun_wavegen(filename, stream, sample_rate, bits_per_sample, channels, samples, functs, write_header);
+	bool ok = mathfun_wavegen(filename, stream, sample_rate, bits_per_sample, channels,
+		samples, functs, write_header);
 	
 	for (size_t i = channels; i > 0; -- i) {
 		mathfun_cleanup(functs + i - 1);
