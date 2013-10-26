@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <errno.h>
+#include <ctype.h>
 #include <math.h>
 #include <mathfun.h>
 #include "portable_endian.h"
@@ -27,21 +28,32 @@ static mathfun_value sawtooth_wave(const mathfun_value args[]) {
 static mathfun_value fadein(const mathfun_value args[]) {
 	const mathfun_value t = args[0];
 	if (t < 0) return 0;
-	const mathfun_value x = t / args[1];
-	return x < 1 ? x*x : 1;
+	const mathfun_value duration = args[1];
+	if (duration < t) return 1;
+	const mathfun_value x = t / duration;
+	return x*x;
 }
 
 static mathfun_value fadeout(const mathfun_value args[]) {
-	const mathfun_value t = args[0];
+	mathfun_value t = args[0];
 	const mathfun_value duration = args[1];
 	if (t > duration) return 0;
-	const mathfun_value x = (t - duration) / duration;
-	return x < 1 ? x*x : 1;
+	t -= duration;
+	if (duration < t) return 1;
+	const mathfun_value x = t / duration;
+	return x*x;
 }
 
 static mathfun_value mask(const mathfun_value args[]) {
 	const mathfun_value t = args[0];
 	return t >= 0 && t < args[1] ? 1 : 0;
+}
+
+static mathfun_value clamp(const mathfun_value args[]) {
+	const mathfun_value x = args[0];
+	const mathfun_value min = args[1];
+	const mathfun_value max = args[2];
+	return x < min ? min : x > max ? max : x;
 }
 
 #define RIFF_WAVE_HEADER_SIZE 44
@@ -155,7 +167,10 @@ bool mathfun_wavegen(const char *filename, FILE *stream, uint32_t sample_rate, u
 			frame[1] = sample;
 			frame[2] = channel;
 			// ignore math errors here (would be in errno)
-			int vol = (int)(max_volume * mathfun_exec(funct, frame)) << shift;
+			mathfun_value value = mathfun_exec(funct, frame);
+			if (value > 1.0) value = 1.0;
+			else if (value < -1.0) value = -1.0;
+			int vol = (int)(max_volume * value) << shift;
 			if (bits_per_sample <= 8) {
 				vol += mid;
 			}
@@ -188,7 +203,8 @@ bool wavegen(const char *filename, FILE *stream, uint32_t sample_rate, uint16_t 
 		!mathfun_context_define_funct(&ctx, "saw",     sawtooth_wave, 1, &error) ||
 		!mathfun_context_define_funct(&ctx, "fadein",  fadein,        2, &error) ||
 		!mathfun_context_define_funct(&ctx, "fadeout", fadeout,       2, &error) ||
-		!mathfun_context_define_funct(&ctx, "mask",    mask,          2, &error)) {
+		!mathfun_context_define_funct(&ctx, "mask",    mask,          2, &error) ||
+		!mathfun_context_define_funct(&ctx, "clamp",   clamp,         3, &error)) {
 		mathfun_error_log_and_cleanup(&error, stderr);
 		return false;
 	}
@@ -222,10 +238,96 @@ bool wavegen(const char *filename, FILE *stream, uint32_t sample_rate, uint16_t 
 	return ok;
 }
 
-void usage(int argc, const char *argv[]) {
+static void usage(int argc, const char *argv[]) {
 	printf(
 		"Usage: %s <wave-filename> <sample-rate> <bits-per-sample> <samples> <wave-function>...\n",
 		argc > 0 ? argv[0] : "wavegen");
+}
+
+static bool parse_uint16(const char *str, uint16_t *valueptr) {
+	char *endptr = NULL;
+	unsigned long int value = strtoul(str, &endptr, 10);
+	if (endptr == str || value > UINT16_MAX) return false;
+	while (isspace(*endptr)) ++ endptr;
+	if (*endptr) return false;
+	*valueptr = value;
+	return true;
+}
+
+static bool parse_uint32(const char *str, uint32_t *valueptr) {
+	char *endptr = NULL;
+	unsigned long int value = strtoul(str, &endptr, 10);
+	if (endptr == str || value > UINT32_MAX) return false;
+	while (isspace(*endptr)) ++ endptr;
+	if (*endptr) return false;
+	*valueptr = value;
+	return true;
+}
+
+static bool parse_samples(const char *str, uint32_t sample_rate, uint32_t *samplesptr) {
+	if (!*str) return false;
+	const char *ptr = strrchr(str,':');
+	const char *endptr = NULL;
+	if (ptr) {
+		const double sec = strtod(++ptr, (char**)&endptr);
+		unsigned long int min = 0;
+		unsigned long int hours = 0;
+		if (ptr == endptr) return false;
+		while (isspace(*endptr)) ++ endptr;
+		if (*endptr) return false;
+		ptr -= 2;
+		while (ptr > str && *ptr != ':') -- ptr;
+		if (ptr >= str) {
+			min = strtoul(*ptr == ':' ? ptr+1 : ptr, (char**)&endptr, 10);
+			if (endptr == ptr || *endptr != ':') return false;
+			if (ptr > str) {
+				hours = strtoul(str, (char**)&endptr, 10);
+				if (str == endptr || endptr != ptr) return false;
+			}
+		}
+		unsigned long int samples = (((hours * 60 + min) * 60) + sec) * sample_rate;
+		if (samples > UINT32_MAX) return false;
+		*samplesptr = samples;
+		return true;
+	}
+	endptr = str + strlen(str) - 1;
+	while (endptr > str && isspace(*endptr)) -- endptr;
+	ptr = endptr;
+	++ endptr;
+	while (ptr > str && isalpha(*ptr)) -- ptr;
+	++ ptr;
+	size_t sufflen = endptr - ptr;
+	if ((sufflen == 2 && strncmp("ms",ptr,sufflen) == 0) || (sufflen == 4 && strncmp("msec",ptr,sufflen) == 0)) {
+		const double msec = strtod(str, (char**)&endptr);
+		if (endptr == str || msec < 0) return false;
+		while (isspace(*endptr)) ++ endptr;
+		if (endptr != ptr) return false;
+		const double samples = sample_rate * msec / 1000.0;
+		if (samples > UINT32_MAX) return false;
+		*samplesptr = (uint32_t)samples;
+	}
+	else if ((sufflen == 1 && strncmp("s",ptr,sufflen) == 0) || (sufflen == 3 && strncmp("sec",ptr,sufflen) == 0)) {
+		const double sec = strtod(str, (char**)&endptr);
+		if (endptr == str || sec < 0) return false;
+		while (isspace(*endptr)) ++ endptr;
+		if (endptr != ptr) return false;
+		const double samples = sample_rate * sec;
+		if (samples > UINT32_MAX) return false;
+		*samplesptr = (uint32_t)samples;
+	}
+	else if ((sufflen == 1 && strncmp("m",ptr,sufflen) == 0) || (sufflen == 3 && strncmp("min",ptr,sufflen) == 0)) {
+		const double min = strtod(str, (char**)&endptr);
+		if (endptr == str || min < 0) return false;
+		while (isspace(*endptr)) ++ endptr;
+		if (endptr != ptr) return false;
+		const double samples = sample_rate * min * 60;
+		if (samples > UINT32_MAX) return false;
+		*samplesptr = (uint32_t)samples;
+	}
+	else {
+		return parse_uint32(str, samplesptr);
+	}
+	return true;
 }
 
 int main(int argc, const char *argv[]) {
@@ -236,22 +338,21 @@ int main(int argc, const char *argv[]) {
 	}
 
 	const char *filename = argv[1];
-	char *endptr = NULL;
 
-	unsigned long int sample_rate = strtoul(argv[2], &endptr, 10);
-	if (!*argv[2] || *endptr || sample_rate > UINT32_MAX) {
+	uint32_t sample_rate = 0;
+	if (!parse_uint32(argv[2], &sample_rate) || sample_rate == 0) {
 		fprintf(stderr, "illegal value for sample rate: %s\n", argv[2]);
 		return 1;
 	}
 
-	unsigned long int bits_per_sample = strtoul(argv[3], &endptr, 10);
-	if (!*argv[3] || *endptr || bits_per_sample > UINT16_MAX) {
+	uint16_t bits_per_sample = 0;
+	if (!parse_uint16(argv[3], &bits_per_sample) || bits_per_sample == 0) {
 		fprintf(stderr, "illegal value for bits per sample: %s\n", argv[3]);
 		return 1;
 	}
 
-	unsigned long int samples = strtoul(argv[4], &endptr, 10);
-	if (!*argv[4] || *endptr || samples > UINT32_MAX) {
+	uint32_t samples = 0;
+	if (!parse_samples(argv[4], sample_rate, &samples)) {
 		fprintf(stderr, "illegal value for samples: %s\n", argv[4]);
 		return 1;
 	}
