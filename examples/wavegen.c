@@ -37,10 +37,9 @@ static mathfun_value fadein(const mathfun_value args[]) {
 static mathfun_value fadeout(const mathfun_value args[]) {
 	mathfun_value t = args[0];
 	const mathfun_value duration = args[1];
-	if (t > duration) return 0;
-	t -= duration;
-	if (duration < t) return 1;
-	const mathfun_value x = t / duration;
+	if (t > duration) return 0.0;
+	if (t < 0.0) return 1.0;
+	const mathfun_value x = (t - duration) / duration;
 	return x*x;
 }
 
@@ -54,6 +53,19 @@ static mathfun_value clamp(const mathfun_value args[]) {
 	const mathfun_value min = args[1];
 	const mathfun_value max = args[2];
 	return x < min ? min : x > max ? max : x;
+}
+
+static mathfun_value pop(const mathfun_value args[]) {
+	const mathfun_value t = args[0];
+	const mathfun_value wavelength = args[1];
+	const mathfun_value half_wavelength = wavelength * 0.5;
+	const mathfun_value amplitude = args[2];
+
+	return t >= 0.0 && t < half_wavelength ? amplitude : t >= half_wavelength && t < wavelength ? -amplitude : 0.0;
+}
+
+static mathfun_value drop(const mathfun_value args[]) {
+	return args[0] == 0.0 ? 0.0 : 1.0;
 }
 
 #define RIFF_WAVE_HEADER_SIZE 44
@@ -204,7 +216,9 @@ bool wavegen(const char *filename, FILE *stream, uint32_t sample_rate, uint16_t 
 		!mathfun_context_define_funct(&ctx, "fadein",  fadein,        2, &error) ||
 		!mathfun_context_define_funct(&ctx, "fadeout", fadeout,       2, &error) ||
 		!mathfun_context_define_funct(&ctx, "mask",    mask,          2, &error) ||
-		!mathfun_context_define_funct(&ctx, "clamp",   clamp,         3, &error)) {
+		!mathfun_context_define_funct(&ctx, "clamp",   clamp,         3, &error) ||
+		!mathfun_context_define_funct(&ctx, "pop",     pop,           3, &error) ||
+		!mathfun_context_define_funct(&ctx, "drop",    drop,          1, &error)) {
 		mathfun_error_log_and_cleanup(&error, stderr);
 		return false;
 	}
