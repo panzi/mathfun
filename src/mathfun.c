@@ -362,6 +362,7 @@ bool mathfun_context_compile(const mathfun_context *ctx,
 bool mathfun_compile(mathfun *mathfun, const char *argnames[], size_t argc, const char *code,
 	mathfun_error_p *error) {
 	mathfun_context ctx;
+	memset(mathfun, 0, sizeof(mathfun));
 	if (!mathfun_context_init(&ctx, true, error)) return false;
 
 	bool ok = mathfun_context_compile(&ctx, argnames, argc, code, mathfun, error);

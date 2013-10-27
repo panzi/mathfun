@@ -29,7 +29,7 @@
 #	endif
 #endif
 
-/** Test if given enum mathfun_error_type is a parser error.
+/** Test if given mathfun_error_type is a parser error.
  */
 #define MATHFUN_IS_PARSER_ERROR(ERROR) ( \
 	(ERROR) >= MATHFUN_PARSER_EXPECTED_CLOSE_PARENTHESIS && \
@@ -41,11 +41,13 @@ extern "C" {
 
 typedef uintptr_t mathfun_code;
 
-/** TODO
+/** Numeric type for all calculations.
+ *
+ * (Maybe double should just be used directly.)
  */
 typedef double mathfun_value;
 
-/** TODO
+/** Function type for functions to be regstered with a #mathfun_context.
  */
 typedef mathfun_value (*mathfun_binding_funct)(const mathfun_value args[]);
 
@@ -57,7 +59,7 @@ enum mathfun_error_type {
 	MATHFUN_OUT_OF_MEMORY,          ///< memory allocation failed
 	MATHFUN_MATH_ERROR,             ///< a math error occured, like x % 0
 	MATHFUN_C_ERROR,                ///< a C error occured (errno is set)
-	MATHFUN_ILLEGAL_NAME,           ///< a illegal argumen/function/constant name was used
+	MATHFUN_ILLEGAL_NAME,           ///< a illegal argument/function/constant name was used
 	MATHFUN_DUPLICATE_ARGUMENT,     ///< a argument name occured more than once in the list of arguments
 	MATHFUN_NAME_EXISTS,            ///< a constant/function with given name already exists
 	MATHFUN_NO_SUCH_NAME,           ///< no constant/function with given name exists
@@ -79,7 +81,7 @@ struct mathfun_error;
 
 typedef struct mathfun_decl mathfun_decl;
 
-/** Context that holds function and constant definitions.
+/** Object that holds function and constant definitions.
  */
 typedef struct mathfun_context mathfun_context;
 
@@ -124,7 +126,7 @@ struct mathfun {
 
 /** Initialize a mathfun_context.
  *
- * @param ctx A pointer to a mathfun_context
+ * @param ctx A pointer to a #mathfun_context
  * @param define_default If true then a lot of default functions (mainly from math.h) and
  *        constans will be defined in the math_context. See mathfun_context_define_default() for more details.
  * @param error A pointer to an error handle.
@@ -133,16 +135,48 @@ struct mathfun {
 MATHFUN_EXPORT bool mathfun_context_init(mathfun_context *ctx, bool define_default, mathfun_error_p *error);
 
 /** Frees allocated resources.
- * @param ctx A pointer to a mathfun_context
+ * @param ctx A pointer to a #mathfun_context
  */
 MATHFUN_EXPORT void mathfun_context_cleanup(mathfun_context *ctx);
 
-/** TODO
+/** Define default set of functions and constants.
+ *
+ * Functions:
+ *
+ * acos(x), acosh(x), asin(x), asinh(x), atan(x), atan2(y, x), atanh(x), cbrt(x), ceil(x), copysign(x, y),
+ * cos(x), cosh(x), erf(x), erfc(x), exp(x), exp2(x), expm1(x), abs(x) (uses fabs(x)), fdim(x, y), floor(x),
+ * fma(x, y, z), fmod(x, y), max(x), min(x), hypot(x, y), j0(x), j1(x), jn(n, x), ldexp(x, exp), log(x),
+ * log10(x), log1p(x), log2(x), logb(x), nearbyint(x), nextafter(x, y), nexttoward(x, y), remainder(x, y), round(x),
+ * scalbln(x, exp), sin(x), sinh(x), sqrt(x), tan(x), tanh(x), gamma(x) (uses tgamma(x)), trunc(x),
+ * y0(x), y1(x), yn(n, x)
+ *
+ * See `man math.h` for a documentation on these functions.
+ *
+ * Constants:
+ *
+ *    - e ... value of e
+ *    - log2e ... value of log2(e)
+ *    - log10e ... value of log10(e)
+ *    - ln2 ... value of ln(2)
+ *    - ln10 ... value of ln(10)
+ *    - pi ... value of pi
+ *    - tau ... value of pi*2
+ *    - pi_2 ... value of pi/2
+ *    - pi_4 ... value of pi/4
+ *    - _1_pi ... value of 1/pi
+ *    - _2_pi ... value of 2/pi
+ *    - _2_sqrtpi ... value of 2/sqrt(pi)
+ *    - sqrt2 ... value of sqrt(2)
+ *    - sqrt1_2 ... value of 1/sqrt(2)
+ *
+ * @param ctx A pointer to a #mathfun_context
+ * @param error A pointer to an error handle.
+ * @return true on success, false if an error occured.
  */
 MATHFUN_EXPORT bool mathfun_context_define_default(mathfun_context *ctx, mathfun_error_p *error);
 
 /** Define a constant value.
- * @param ctx A pointer to a mathfun_context
+ * @param ctx A pointer to a #mathfun_context
  * @param name The name of the constant.
  * @param value The value of the constant.
  * @param error A pointer to an error handle. Possible errors: #MATHFUN_OUT_OF_MEMORY and #MATHFUN_NAME_EXISTS
@@ -152,7 +186,7 @@ MATHFUN_EXPORT bool mathfun_context_define_const(mathfun_context *ctx, const cha
 	mathfun_error_p *error);
 
 /** Define a constant function.
- * @param ctx A pointer to a mathfun_context
+ * @param ctx A pointer to a #mathfun_context
  * @param name The name of the function.
  * @param funct A function pointer.
  * @param argc The number of the arguments of the function.
@@ -168,7 +202,7 @@ MATHFUN_EXPORT bool mathfun_context_define_funct(mathfun_context *ctx, const cha
 MATHFUN_EXPORT const char *mathfun_context_funct_name(const mathfun_context *ctx, mathfun_binding_funct funct);
 
 /** Removes a function/constant from the context.
- * @param ctx A pointer to a mathfun_context
+ * @param ctx A pointer to a #mathfun_context
  * @param name The name of the function/constant.
  * @param error A pointer to an error handle. Possible errors: #MATHFUN_NO_SUCH_NAME
  * @return true on success, false if an error occured.
@@ -176,30 +210,68 @@ MATHFUN_EXPORT const char *mathfun_context_funct_name(const mathfun_context *ctx
 MATHFUN_EXPORT bool mathfun_context_undefine(mathfun_context *ctx, const char *name,
 	mathfun_error_p *error);
 
-/** TODO
+/** Compile a function expression to byte code.
+ *
+ * @param ctx A pointer to a #mathfun_context
+ * @param argnames Array of argument names of the function expression
+ * @param argc Number of arguments
+ * @param code The function expression
+ * @param mathfun Target byte code object (will be initialized in any case)
+ * @param error A pointer to an error handle. Possible errors: #MATHFUN_ILLEGAL_NAME, #MATHFUN_DUPLICATE_ARGUMENT,
+ *        #MATHFUN_OUT_OF_MEMORY, #MATHFUN_MATH_ERROR, #MATHFUN_TOO_MANY_ARGUMENTS, #MATHFUN_EXCEEDS_MAX_FRAME_SIZE,
+ *        MATHFUN_PARSER_*
+ * @return true on success, false if an error occured.
  */
 MATHFUN_EXPORT bool mathfun_context_compile(const mathfun_context *ctx,
 	const char *argnames[], size_t argc, const char *code,
 	mathfun *mathfun, mathfun_error_p *error);
 
 /** Frees allocated resources.
+ *
+ * @param mathfun A pointer to a #mathfun object
  */
 MATHFUN_EXPORT void mathfun_cleanup(mathfun *mathfun);
 
-/** TODO
+/** Compile function expression to byte code using default function/constant definitions.
+ *
+ * @param mathfun Target byte code object (will be initialized in any case)
+ * @param argnames Array of argument names of the function expression
+ * @param argc Number of arguments
+ * @param code The function expression
+ * @param error A pointer to an error handle. Possible errors: #MATHFUN_ILLEGAL_NAME, #MATHFUN_DUPLICATE_ARGUMENT,
+ *        #MATHFUN_OUT_OF_MEMORY, #MATHFUN_MATH_ERROR, #MATHFUN_TOO_MANY_ARGUMENTS, #MATHFUN_EXCEEDS_MAX_FRAME_SIZE,
+ *        MATHFUN_PARSER_*
+ * @return true on success, false if an error occured.
  */
 MATHFUN_EXPORT bool mathfun_compile(mathfun *mathfun, const char *argnames[], size_t argc, const char *code,
 	mathfun_error_p *error);
 
-/** TODO
+/** Execute a compiled function expression.
+ *
+ * @param mathfun Byte code object to execute
+ * @param error A pointer to an error handle. Possible errors: #MATHFUN_OUT_OF_MEMORY, #MATHFUN_MATH_ERROR,
+ *        #MATHFUN_C_ERROR (depending on the functions called by the expression)
+ * @return The result of the evaluation.
  */
 MATHFUN_EXPORT mathfun_value mathfun_call(const mathfun *mathfun, mathfun_error_p *error, ...);
 
-/** TODO
+/** Execute a compiled function expression.
+ *
+ * @param mathfun Byte code object to execute
+ * @param args Array of argument values
+ * @param error A pointer to an error handle. Possible errors: #MATHFUN_OUT_OF_MEMORY, #MATHFUN_MATH_ERROR,
+ *        #MATHFUN_C_ERROR (depending on the functions called by the expression)
+ * @return The result of the evaluation.
  */
 MATHFUN_EXPORT mathfun_value mathfun_acall(const mathfun *mathfun, const mathfun_value args[], mathfun_error_p *error);
 
-/** TODO
+/** Execute a compiled function expression.
+ *
+ * @param mathfun Byte code object to execute
+ * @param ap Variable argument list pointer
+ * @param error A pointer to an error handle. Possible errors: #MATHFUN_OUT_OF_MEMORY, #MATHFUN_MATH_ERROR,
+ *        #MATHFUN_C_ERROR (depending on the functions called by the expression)
+ * @return The result of the evaluation
  */
 MATHFUN_EXPORT mathfun_value mathfun_vcall(const mathfun *mathfun, va_list ap, mathfun_error_p *error);
 
@@ -214,14 +286,20 @@ MATHFUN_EXPORT mathfun_value mathfun_vcall(const mathfun *mathfun, va_list ap, m
  *
  * Sets errno when a math error occurs.
  *
- * @param mathfun The compiled function expression.
- * @param frame The functions execution frame.
- * @return The result of the execution.
+ * @param mathfun The compiled function expression
+ * @param frame The functions execution frame
+ * @return The result of the execution
  */
 MATHFUN_EXPORT mathfun_value mathfun_exec(const mathfun *mathfun, mathfun_value frame[])
 	__attribute__((__noinline__,__noclone__));
 
-/** TODO
+/** Dump text representation of byte code.
+ * 
+ * @param mathfun The compiled function expression
+ * @param stream The output FILE
+ * @param ctx A pointer to a #mathfun_context. Can be NULL.
+ * @param error A pointer to an error handle. Possible errors: #MATHFUN_IO_ERROR
+ * @return true on success, false if an error occured.
  */
 MATHFUN_EXPORT bool mathfun_dump(const mathfun *mathfun, FILE *stream, const mathfun_context *ctx,
 	mathfun_error_p *error);
@@ -250,49 +328,87 @@ MATHFUN_EXPORT mathfun_value mathfun_run(const char *code, mathfun_error_p *erro
  * @param argc Number of arguments.
  * @param code The function expression.
  * @param args The argument values.
- * @param error A pointer to an error handle.
+ * @param error A pointer to an error handle. Possible errors: #MATHFUN_ILLEGAL_NAME, #MATHFUN_DUPLICATE_ARGUMENT,
+ *        #MATHFUN_OUT_OF_MEMORY, #MATHFUN_MATH_ERROR, #MATHFUN_TOO_MANY_ARGUMENTS, #MATHFUN_EXCEEDS_MAX_FRAME_SIZE,
+ *        MATHFUN_PARSER_*
  * @return The result of the execution.
  */
 MATHFUN_EXPORT mathfun_value mathfun_arun(const char *argnames[], size_t argc, const char *code, const mathfun_value args[],
 	mathfun_error_p *error);
 
-/** TODO
+/** Get mathfun_error_type of error.
+ *
+ * If error is NULL, derive mathfun_error_type from errno.
+ *
+ * @param error Error handle
+ * @return a mathfun_error_type
  */
 MATHFUN_EXPORT enum mathfun_error_type mathfun_error_type(mathfun_error_p error);
 
-/** TODO
+/** Get C error number of error.
+ *
+ * If error is NULL, return errno.
+ *
+ * @param error Error handle
+ * @return a C error number
  */
 MATHFUN_EXPORT int mathfun_error_errno(mathfun_error_p error);
 
-/** TODO
+/** Get line number of a parser error.
+ *
+ * @param error Error handle
+ * @return line number of parser error or 0 if error isn't a parser error.
  */
 MATHFUN_EXPORT size_t mathfun_error_lineno(mathfun_error_p error);
 
-/** TODO
+/** Get column of a parser error.
+ *
+ * @param error Error handle
+ * @return column of parser error or 0 if error isn't a parser error.
  */
 MATHFUN_EXPORT size_t mathfun_error_column(mathfun_error_p error);
 
-/** TODO
+/** Get index of parser error in function expression code string.
+ *
+ * @param error Error handle
+ * @return index of parser error or 0 if error isn't a parser error.
  */
 MATHFUN_EXPORT size_t mathfun_error_errpos(mathfun_error_p error);
 
-/** TODO
+/** Get length of erroneous area in function expression code string.
+ *
+ * @param error Error handle
+ * @return length of error or 0 if error isn't a parser error.
  */
 MATHFUN_EXPORT size_t mathfun_error_errlen(mathfun_error_p error);
 
-/** TODO
+/** Print error message.
+ * 
+ * @param error Error handle
+ * @param stream Output stream
  */
 MATHFUN_EXPORT void mathfun_error_log(mathfun_error_p error, FILE *stream);
 
-/** TODO
+/** Print error message and free error object.
+ * 
+ * @param error Error handle
+ * @param stream Output stream
  */
 MATHFUN_EXPORT void mathfun_error_log_and_cleanup(mathfun_error_p *error, FILE *stream);
 
-/** TODO
+/** Free error object and set error handle to NULL.
+ *
+ * @param error Error handle
  */
 MATHFUN_EXPORT void mathfun_error_cleanup(mathfun_error_p *error);
 
-/** TODO
+/** Test if argument is a valid name.
+ *
+ * Valid names start with a letter or '_' and then have an arbitrary number of more
+ * letters, numbers or '_'. To test for letters isalpha() is used, to test for letters or
+ * numbers isalnum() is used.
+ *
+ * @return true if argument is a valid name, false otherwise
  */
 MATHFUN_EXPORT bool mathfun_valid_name(const char *name);
 
@@ -303,9 +419,9 @@ MATHFUN_EXPORT bool mathfun_valid_name(const char *name);
  *
  * If y is 0, a NaN is returned and errno is set to EDOM (domain error).
  *
- * @param x The dividend.
- * @param y The divisor.
- * @return The remainder.
+ * @param x The dividend
+ * @param y The divisor
+ * @return The remainder
  */
 MATHFUN_EXPORT mathfun_value mathfun_mod(mathfun_value x, mathfun_value y);
 
