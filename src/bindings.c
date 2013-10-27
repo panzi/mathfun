@@ -150,6 +150,10 @@ static mathfun_value mathfun_funct_nextafter(const mathfun_value args[]) {
 	return nextafter(args[0], args[1]);
 }
 
+static mathfun_value mathfun_funct_nexttoward(const mathfun_value args[]) {
+	return nexttoward(args[0], args[1]);
+}
+
 static mathfun_value mathfun_funct_remainder(const mathfun_value args[]) {
 	return remainder(args[0], args[1]);
 }
@@ -204,256 +208,74 @@ static mathfun_value mathfun_funct_yn(const mathfun_value args[]) {
 
 bool mathfun_context_define_default(mathfun_context *ctx, mathfun_error_p *error) {
 	// Constants
-	if (!mathfun_context_define_const(ctx, "e", M_E, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_const(ctx, "log2e", M_LOG2E, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_const(ctx, "log10e", M_LOG10E, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_const(ctx, "ln2", M_LN2, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_const(ctx, "ln10", M_LN10, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_const(ctx, "pi", M_PI, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_const(ctx, "tau", 2*M_PI, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_const(ctx, "pi_2", M_PI_2, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_const(ctx, "pi_4", M_PI_4, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_const(ctx, "_1_pi", M_1_PI, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_const(ctx, "_2_pi", M_2_PI, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_const(ctx, "_2_sqrtpi", M_2_SQRTPI, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_const(ctx, "sqrt2", M_SQRT2, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_const(ctx, "sqrt1_2", M_SQRT1_2, error)) {
+	if (!mathfun_context_define_const(ctx, "e", M_E, error) ||
+		!mathfun_context_define_const(ctx, "log2e", M_LOG2E, error) ||
+		!mathfun_context_define_const(ctx, "log10e", M_LOG10E, error) ||
+		!mathfun_context_define_const(ctx, "ln2", M_LN2, error) ||
+		!mathfun_context_define_const(ctx, "ln10", M_LN10, error) ||
+		!mathfun_context_define_const(ctx, "pi", M_PI, error) ||
+		!mathfun_context_define_const(ctx, "tau", 2*M_PI, error) ||
+		!mathfun_context_define_const(ctx, "pi_2", M_PI_2, error) ||
+		!mathfun_context_define_const(ctx, "pi_4", M_PI_4, error) ||
+		!mathfun_context_define_const(ctx, "_1_pi", M_1_PI, error) ||
+		!mathfun_context_define_const(ctx, "_2_pi", M_2_PI, error) ||
+		!mathfun_context_define_const(ctx, "_2_sqrtpi", M_2_SQRTPI, error) ||
+		!mathfun_context_define_const(ctx, "sqrt2", M_SQRT2, error) ||
+		!mathfun_context_define_const(ctx, "sqrt1_2", M_SQRT1_2, error)) {
 		return false;
 	}
 
 	// Functions
-	if (!mathfun_context_define_funct(ctx, "acos", mathfun_funct_acos, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "acosh", mathfun_funct_acosh, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "asin", mathfun_funct_asin, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "asinh", mathfun_funct_asinh, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "atan", mathfun_funct_atan, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "atan2", mathfun_funct_atan2, 2, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "atanh", mathfun_funct_atanh, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "cbrt", mathfun_funct_cbrt, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "ceil", mathfun_funct_ceil, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "copysign", mathfun_funct_copysign, 2, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "cos", mathfun_funct_cos, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "cosh", mathfun_funct_cosh, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "erf", mathfun_funct_erf, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "erfc", mathfun_funct_erfc, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "exp", mathfun_funct_exp, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "exp2", mathfun_funct_exp2, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "expm1", mathfun_funct_expm1, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "abs", mathfun_funct_abs, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "fdim", mathfun_funct_fdim, 2, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "floor", mathfun_funct_floor, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "fma", mathfun_funct_fma, 3, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "fmod", mathfun_funct_fmod, 2, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "max", mathfun_funct_max, 2, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "min", mathfun_funct_min, 2, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "hypot", mathfun_funct_hypot, 2, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "j0", mathfun_funct_j0, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "j1", mathfun_funct_j1, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "jn", mathfun_funct_jn, 2, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "ldexp", mathfun_funct_ldexp, 2, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "log", mathfun_funct_log, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "log10", mathfun_funct_log10, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "log1p", mathfun_funct_log1p, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "log2", mathfun_funct_log2, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "logb", mathfun_funct_logb, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "nearbyint", mathfun_funct_nearbyint, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "nextafter", mathfun_funct_nextafter, 2, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "remainder", mathfun_funct_remainder, 2, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "round", mathfun_funct_round, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "scalbln", mathfun_funct_scalbln, 2, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "sin", mathfun_funct_sin, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "sinh", mathfun_funct_sinh, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "sqrt", mathfun_funct_sqrt, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "tan", mathfun_funct_tan, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "tanh", mathfun_funct_tanh, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "gamma", mathfun_funct_gamma, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "trunc", mathfun_funct_trunc, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "y0", mathfun_funct_y0, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "y1", mathfun_funct_y1, 1, error)) {
-		return false;
-	}
-
-	if (!mathfun_context_define_funct(ctx, "yn", mathfun_funct_yn, 2, error)) {
+	if (!mathfun_context_define_funct(ctx, "acos", mathfun_funct_acos, 1, error) ||
+		!mathfun_context_define_funct(ctx, "acosh", mathfun_funct_acosh, 1, error) ||
+		!mathfun_context_define_funct(ctx, "asin", mathfun_funct_asin, 1, error) ||
+		!mathfun_context_define_funct(ctx, "asinh", mathfun_funct_asinh, 1, error) ||
+		!mathfun_context_define_funct(ctx, "atan", mathfun_funct_atan, 1, error) ||
+		!mathfun_context_define_funct(ctx, "atan2", mathfun_funct_atan2, 2, error) ||
+		!mathfun_context_define_funct(ctx, "atanh", mathfun_funct_atanh, 1, error) ||
+		!mathfun_context_define_funct(ctx, "cbrt", mathfun_funct_cbrt, 1, error) ||
+		!mathfun_context_define_funct(ctx, "ceil", mathfun_funct_ceil, 1, error) ||
+		!mathfun_context_define_funct(ctx, "copysign", mathfun_funct_copysign, 2, error) ||
+		!mathfun_context_define_funct(ctx, "cos", mathfun_funct_cos, 1, error) ||
+		!mathfun_context_define_funct(ctx, "cosh", mathfun_funct_cosh, 1, error) ||
+		!mathfun_context_define_funct(ctx, "erf", mathfun_funct_erf, 1, error) ||
+		!mathfun_context_define_funct(ctx, "erfc", mathfun_funct_erfc, 1, error) ||
+		!mathfun_context_define_funct(ctx, "exp", mathfun_funct_exp, 1, error) ||
+		!mathfun_context_define_funct(ctx, "exp2", mathfun_funct_exp2, 1, error) ||
+		!mathfun_context_define_funct(ctx, "expm1", mathfun_funct_expm1, 1, error) ||
+		!mathfun_context_define_funct(ctx, "abs", mathfun_funct_abs, 1, error) ||
+		!mathfun_context_define_funct(ctx, "fdim", mathfun_funct_fdim, 2, error) ||
+		!mathfun_context_define_funct(ctx, "floor", mathfun_funct_floor, 1, error) ||
+		!mathfun_context_define_funct(ctx, "fma", mathfun_funct_fma, 3, error) ||
+		!mathfun_context_define_funct(ctx, "fmod", mathfun_funct_fmod, 2, error) ||
+		!mathfun_context_define_funct(ctx, "max", mathfun_funct_max, 2, error) ||
+		!mathfun_context_define_funct(ctx, "min", mathfun_funct_min, 2, error) ||
+		!mathfun_context_define_funct(ctx, "hypot", mathfun_funct_hypot, 2, error) ||
+		!mathfun_context_define_funct(ctx, "j0", mathfun_funct_j0, 1, error) ||
+		!mathfun_context_define_funct(ctx, "j1", mathfun_funct_j1, 1, error) ||
+		!mathfun_context_define_funct(ctx, "jn", mathfun_funct_jn, 2, error) ||
+		!mathfun_context_define_funct(ctx, "ldexp", mathfun_funct_ldexp, 2, error) ||
+		!mathfun_context_define_funct(ctx, "log", mathfun_funct_log, 1, error) ||
+		!mathfun_context_define_funct(ctx, "log10", mathfun_funct_log10, 1, error) ||
+		!mathfun_context_define_funct(ctx, "log1p", mathfun_funct_log1p, 1, error) ||
+		!mathfun_context_define_funct(ctx, "log2", mathfun_funct_log2, 1, error) ||
+		!mathfun_context_define_funct(ctx, "logb", mathfun_funct_logb, 1, error) ||
+		!mathfun_context_define_funct(ctx, "nearbyint", mathfun_funct_nearbyint, 1, error) ||
+		!mathfun_context_define_funct(ctx, "nextafter", mathfun_funct_nextafter, 2, error) ||
+		!mathfun_context_define_funct(ctx, "nexttoward", mathfun_funct_nexttoward, 2, error) ||
+		!mathfun_context_define_funct(ctx, "remainder", mathfun_funct_remainder, 2, error) ||
+		!mathfun_context_define_funct(ctx, "round", mathfun_funct_round, 1, error) ||
+		!mathfun_context_define_funct(ctx, "scalbln", mathfun_funct_scalbln, 2, error) ||
+		!mathfun_context_define_funct(ctx, "sin", mathfun_funct_sin, 1, error) ||
+		!mathfun_context_define_funct(ctx, "sinh", mathfun_funct_sinh, 1, error) ||
+		!mathfun_context_define_funct(ctx, "sqrt", mathfun_funct_sqrt, 1, error) ||
+		!mathfun_context_define_funct(ctx, "tan", mathfun_funct_tan, 1, error) ||
+		!mathfun_context_define_funct(ctx, "tanh", mathfun_funct_tanh, 1, error) ||
+		!mathfun_context_define_funct(ctx, "gamma", mathfun_funct_gamma, 1, error) ||
+		!mathfun_context_define_funct(ctx, "trunc", mathfun_funct_trunc, 1, error) ||
+		!mathfun_context_define_funct(ctx, "y0", mathfun_funct_y0, 1, error) ||
+		!mathfun_context_define_funct(ctx, "y1", mathfun_funct_y1, 1, error) ||
+		!mathfun_context_define_funct(ctx, "yn", mathfun_funct_yn, 2, error)) {
 		return false;
 	}
 
