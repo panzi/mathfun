@@ -734,6 +734,8 @@ bool mathfun_expr_codegen(mathfun_expr *expr, mathfun *mathfun, mathfun_error_p 
 bool mathfun_dump(const mathfun *mathfun, FILE *stream, const mathfun_context *ctx, mathfun_error_p *error) {
 	const mathfun_code *code = mathfun->code;
 
+	MATHFUN_DUMP((stream, "argc = %"PRIzu", framesize = %"PRIzu"\n\n", mathfun->argc, mathfun->framesize));
+
 	for (;;) {
 		MATHFUN_DUMP((stream, "0x%08"PRIXPTR": ", code - mathfun->code));
 		switch (*code) {
