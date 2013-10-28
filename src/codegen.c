@@ -268,6 +268,7 @@ mathfun_expr *mathfun_expr_optimize(mathfun_expr *expr, mathfun_error_p *error) 
 				expr->type = EX_CONST;
 				expr->ex.value.type = MATHFUN_BOOLEAN;
 				expr->ex.value.value.boolean = value;
+				return expr;
 			}
 			else if (expr->ex.binary.left->type == EX_CONST) {
 				const_expr = expr->ex.binary.left;
@@ -322,6 +323,7 @@ mathfun_expr *mathfun_expr_optimize(mathfun_expr *expr, mathfun_error_p *error) 
 				expr->type = EX_CONST;
 				expr->ex.value.type = MATHFUN_BOOLEAN;
 				expr->ex.value.value.boolean = value;
+				return expr;
 			}
 			else if (expr->ex.binary.left->type == EX_CONST) {
 				const_expr = expr->ex.binary.left;
