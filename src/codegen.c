@@ -625,13 +625,57 @@ bool mathfun_codegen_expr(mathfun_codegen *codegen, mathfun_expr *expr, mathfun_
 		{
 			mathfun_code leftret = *ret;
 			if (!mathfun_codegen_expr(codegen, expr->ex.binary.left, &leftret)) return false;
-//			if (!mathfun_codegen_ins2(codegen, )) return false; TODO
+			size_t adr = codegen->code_used + 2;
+			if (!mathfun_codegen_ins2(codegen, JMPF, leftret, 0)) return false;
+			mathfun_code rightret = *ret;
+			if (!mathfun_codegen_expr(codegen, expr->ex.binary.right, &rightret)) return false;
+			if (rightret != *ret) {
+				if (!mathfun_codegen_ins2(codegen, MOV, rightret, *ret)) return false;
+			}
+			codegen->code[adr] = codegen->code_used;
+			if (leftret != *ret) {
+				return mathfun_codegen_ins1(codegen, SETF, *ret);
+			}
+			return true;
 		}
 		case EX_OR:
+		{
+			mathfun_code leftret = *ret;
+			if (!mathfun_codegen_expr(codegen, expr->ex.binary.left, &leftret)) return false;
+			size_t adr = codegen->code_used + 2;
+			if (!mathfun_codegen_ins2(codegen, JMPT, leftret, 0)) return false;
+			mathfun_code rightret = *ret;
+			if (!mathfun_codegen_expr(codegen, expr->ex.binary.right, &rightret)) return false;
+			if (rightret != *ret) {
+				if (!mathfun_codegen_ins2(codegen, MOV, rightret, *ret)) return false;
+			}
+			codegen->code[adr] = codegen->code_used;
+			if (leftret != *ret) {
+				return mathfun_codegen_ins1(codegen, SETT, *ret);
+			}
+			return true;
+		}
 		case EX_IIF:
 		{
-			// TODO
-			assert(false);
+			mathfun_code childret = *ret;
+			if (!mathfun_codegen_expr(codegen, expr->ex.iif.cond, &childret)) return false;
+			size_t adr1 = codegen->code_used + 2;
+			if (!mathfun_codegen_ins2(codegen, JMPF, childret, 0)) return false;
+			childret = *ret;
+			if (!mathfun_codegen_expr(codegen, expr->ex.iif.then_expr, &childret)) return false;
+			if (childret != *ret) {
+				if (!mathfun_codegen_ins2(codegen, MOV, childret, *ret)) return false;
+			}
+			size_t adr2 = codegen->code_used + 1;
+			if (!mathfun_codegen_ins1(codegen, JMP, 0)) return false;
+			codegen->code[adr1] = codegen->code_used;
+			childret = *ret;
+			if (!mathfun_codegen_expr(codegen, expr->ex.iif.else_expr, &childret)) return false;
+			if (childret != *ret) {
+				if (!mathfun_codegen_ins2(codegen, MOV, childret, *ret)) return false;
+			}
+			codegen->code[adr2] = codegen->code_used;
+			return true;
 		}
 	}
 
@@ -691,7 +735,7 @@ bool mathfun_dump(const mathfun *mathfun, FILE *stream, const mathfun_context *c
 	const mathfun_code *code = mathfun->code;
 
 	for (;;) {
-		MATHFUN_DUMP((stream, "0x%08"PRIuPTR": ", code - mathfun->code));
+		MATHFUN_DUMP((stream, "0x%08"PRIXPTR": ", code - mathfun->code));
 		switch (*code) {
 			case NOP:
 				MATHFUN_DUMP((stream, "nop\n"));
@@ -816,18 +860,18 @@ bool mathfun_dump(const mathfun *mathfun, FILE *stream, const mathfun_context *c
 				break;
 
 			case JMP:
-				MATHFUN_DUMP((stream, "jmp 0x%"PRIxPTR"\n", code[1]));
+				MATHFUN_DUMP((stream, "jmp 0x%"PRIXPTR"\n", code[1]));
 				code += 2;
 				break;
 
 			case JMPT:
-				MATHFUN_DUMP((stream, "jmpt %"PRIuPTR", 0x%"PRIxPTR"\n",
+				MATHFUN_DUMP((stream, "jmpt %"PRIuPTR", 0x%"PRIXPTR"\n",
 					code[1], code[2]));
 				code += 3;
 				break;
 
 			case JMPF:
-				MATHFUN_DUMP((stream, "jmpf %"PRIuPTR", 0x%"PRIxPTR"\n",
+				MATHFUN_DUMP((stream, "jmpf %"PRIuPTR", 0x%"PRIXPTR"\n",
 					code[1], code[2]));
 				code += 3;
 				break;
