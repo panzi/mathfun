@@ -128,7 +128,7 @@ typedef struct mathfun mathfun;
  *
  * @code
  * mathfun_error_p error = NULL;
- * mathfun_value value = mathfun_run("sin(x)", &error, "x", NULL, 1.2);
+ * mathfun_value value = mathfun_run("sin(x) + cos(y)", &error, "x", "y", NULL, 1.2, 3.4);
  * if (error) {
  *     mathfun_error_log_and_cleanup(&error, stderr);
  * }

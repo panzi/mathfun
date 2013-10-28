@@ -245,58 +245,45 @@ mathfun_value mathfun_vcall(const mathfun *mathfun, va_list ap, mathfun_error_p 
 	return value;
 }
 
-// usage:
-// result = matfun_run(expr, errorptr, argnames..., NULL, args...);
-//
-// mathfun_error *error = NULL;
-// mathfun_value value = mathfun_run("sin(x) * y", &error, "x", "y", NULL, 1.4, 2.5);
-//
-// or
-// 
-// mathfun_value value = mathfun_run("sin(x) * y", NULL, "x", "y", NULL, 1.4, 2.5);
 mathfun_value mathfun_run(const char *code, mathfun_error_p *error, ...) {
 	va_list ap;
-	size_t argcap = 32;
-	const char **argnames = calloc(argcap, sizeof(char*));
-	size_t argc = 0;
 
-	if (!argnames) {
-		mathfun_raise_error(error, MATHFUN_OUT_OF_MEMORY);
-		return NAN;
+	va_start(ap, error);
+
+	size_t argc = 0;
+	while (va_arg(ap, const char *)) {
+		++ argc;
+	}
+
+	va_end(ap);
+
+	const char **argnames = NULL;
+	mathfun_value *args = NULL;
+
+	if (argc > 0) {
+		argnames = calloc(argc, sizeof(char*));
+
+		if (!argnames) {
+			mathfun_raise_error(error, MATHFUN_OUT_OF_MEMORY);
+			return NAN;
+		}
+
+		args = calloc(argc, sizeof(mathfun_value));
+
+		if (!args) {
+			mathfun_raise_error(error, MATHFUN_OUT_OF_MEMORY);
+			free(argnames);
+			return NAN;
+		}
 	}
 
 	va_start(ap, error);
 
-	for (;;) {
-		const char *argname = va_arg(ap, const char *);
-
-		if (!argname) break;
-
-		if (argc == argcap) {
-			size_t size = argcap * 2;
-			const char **args = realloc(argnames, size * sizeof(char*));
-
-			if (!args) {
-				mathfun_raise_error(error, MATHFUN_OUT_OF_MEMORY);
-				free(argnames);
-				return NAN;
-			}
-
-			argnames = args;
-			argcap   = size;
-		}
-
-		argnames[argc] = argname;
-		++ argc;
+	for (size_t i = 0; i < argc; ++ i) {
+		argnames[i] = va_arg(ap, const char *);
 	}
-	
-	mathfun_value *args = malloc(argc * sizeof(mathfun_value));
 
-	if (!args) {
-		mathfun_raise_error(error, MATHFUN_OUT_OF_MEMORY);
-		free(argnames);
-		return NAN;
-	}
+	va_arg(ap, const char *);
 
 	for (size_t i = 0; i < argc; ++ i) {
 		args[i] = va_arg(ap, mathfun_value);
