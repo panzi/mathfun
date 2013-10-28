@@ -47,9 +47,31 @@ typedef uintptr_t mathfun_code;
  */
 typedef double mathfun_value;
 
+/** Type used for "registers" of the interpreter.
+ */
+typedef union mathfun_reg {
+	mathfun_value number;
+	bool boolean;
+} mathfun_reg;
+
+/** Type enum.
+ */
+typedef enum mathfun_type {
+	MATHFUN_NUMBER,
+	MATHFUN_BOOLEAN
+} mathfun_type;
+
+/** Function signature.
+ */
+typedef struct mathfun_sig {
+	size_t argc;
+	mathfun_type *argtypes;
+	mathfun_type rettype;
+} mathfun_sig;
+
 /** Function type for functions to be regstered with a #mathfun_context.
  */
-typedef mathfun_value (*mathfun_binding_funct)(const mathfun_value args[]);
+typedef mathfun_reg (*mathfun_binding_funct)(const mathfun_reg args[]);
 
 /** Error code as returned by mathfun_error_type(mathfun_error_p error)
  */
@@ -73,6 +95,8 @@ enum mathfun_error_type {
 	MATHFUN_PARSER_ILLEGAL_NUMBER_OF_ARGUMENTS, ///< function called with an illegal number of arguments
 	MATHFUN_PARSER_EXPECTED_NUMBER,             ///< expected a number but got something else or end of input
 	MATHFUN_PARSER_EXPECTED_IDENTIFIER,         ///< expected an identifier but got something else or end of input
+	MATHFUN_PARSER_EXPECTED_COLON,              ///< expected ':' but got something else or end of input
+	MATHFUN_PARSER_TYPE_ERROR,                  ///< expression with wrong type for this position
 	MATHFUN_PARSER_TRAILING_GARBAGE             ///< garbage at the end of input
 };
 
@@ -189,11 +213,11 @@ MATHFUN_EXPORT bool mathfun_context_define_const(mathfun_context *ctx, const cha
  * @param ctx A pointer to a #mathfun_context
  * @param name The name of the function.
  * @param funct A function pointer.
- * @param argc The number of the arguments of the function.
+ * @param sig The function signature. sig has to have a lifetime at least as long as ctx.
  * @param error A pointer to an error handle. Possible errors: #MATHFUN_OUT_OF_MEMORY and #MATHFUN_NAME_EXISTS
  * @return true on success, false if an error occured.
  */
-MATHFUN_EXPORT bool mathfun_context_define_funct(mathfun_context *ctx, const char *name, mathfun_binding_funct funct, size_t argc,
+MATHFUN_EXPORT bool mathfun_context_define_funct(mathfun_context *ctx, const char *name, mathfun_binding_funct funct, const mathfun_sig *sig,
 	mathfun_error_p *error);
 
 /** Find the name of a given function.
@@ -290,7 +314,7 @@ MATHFUN_EXPORT mathfun_value mathfun_vcall(const mathfun *mathfun, va_list ap, m
  * @param frame The functions execution frame
  * @return The result of the execution
  */
-MATHFUN_EXPORT mathfun_value mathfun_exec(const mathfun *mathfun, mathfun_value frame[])
+MATHFUN_EXPORT mathfun_value mathfun_exec(const mathfun *mathfun, mathfun_reg frame[])
 	__attribute__((__noinline__,__noclone__));
 
 /** Dump text representation of byte code.

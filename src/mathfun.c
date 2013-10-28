@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <assert.h>
 
 #include "mathfun_intern.h"
 
@@ -136,14 +137,14 @@ bool mathfun_context_define_const(mathfun_context *ctx, const char *name, mathfu
 	return true;
 }
 
-bool mathfun_context_define_funct(mathfun_context *ctx, const char *name, mathfun_binding_funct funct, size_t argc,
-	mathfun_error_p *error) {
+bool mathfun_context_define_funct(mathfun_context *ctx, const char *name, mathfun_binding_funct funct,
+	const mathfun_sig *sig, mathfun_error_p *error) {
 	if (!mathfun_valid_name(name)) {
 		mathfun_raise_name_error(error, MATHFUN_ILLEGAL_NAME, name);
 		return false;
 	}
 
-	if (argc > MATHFUN_REGS_MAX) {
+	if (sig->argc > MATHFUN_REGS_MAX) {
 		mathfun_raise_error(error, MATHFUN_TOO_MANY_ARGUMENTS);
 		return false;
 	}
@@ -161,7 +162,7 @@ bool mathfun_context_define_funct(mathfun_context *ctx, const char *name, mathfu
 	decl->type = DECL_FUNCT;
 	decl->name = name;
 	decl->decl.funct.funct = funct;
-	decl->decl.funct.argc  = argc;
+	decl->decl.funct.sig   = sig;
 
 	++ ctx->decl_used;
 
@@ -199,14 +200,16 @@ mathfun_value mathfun_call(const mathfun *mathfun, mathfun_error_p *error, ...) 
 }
 
 mathfun_value mathfun_acall(const mathfun *mathfun, const mathfun_value args[], mathfun_error_p *error) {
-	mathfun_value *regs = calloc(mathfun->framesize, sizeof(mathfun_value));
+	mathfun_reg *regs = calloc(mathfun->framesize, sizeof(mathfun_reg));
 
 	if (!regs) {
 		mathfun_raise_error(error, MATHFUN_OUT_OF_MEMORY);
 		return NAN;
 	}
 
-	memcpy(regs, args, mathfun->argc * sizeof(mathfun_value));
+	for (size_t i = 0; i < mathfun->argc; ++ i) {
+		regs[i].number = args[i];
+	}
 
 	errno = 0;
 	mathfun_value value = mathfun_exec(mathfun, regs);
@@ -220,7 +223,7 @@ mathfun_value mathfun_acall(const mathfun *mathfun, const mathfun_value args[], 
 }
 
 mathfun_value mathfun_vcall(const mathfun *mathfun, va_list ap, mathfun_error_p *error) {
-	mathfun_value *regs = calloc(mathfun->framesize, sizeof(mathfun_value));
+	mathfun_reg *regs = calloc(mathfun->framesize, sizeof(mathfun_reg));
 
 	if (!regs) {
 		mathfun_raise_error(error, MATHFUN_OUT_OF_MEMORY);
@@ -228,7 +231,7 @@ mathfun_value mathfun_vcall(const mathfun *mathfun, va_list ap, mathfun_error_p 
 	}
 
 	for (size_t i = 0; i < mathfun->argc; ++ i) {
-		regs[i] = va_arg(ap, mathfun_value);
+		regs[i].number = va_arg(ap, mathfun_value);
 	}
 
 	errno = 0;
@@ -324,7 +327,7 @@ mathfun_value mathfun_arun(const char *argnames[], size_t argc, const char *code
 
 	// it's only executed once, so any optimizations and byte code
 	// compilations would only add overhead
-	mathfun_value value = mathfun_expr_exec(expr, args, error);
+	mathfun_value value = mathfun_expr_exec(expr, args, error).number;
 
 	mathfun_expr_free(expr);
 	mathfun_context_cleanup(&ctx);
@@ -394,7 +397,8 @@ void mathfun_expr_free(mathfun_expr *expr) {
 
 		case EX_CALL:
 			if (expr->ex.funct.args) {
-				for (size_t i = 0; i < expr->ex.funct.argc; ++ i) {
+				const size_t argc = expr->ex.funct.sig->argc;
+				for (size_t i = 0; i < argc; ++ i) {
 					mathfun_expr_free(expr->ex.funct.args[i]);
 				}
 				free(expr->ex.funct.args);
@@ -403,6 +407,7 @@ void mathfun_expr_free(mathfun_expr *expr) {
 			break;
 
 		case EX_NEG:
+		case EX_NOT:
 			mathfun_expr_free(expr->ex.unary.expr);
 			expr->ex.unary.expr = NULL;
 			break;
@@ -413,13 +418,78 @@ void mathfun_expr_free(mathfun_expr *expr) {
 		case EX_DIV:
 		case EX_MOD:
 		case EX_POW:
+		case EX_EQ:
+		case EX_NE:
+		case EX_LT:
+		case EX_GT:
+		case EX_LE:
+		case EX_GE:
+		case EX_AND:
+		case EX_OR:
 			mathfun_expr_free(expr->ex.binary.left);
 			mathfun_expr_free(expr->ex.binary.right);
 			expr->ex.binary.left  = NULL;
 			expr->ex.binary.right = NULL;
 			break;
+
+		case EX_IIF:
+			mathfun_expr_free(expr->ex.iif.cond);
+			mathfun_expr_free(expr->ex.iif.then_expr);
+			mathfun_expr_free(expr->ex.iif.else_expr);
+			expr->ex.iif.cond      = NULL;
+			expr->ex.iif.then_expr = NULL;
+			expr->ex.iif.else_expr = NULL;
+			break;
 	}
 	free(expr);
+}
+
+mathfun_type mathfun_expr_type(const mathfun_expr *expr) {
+	switch (expr->type) {
+		case EX_CONST:
+			return expr->ex.value.type;
+
+		case EX_CALL:
+			return expr->ex.funct.sig->rettype;
+
+		case EX_IIF:
+			return mathfun_expr_type(expr->ex.iif.then_expr);
+
+		case EX_ARG:
+		case EX_NEG:
+		case EX_ADD:
+		case EX_SUB:
+		case EX_MUL:
+		case EX_DIV:
+		case EX_MOD:
+		case EX_POW:
+			return MATHFUN_NUMBER;
+
+		case EX_NOT:
+		case EX_EQ:
+		case EX_NE:
+		case EX_LT:
+		case EX_GT:
+		case EX_LE:
+		case EX_GE:
+		case EX_AND:
+		case EX_OR:
+			return MATHFUN_BOOLEAN;
+
+		default:
+			assert(false);
+			return -1;
+	}
+}
+
+const char *mathfun_type_name(mathfun_type type) {
+	switch (type) {
+		case MATHFUN_NUMBER:  return "number";
+		case MATHFUN_BOOLEAN: return "boolean";
+		default:              fprintf(stderr, "illegal type: %d\n", type);
+		
+		return NULL;
+	}
 }
 
 mathfun_value mathfun_mod(mathfun_value x, mathfun_value y) {

@@ -12,60 +12,62 @@
 #	define M_TAU (2*M_PI)
 #endif
 
-static mathfun_value square_wave(const mathfun_value args[]) {
-	return fmod(args[0], M_TAU) < M_PI ? 1 : -1;
+static mathfun_reg square_wave(const mathfun_reg args[]) {
+	return (mathfun_reg){ .number = fmod(args[0].number, M_TAU) < M_PI ? 1 : -1 };
 }
 
-static mathfun_value triangle_wave(const mathfun_value args[]) {
-	const mathfun_value x = fmod((args[0] + M_PI_2), M_TAU);
-	return x < M_PI ? x * M_2_PI - 1 : 3 - x * M_2_PI;
+static mathfun_reg triangle_wave(const mathfun_reg args[]) {
+	const mathfun_value x = fmod((args[0].number + M_PI_2), M_TAU);
+	return (mathfun_reg){ .number = x < M_PI ? x * M_2_PI - 1 : 3 - x * M_2_PI };
 }
 
-static mathfun_value sawtooth_wave(const mathfun_value args[]) {
-	return fmod(args[0], M_TAU) * M_1_PI - 1;
+static mathfun_reg sawtooth_wave(const mathfun_reg args[]) {
+	return (mathfun_reg){ .number = fmod(args[0].number, M_TAU) * M_1_PI - 1 };
 }
 
-static mathfun_value fadein(const mathfun_value args[]) {
-	const mathfun_value t = args[0];
-	if (t < 0) return 0;
-	const mathfun_value duration = args[1];
-	if (duration < t) return 1;
+static mathfun_reg fadein(const mathfun_reg args[]) {
+	const mathfun_value t = args[0].number;
+	if (t < 0) return (mathfun_reg){ .number = 0.0 };
+	const mathfun_value duration = args[1].number;
+	if (duration < t) return (mathfun_reg){ .number = 1.0 };
 	const mathfun_value x = t / duration;
-	return x*x;
+	return (mathfun_reg){ .number = x*x };
 }
 
-static mathfun_value fadeout(const mathfun_value args[]) {
-	mathfun_value t = args[0];
-	const mathfun_value duration = args[1];
-	if (t > duration) return 0.0;
-	if (t < 0.0) return 1.0;
+static mathfun_reg fadeout(const mathfun_reg args[]) {
+	mathfun_value t = args[0].number;
+	const mathfun_value duration = args[1].number;
+	if (t > duration) return (mathfun_reg){ .number = 0.0 };
+	if (t < 0.0) return (mathfun_reg){ .number = 1.0 };
 	const mathfun_value x = (t - duration) / duration;
-	return x*x;
+	return (mathfun_reg){ .number = x*x };
 }
 
-static mathfun_value mask(const mathfun_value args[]) {
-	const mathfun_value t = args[0];
-	return t >= 0 && t < args[1] ? 1 : 0;
+static mathfun_reg mask(const mathfun_reg args[]) {
+	const mathfun_value t = args[0].number;
+	return (mathfun_reg){ .number = t >= 0 && t < args[1].number ? 1.0 : 0.0 };
 }
 
-static mathfun_value clamp(const mathfun_value args[]) {
-	const mathfun_value x = args[0];
-	const mathfun_value min = args[1];
-	const mathfun_value max = args[2];
-	return x < min ? min : x > max ? max : x;
+static mathfun_reg clamp(const mathfun_reg args[]) {
+	const mathfun_value x = args[0].number;
+	const mathfun_value min = args[1].number;
+	const mathfun_value max = args[2].number;
+	return (mathfun_reg){ .number = x < min ? min : x > max ? max : x };
 }
 
-static mathfun_value pop(const mathfun_value args[]) {
-	const mathfun_value t = args[0];
-	const mathfun_value wavelength = args[1];
+static mathfun_reg pop(const mathfun_reg args[]) {
+	const mathfun_value t = args[0].number;
+	const mathfun_value wavelength = args[1].number;
 	const mathfun_value half_wavelength = wavelength * 0.5;
-	const mathfun_value amplitude = args[2];
+	const mathfun_value amplitude = args[2].number;
 
-	return t >= 0.0 && t < half_wavelength ? amplitude : t >= half_wavelength && t < wavelength ? -amplitude : 0.0;
+	return (mathfun_reg){ .number =
+		t >= 0.0 && t < half_wavelength ? amplitude : t >= half_wavelength && t < wavelength ? -amplitude : 0.0
+	};
 }
 
-static mathfun_value drop(const mathfun_value args[]) {
-	return args[0] == 0.0 ? 0.0 : 1.0;
+static mathfun_reg drop(const mathfun_reg args[]) {
+	return (mathfun_reg){ .number = args[0].number == 0.0 ? 0.0 : 1.0 };
 }
 
 #define RIFF_WAVE_HEADER_SIZE 44
@@ -134,7 +136,7 @@ bool mathfun_wavegen(const char *filename, FILE *stream, uint32_t sample_rate, u
 		}
 	}
 
-	mathfun_value *frame = calloc(maxframesize, sizeof(mathfun_value));
+	mathfun_reg *frame = calloc(maxframesize, sizeof(mathfun_reg));
 
 	if (!frame) {
 		perror("allocating frame");
@@ -175,9 +177,9 @@ bool mathfun_wavegen(const char *filename, FILE *stream, uint32_t sample_rate, u
 		for (size_t channel = 0; channel < channels; ++ channel) {
 			const mathfun *funct = channel_functs + channel;
 			// arguments are the first cells in frame:
-			frame[0] = t;
-			frame[1] = sample;
-			frame[2] = channel;
+			frame[0].number = t;
+			frame[1].number = sample;
+			frame[2].number = channel;
 			// ignore math errors here (would be in errno)
 			mathfun_value value = mathfun_exec(funct, frame);
 			if (value > 1.0) value = 1.0;
@@ -206,19 +208,23 @@ bool mathfun_wavegen(const char *filename, FILE *stream, uint32_t sample_rate, u
 
 bool wavegen(const char *filename, FILE *stream, uint32_t sample_rate, uint16_t bits_per_sample,
 	uint16_t channels, uint32_t samples, const char *channel_functs[], bool write_header) {
+	const mathfun_sig sig1 = {1, (mathfun_type[]){MATHFUN_NUMBER}, MATHFUN_NUMBER};
+	const mathfun_sig sig2 = {2, (mathfun_type[]){MATHFUN_NUMBER, MATHFUN_NUMBER}, MATHFUN_NUMBER};
+	const mathfun_sig sig3 = {3, (mathfun_type[]){MATHFUN_NUMBER, MATHFUN_NUMBER, MATHFUN_NUMBER}, MATHFUN_NUMBER};
+
 	mathfun_context ctx;
 	mathfun_error_p error = NULL;
 
 	if (!mathfun_context_init(&ctx, true, &error) ||
-		!mathfun_context_define_funct(&ctx, "sq",      square_wave,   1, &error) ||
-		!mathfun_context_define_funct(&ctx, "tri",     triangle_wave, 1, &error) ||
-		!mathfun_context_define_funct(&ctx, "saw",     sawtooth_wave, 1, &error) ||
-		!mathfun_context_define_funct(&ctx, "fadein",  fadein,        2, &error) ||
-		!mathfun_context_define_funct(&ctx, "fadeout", fadeout,       2, &error) ||
-		!mathfun_context_define_funct(&ctx, "mask",    mask,          2, &error) ||
-		!mathfun_context_define_funct(&ctx, "clamp",   clamp,         3, &error) ||
-		!mathfun_context_define_funct(&ctx, "pop",     pop,           3, &error) ||
-		!mathfun_context_define_funct(&ctx, "drop",    drop,          1, &error)) {
+		!mathfun_context_define_funct(&ctx, "sq",      square_wave,   &sig1, &error) ||
+		!mathfun_context_define_funct(&ctx, "tri",     triangle_wave, &sig1, &error) ||
+		!mathfun_context_define_funct(&ctx, "saw",     sawtooth_wave, &sig1, &error) ||
+		!mathfun_context_define_funct(&ctx, "fadein",  fadein,        &sig2, &error) ||
+		!mathfun_context_define_funct(&ctx, "fadeout", fadeout,       &sig2, &error) ||
+		!mathfun_context_define_funct(&ctx, "mask",    mask,          &sig2, &error) ||
+		!mathfun_context_define_funct(&ctx, "clamp",   clamp,         &sig3, &error) ||
+		!mathfun_context_define_funct(&ctx, "pop",     pop,           &sig3, &error) ||
+		!mathfun_context_define_funct(&ctx, "drop",    drop,          &sig1, &error)) {
 		mathfun_error_log_and_cleanup(&error, stderr);
 		return false;
 	}

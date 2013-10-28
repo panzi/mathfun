@@ -7,7 +7,7 @@
 // error object will work and this is also the only way to signal a proper error in case
 // there is an ENOMEM when allocating an error object.
 static const mathfun_error mathfun_memory_error = {
-	MATHFUN_OUT_OF_MEMORY, ENOMEM, 0, 0, NULL, NULL, 0, 0, 0
+	MATHFUN_OUT_OF_MEMORY, ENOMEM, 0, 0, NULL, NULL, 0, { .argc = { 0, 0 } }
 };
 
 enum mathfun_error_type mathfun_error_type(mathfun_error_p error) {
@@ -176,8 +176,26 @@ void mathfun_raise_parser_argc_error(const mathfun_parser *parser,
 			MATHFUN_PARSER_ILLEGAL_NUMBER_OF_ARGUMENTS, errpos);
 
 		if (error) {
-			error->expected_argc = expected;
-			error->argc          = got;
+			error->err.argc.expected = expected;
+			error->err.argc.got      = got;
+
+			*parser->error = error;
+		}
+		else {
+			*parser->error = &mathfun_memory_error;
+		}
+	}
+}
+
+void mathfun_raise_parser_type_error(const mathfun_parser *parser,
+	const char *errpos, mathfun_type expected, mathfun_type got) {
+	if (parser->error) {
+		mathfun_error *error = mathfun_alloc_parse_error(parser,
+			MATHFUN_PARSER_TYPE_ERROR, errpos);
+
+		if (error) {
+			error->err.type.expected = expected;
+			error->err.type.got      = got;
 
 			*parser->error = error;
 		}
@@ -308,7 +326,7 @@ void mathfun_error_log(mathfun_error_p error, FILE *stream) {
 
 		case MATHFUN_PARSER_ILLEGAL_NUMBER_OF_ARGUMENTS:
 			mathfun_log_parser_error(error, stream, "illegal number of arguments: expected %"PRIzu" but got %"PRIzu,
-				error->expected_argc, error->argc);
+				error->err.argc.expected, error->err.argc.got);
 			break;
 
 		case MATHFUN_PARSER_EXPECTED_NUMBER:
@@ -317,6 +335,15 @@ void mathfun_error_log(mathfun_error_p error, FILE *stream) {
 
 		case MATHFUN_PARSER_EXPECTED_IDENTIFIER:
 			mathfun_log_parser_error(error, stream, "expected an identifier");
+			break;
+
+		case MATHFUN_PARSER_EXPECTED_COLON:
+			mathfun_log_parser_error(error, stream, "expected ':'");
+			break;
+
+		case MATHFUN_PARSER_TYPE_ERROR:
+			mathfun_log_parser_error(error, stream, "expression has illegal type for this position: expected %s but got %s",
+				mathfun_type_name(error->err.type.expected), mathfun_type_name(error->err.type.got));
 			break;
 
 		case MATHFUN_PARSER_TRAILING_GARBAGE:

@@ -66,7 +66,7 @@ struct mathfun_decl {
 		mathfun_value value;
 		struct {
 			mathfun_binding_funct funct;
-			size_t argc;
+			const mathfun_sig *sig;
 		} funct;
 	} decl;
 };
@@ -75,26 +75,43 @@ enum mathfun_expr_type {
 	EX_CONST,
 	EX_ARG,
 	EX_CALL,
+	
 	EX_NEG,
 	EX_ADD,
 	EX_SUB,
 	EX_MUL,
 	EX_DIV,
 	EX_MOD,
-	EX_POW
+	EX_POW,
+
+	EX_NOT,
+	EX_EQ,
+	EX_NE,
+	EX_LT,
+	EX_GT,
+	EX_LE,
+	EX_GE,
+
+	EX_AND,
+	EX_OR,
+
+	EX_IIF
 };
 
 struct mathfun_expr {
 	enum mathfun_expr_type type;
 	union {
-		mathfun_value value;
+		struct {
+			mathfun_type type;
+			mathfun_reg value;
+		} value;
 
 		mathfun_code arg;
 
 		struct {
 			mathfun_binding_funct funct;
+			const mathfun_sig *sig;
 			mathfun_expr **args;
-			size_t argc;
 		} funct;
 
 		struct {
@@ -105,11 +122,17 @@ struct mathfun_expr {
 			mathfun_expr *left;
 			mathfun_expr *right;
 		} binary;
+
+		struct {
+			mathfun_expr *cond;
+			mathfun_expr *then_expr;
+			mathfun_expr *else_expr;
+		} iif;
 	} ex;
 };
 
 enum mathfun_bytecode {
-	             // args           description
+	             // arguments      description
 	NOP  =  0,   //                do nothing. used to align VAL and CALL
 	RET  =  1,   // reg            return
 	MOV  =  2,   // reg, reg       copy value
@@ -125,7 +148,22 @@ enum mathfun_bytecode {
 	MUL  =  8,   // reg, reg, reg  multiply
 	DIV  =  9,   // reg, reg, reg  divide
 	MOD  = 10,   // reg, reg, reg  modulo division
-	POW  = 11    // reg, reg, reg  power
+	POW  = 11,   // reg, reg, reg  power
+
+	NOT  = 12,   // reg, reg       logically negate
+	EQ   = 13,   // reg, reg, reg  equals
+	NE   = 14,   // reg, reg, reg  not equals
+	LT   = 15,   // reg, reg, reg  lower than
+	GT   = 16,   // reg, reg, reg  greater than
+	LE   = 17,   // reg, reg, reg  lower or equal than
+	GE   = 18,   // reg, reg, reg  greater or equal than
+
+	JMP  = 19,   // adr            jumo to adr
+	JMPT = 20,   // reg, adr       jump to adr if reg contains true
+	JMPF = 21,   // reg, adr       jump to adr if reg contains false
+
+	SETT = 22,   // reg            set reg to true
+	SETF = 23    // reg            set reg to false
 };
 
 struct mathfun_error {
@@ -136,8 +174,17 @@ struct mathfun_error {
 	const char *str;
 	const char *errpos;
 	size_t      errlen;
-	size_t      argc;
-	size_t      expected_argc;
+	union {
+		struct {
+			size_t got;
+			size_t expected;
+		} argc;
+
+		struct {
+			mathfun_type got;
+			mathfun_type expected;
+		} type;
+	} err;
 };
 
 struct mathfun_parser {
@@ -172,16 +219,29 @@ MATHFUN_LOCAL bool mathfun_expr_codegen(mathfun_expr *expr, mathfun *mathfun, ma
 
 MATHFUN_LOCAL bool mathfun_codegen_expr(mathfun_codegen *codegen, mathfun_expr *expr, mathfun_code *ret);
 
+MATHFUN_LOCAL bool mathfun_codegen_val(mathfun_codegen *codegen, mathfun_reg value, mathfun_code target);
+MATHFUN_LOCAL bool mathfun_codegen_call(mathfun_codegen *codegen, mathfun_binding_funct funct, mathfun_code firstarg, mathfun_code target);
+
+MATHFUN_LOCAL bool mathfun_codegen_ins0(mathfun_codegen *codegen, enum mathfun_bytecode code);
+MATHFUN_LOCAL bool mathfun_codegen_ins1(mathfun_codegen *codegen, enum mathfun_bytecode code, mathfun_code arg1);
+MATHFUN_LOCAL bool mathfun_codegen_ins2(mathfun_codegen *codegen, enum mathfun_bytecode code, mathfun_code arg1, mathfun_code arg2);
+MATHFUN_LOCAL bool mathfun_codegen_ins3(mathfun_codegen *codegen, enum mathfun_bytecode code, mathfun_code arg1, mathfun_code arg2, mathfun_code arg3);
+
 MATHFUN_LOCAL bool mathfun_codegen_binary(mathfun_codegen *codegen, mathfun_expr *expr,
+	enum mathfun_bytecode code, mathfun_code *ret);
+
+MATHFUN_LOCAL bool mathfun_codegen_unary(mathfun_codegen *codegen, mathfun_expr *expr,
 	enum mathfun_bytecode code, mathfun_code *ret);
 
 MATHFUN_LOCAL mathfun_expr *mathfun_expr_alloc(enum mathfun_expr_type type, mathfun_error_p *error);
 
-MATHFUN_LOCAL void          mathfun_expr_free(mathfun_expr *expr);
+MATHFUN_LOCAL void mathfun_expr_free(mathfun_expr *expr);
 
 MATHFUN_LOCAL mathfun_expr *mathfun_expr_optimize(mathfun_expr *expr, mathfun_error_p *error);
 
-MATHFUN_LOCAL mathfun_value mathfun_expr_exec(const mathfun_expr *expr, const mathfun_value args[],
+MATHFUN_LOCAL mathfun_type mathfun_expr_type(const mathfun_expr *expr);
+
+MATHFUN_LOCAL mathfun_reg mathfun_expr_exec(const mathfun_expr *expr, const mathfun_value args[],
 	mathfun_error_p *error);
 
 MATHFUN_LOCAL const char *mathfun_find_identifier_end(const char *str);
@@ -198,7 +258,12 @@ MATHFUN_LOCAL void mathfun_raise_parser_error(const mathfun_parser *parser,
 MATHFUN_LOCAL void mathfun_raise_parser_argc_error(const mathfun_parser *parser,
 	const char *errpos, size_t expected, size_t got);
 
+MATHFUN_LOCAL void mathfun_raise_parser_type_error(const mathfun_parser *parser,
+	const char *errpos, mathfun_type expected, mathfun_type got);
+
 MATHFUN_LOCAL bool mathfun_validate_argnames(const char *argnames[], size_t argc, mathfun_error_p *error);
+
+MATHFUN_LOCAL const char *mathfun_type_name(mathfun_type type);
 
 #ifdef __cplusplus
 }
