@@ -44,8 +44,8 @@ typedef uintptr_t mathfun_code;
 /** Type used for the "registers" of the interpreter.
  */
 typedef union mathfun_reg {
-	double number;
-	bool boolean;
+	double number; ///< numeric value
+	bool boolean;  ///< boolean value
 } mathfun_reg;
 
 /** Type enum.
