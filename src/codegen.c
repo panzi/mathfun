@@ -4,47 +4,47 @@
 
 #include "mathfun_intern.h"
 
-typedef bool (*mathfun_binary_op)(mathfun_value a, mathfun_value b, mathfun_value *res, mathfun_error_p *error);
-typedef bool (*mathfun_cmp)(mathfun_value a, mathfun_value b);
+typedef bool (*mathfun_binary_op)(double a, double b, double *res, mathfun_error_p *error);
+typedef bool (*mathfun_cmp)(double a, double b);
 
-static bool mathfun_opt_add(mathfun_value a, mathfun_value b, mathfun_value *res, mathfun_error_p *error) {
+static bool mathfun_opt_add(double a, double b, double *res, mathfun_error_p *error) {
 	(void)error;
 	*res = a + b;
 	return true;
 }
 
-static bool mathfun_opt_sub(mathfun_value a, mathfun_value b, mathfun_value *res, mathfun_error_p *error) {
+static bool mathfun_opt_sub(double a, double b, double *res, mathfun_error_p *error) {
 	(void)error;
 	*res = a - b;
 	return true;
 }
 
-static bool mathfun_opt_mul(mathfun_value a, mathfun_value b, mathfun_value *res, mathfun_error_p *error) {
+static bool mathfun_opt_mul(double a, double b, double *res, mathfun_error_p *error) {
 	(void)error;
 	*res = a * b;
 	return true;
 }
 
-static bool mathfun_opt_div(mathfun_value a, mathfun_value b, mathfun_value *res, mathfun_error_p *error) {
+static bool mathfun_opt_div(double a, double b, double *res, mathfun_error_p *error) {
 	(void)error;
 	*res = a / b;
 	return true;
 }
 
-static bool mathfun_opt_mod(mathfun_value a, mathfun_value b, mathfun_value *res, mathfun_error_p *error) {
+static bool mathfun_opt_mod(double a, double b, double *res, mathfun_error_p *error) {
 	if (b == 0.0) {
 		mathfun_raise_math_error(error, EDOM);
 		return false;
 	}
 	else {
-		mathfun_value mathfun_mod_result;
+		double mathfun_mod_result;
 		MATHFUN_MOD(a,b);
 		*res = mathfun_mod_result;
 		return true;
 	}
 }
 
-static bool mathfun_opt_pow(mathfun_value a, mathfun_value b, mathfun_value *res, mathfun_error_p *error) {
+static bool mathfun_opt_pow(double a, double b, double *res, mathfun_error_p *error) {
 	errno = 0;
 	*res = pow(a, b);
 	if (errno != 0) {
@@ -54,15 +54,15 @@ static bool mathfun_opt_pow(mathfun_value a, mathfun_value b, mathfun_value *res
 	return true;
 }
 
-static bool mathfun_opt_eq(mathfun_value a, mathfun_value b) { return a == b; }
-static bool mathfun_opt_ne(mathfun_value a, mathfun_value b) { return a != b; }
-static bool mathfun_opt_gt(mathfun_value a, mathfun_value b) { return a >  b; }
-static bool mathfun_opt_lt(mathfun_value a, mathfun_value b) { return a <  b; }
-static bool mathfun_opt_ge(mathfun_value a, mathfun_value b) { return a >= b; }
-static bool mathfun_opt_le(mathfun_value a, mathfun_value b) { return a <= b; }
+static bool mathfun_opt_eq(double a, double b) { return a == b; }
+static bool mathfun_opt_ne(double a, double b) { return a != b; }
+static bool mathfun_opt_gt(double a, double b) { return a >  b; }
+static bool mathfun_opt_lt(double a, double b) { return a <  b; }
+static bool mathfun_opt_ge(double a, double b) { return a >= b; }
+static bool mathfun_opt_le(double a, double b) { return a <= b; }
 
 static mathfun_expr *mathfun_expr_optimize_binary(mathfun_expr *expr,
-	mathfun_binary_op op, bool has_neutral, mathfun_value neutral, bool commutative,
+	mathfun_binary_op op, bool has_neutral, double neutral, bool commutative,
 	mathfun_error_p *error) {
 
 	expr->ex.binary.left = mathfun_expr_optimize(expr->ex.binary.left, error);
@@ -80,7 +80,7 @@ static mathfun_expr *mathfun_expr_optimize_binary(mathfun_expr *expr,
 	if (expr->ex.binary.left->type  == EX_CONST &&
 		expr->ex.binary.right->type == EX_CONST) {
 
-		mathfun_value value = 0;
+		double value = 0;
 		if (!op(expr->ex.binary.left->ex.value.value.number, expr->ex.binary.right->ex.value.value.number, &value, error)) {
 			mathfun_expr_free(expr);
 			return NULL;
@@ -427,7 +427,7 @@ bool mathfun_codegen_align(mathfun_codegen *codegen, size_t offset, size_t align
 }
 
 bool mathfun_codegen_val(mathfun_codegen *codegen, mathfun_reg value, mathfun_code target) {
-	if (!mathfun_codegen_align(codegen, 1, sizeof(mathfun_value))) return false;
+	if (!mathfun_codegen_align(codegen, 1, sizeof(double))) return false;
 	if (!mathfun_codegen_ensure(codegen, MATHFUN_VALUE_CODES + 2)) return false;
 
 	codegen->code[codegen->code_used ++] = VAL;
@@ -756,7 +756,7 @@ bool mathfun_dump(const mathfun *mathfun, FILE *stream, const mathfun_context *c
 				break;
 
 			case VAL:
-				MATHFUN_DUMP((stream, "val %.22g, %"PRIuPTR"\n", *(mathfun_value*)(code + 1),
+				MATHFUN_DUMP((stream, "val %.22g, %"PRIuPTR"\n", *(double*)(code + 1),
 					code[1 + MATHFUN_VALUE_CODES]));
 				code += 2 + MATHFUN_VALUE_CODES;
 				break;

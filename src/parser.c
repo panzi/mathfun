@@ -688,7 +688,7 @@ mathfun_expr *mathfun_parse_atom(mathfun_parser *parser) {
 
 mathfun_expr *mathfun_parse_number(mathfun_parser *parser) {
 	char *endptr = NULL;
-	mathfun_value value = strtod(parser->ptr, &endptr);
+	double value = strtod(parser->ptr, &endptr);
 
 	if (parser->ptr == endptr) {
 		mathfun_raise_parser_error(parser, MATHFUN_PARSER_EXPECTED_NUMBER, NULL);

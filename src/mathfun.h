@@ -41,16 +41,10 @@ extern "C" {
 
 typedef uintptr_t mathfun_code;
 
-/** Numeric type for all calculations.
- *
- * (Maybe double should just be used directly.)
- */
-typedef double mathfun_value;
-
 /** Type used for the "registers" of the interpreter.
  */
 typedef union mathfun_reg {
-	mathfun_value number;
+	double number;
 	bool boolean;
 } mathfun_reg;
 
@@ -132,7 +126,7 @@ typedef struct mathfun mathfun;
  *
  * @code
  * mathfun_error_p error = NULL;
- * mathfun_value value = mathfun_run("sin(x) + cos(y)", &error, "x", "y", NULL, 1.2, 3.4);
+ * double value = mathfun_run("sin(x) + cos(y)", &error, "x", "y", NULL, 1.2, 3.4);
  * if (error) {
  *     mathfun_error_log_and_cleanup(&error, stderr);
  * }
@@ -258,7 +252,7 @@ MATHFUN_EXPORT bool mathfun_context_define_default(mathfun_context *ctx, mathfun
  * @param error A pointer to an error handle. Possible errors: #MATHFUN_OUT_OF_MEMORY and #MATHFUN_NAME_EXISTS
  * @return true on success, false if an error occured.
  */
-MATHFUN_EXPORT bool mathfun_context_define_const(mathfun_context *ctx, const char *name, mathfun_value value,
+MATHFUN_EXPORT bool mathfun_context_define_const(mathfun_context *ctx, const char *name, double value,
 	mathfun_error_p *error);
 
 /** Define a constant function.
@@ -329,7 +323,7 @@ MATHFUN_EXPORT bool mathfun_compile(mathfun *mathfun, const char *argnames[], si
  *        #MATHFUN_C_ERROR (depending on the functions called by the expression)
  * @return The result of the evaluation.
  */
-MATHFUN_EXPORT mathfun_value mathfun_call(const mathfun *mathfun, mathfun_error_p *error, ...);
+MATHFUN_EXPORT double mathfun_call(const mathfun *mathfun, mathfun_error_p *error, ...);
 
 /** Execute a compiled function expression.
  *
@@ -339,7 +333,7 @@ MATHFUN_EXPORT mathfun_value mathfun_call(const mathfun *mathfun, mathfun_error_
  *        #MATHFUN_C_ERROR (depending on the functions called by the expression)
  * @return The result of the evaluation.
  */
-MATHFUN_EXPORT mathfun_value mathfun_acall(const mathfun *mathfun, const mathfun_value args[], mathfun_error_p *error);
+MATHFUN_EXPORT double mathfun_acall(const mathfun *mathfun, const double args[], mathfun_error_p *error);
 
 /** Execute a compiled function expression.
  *
@@ -349,7 +343,7 @@ MATHFUN_EXPORT mathfun_value mathfun_acall(const mathfun *mathfun, const mathfun
  *        #MATHFUN_C_ERROR (depending on the functions called by the expression)
  * @return The result of the evaluation
  */
-MATHFUN_EXPORT mathfun_value mathfun_vcall(const mathfun *mathfun, va_list ap, mathfun_error_p *error);
+MATHFUN_EXPORT double mathfun_vcall(const mathfun *mathfun, va_list ap, mathfun_error_p *error);
 
 /** Execute a compiled function expression.
  *
@@ -366,7 +360,7 @@ MATHFUN_EXPORT mathfun_value mathfun_vcall(const mathfun *mathfun, va_list ap, m
  * @param frame The functions execution frame
  * @return The result of the execution
  */
-MATHFUN_EXPORT mathfun_value mathfun_exec(const mathfun *mathfun, mathfun_reg frame[])
+MATHFUN_EXPORT double mathfun_exec(const mathfun *mathfun, mathfun_reg frame[])
 	__attribute__((__noinline__,__noclone__));
 
 /** Dump text representation of byte code.
@@ -386,14 +380,14 @@ MATHFUN_EXPORT bool mathfun_dump(const mathfun *mathfun, FILE *stream, const mat
  * Use this for one-time executions.
  *
  * @code
- * mathfun_value mathfun_run(const char *code, mathfun_error_p *error, const char *argname..., NULL, mathfun_value argvalue...);
+ * double mathfun_run(const char *code, mathfun_error_p *error, const char *argname..., NULL, double argvalue...);
  * @endcode
  *
  * @param code The function expression.
  * @param error A pointer to an error handle.
  * @return The result of the execution.
  */
-MATHFUN_EXPORT mathfun_value mathfun_run(const char *code, mathfun_error_p *error, ...);
+MATHFUN_EXPORT double mathfun_run(const char *code, mathfun_error_p *error, ...);
 
 /** Parse and run function expression.
  * 
@@ -409,7 +403,7 @@ MATHFUN_EXPORT mathfun_value mathfun_run(const char *code, mathfun_error_p *erro
  *        MATHFUN_PARSER_*
  * @return The result of the execution.
  */
-MATHFUN_EXPORT mathfun_value mathfun_arun(const char *argnames[], size_t argc, const char *code, const mathfun_value args[],
+MATHFUN_EXPORT double mathfun_arun(const char *argnames[], size_t argc, const char *code, const double args[],
 	mathfun_error_p *error);
 
 /** Get mathfun_error_type of error.
@@ -499,7 +493,7 @@ MATHFUN_EXPORT bool mathfun_valid_name(const char *name);
  * @param y The divisor
  * @return The remainder
  */
-MATHFUN_EXPORT mathfun_value mathfun_mod(mathfun_value x, mathfun_value y);
+MATHFUN_EXPORT double mathfun_mod(double x, double y);
 
 #ifdef __cplusplus
 }

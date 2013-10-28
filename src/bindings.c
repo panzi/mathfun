@@ -121,15 +121,15 @@ static mathfun_reg mathfun_funct_fmod(const mathfun_reg args[]) {
 }
 
 static mathfun_reg mathfun_funct_max(const mathfun_reg args[]) {
-	mathfun_value x = args[0].number;
-	mathfun_value y = args[1].number;
+	double x = args[0].number;
+	double y = args[1].number;
 	return (mathfun_reg){ .number = (x >= y || isnan(x)) ? x : y };
 //	return (mathfun_reg){ .number = fmax(args[0].number, args[1].number) };
 }
 
 static mathfun_reg mathfun_funct_min(const mathfun_reg args[]) {
-	mathfun_value x = args[0].number;
-	mathfun_value y = args[1].number;
+	double x = args[0].number;
+	double y = args[1].number;
 	return (mathfun_reg){ .number = (x <= y || isnan(y)) ? x : y };
 //	return (mathfun_reg){ .number = fmin(args[0].number, args[1].number) };
 }

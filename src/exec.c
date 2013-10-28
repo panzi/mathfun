@@ -3,7 +3,7 @@
 #include "mathfun_intern.h"
 
 // tree interpreter, for one time execution and debugging
-mathfun_reg mathfun_expr_exec(const mathfun_expr *expr, const mathfun_value args[],
+mathfun_reg mathfun_expr_exec(const mathfun_expr *expr, const double args[],
 	mathfun_error_p *error) {
 	switch (expr->type) {
 		case EX_CONST:
@@ -67,15 +67,15 @@ mathfun_reg mathfun_expr_exec(const mathfun_expr *expr, const mathfun_value args
 
 		case EX_MOD:
 		{
-			mathfun_value left  = mathfun_expr_exec(expr->ex.binary.left, args, error).number;
-			mathfun_value right = mathfun_expr_exec(expr->ex.binary.right, args, error).number;
+			double left  = mathfun_expr_exec(expr->ex.binary.left, args, error).number;
+			double right = mathfun_expr_exec(expr->ex.binary.right, args, error).number;
 
 			if (right == 0.0) {
 				mathfun_raise_math_error(error, EDOM);
 				return (mathfun_reg){ .number = NAN };
 			}
 
-			mathfun_value mathfun_mod_result;
+			double mathfun_mod_result;
 			MATHFUN_MOD(left, right);
 			return (mathfun_reg){ .number = mathfun_mod_result };
 		}
@@ -138,7 +138,7 @@ mathfun_reg mathfun_expr_exec(const mathfun_expr *expr, const mathfun_value args
 
 #pragma GCC diagnostic ignored "-pedantic"
 #pragma GCC diagnostic ignored "-Wunused-label"
-mathfun_value mathfun_exec(const mathfun *mathfun, mathfun_reg regs[]) {
+double mathfun_exec(const mathfun *mathfun, mathfun_reg regs[]) {
 	const mathfun_code *start = mathfun->code;
 	const mathfun_code *code  = mathfun->code;
 
@@ -211,9 +211,9 @@ do_div:
 			case MOD:
 do_mod:
 			{
-				mathfun_value left  = regs[code[1]].number;
-				mathfun_value right = regs[code[2]].number;
-				mathfun_value mathfun_mod_result;
+				double left  = regs[code[1]].number;
+				double right = regs[code[2]].number;
+				double mathfun_mod_result;
 				
 				if (right == 0.0) {
 					// consistenly just act c-like here
@@ -241,7 +241,7 @@ do_neg:
 
 			case VAL:
 do_val:
-				regs[code[1 + MATHFUN_VALUE_CODES]].number = *(mathfun_value*)(code + 1);
+				regs[code[1 + MATHFUN_VALUE_CODES]].number = *(double*)(code + 1);
 				code += 2 + MATHFUN_VALUE_CODES;
 				DISPATCH;
 

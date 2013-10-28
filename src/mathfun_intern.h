@@ -16,21 +16,21 @@ extern "C" {
 
 // assumtions:
 // sizeof(x) == 2 ** n and sizeof(x) == __alignof__(x)
-// for x in {mathfun_value, mathfun_binding_funct}
+// for x in {double, mathfun_binding_funct}
 
 #define MATHFUN_REGS_MAX UINTPTR_MAX
 #define MATHFUN_FUNCT_CODES (1 + ((sizeof(mathfun_binding_funct) - 1) / sizeof(mathfun_code)))
-#define MATHFUN_VALUE_CODES (1 + ((sizeof(mathfun_value) - 1) / sizeof(mathfun_code)))
+#define MATHFUN_VALUE_CODES (1 + ((sizeof(double) - 1) / sizeof(mathfun_code)))
 
 #ifndef __GNUC__
 #	define __attribute__(X)
 #endif
 
 #define MATHFUN_MOD(A,B) \
-	mathfun_value __mathfun_mod_i = floor((mathfun_value)(A)/(mathfun_value)(B)); \
-	mathfun_mod_result = (mathfun_value)(A) - __mathfun_mod_i * (mathfun_value)(B); \
-	if (((mathfun_value)(A) < 0.0) != ((mathfun_value)(B) < 0.0)) { \
-		mathfun_mod_result = mathfun_mod_result - (mathfun_value)(B); \
+	double __mathfun_mod_i = floor((double)(A)/(double)(B)); \
+	mathfun_mod_result = (double)(A) - __mathfun_mod_i * (double)(B); \
+	if (((double)(A) < 0.0) != ((double)(B) < 0.0)) { \
+		mathfun_mod_result = mathfun_mod_result - (double)(B); \
 	}
 
 #if (defined(_WIN16) || defined(_WIN32) || defined(_WIN64)) && !defined(__CYGWIN__)
@@ -63,7 +63,7 @@ struct mathfun_decl {
 	enum mathfun_decl_type type;
 	const char *name;
 	union {
-		mathfun_value value;
+		double value;
 		struct {
 			mathfun_binding_funct funct;
 			const mathfun_sig *sig;
@@ -241,7 +241,7 @@ MATHFUN_LOCAL mathfun_expr *mathfun_expr_optimize(mathfun_expr *expr, mathfun_er
 
 MATHFUN_LOCAL mathfun_type mathfun_expr_type(const mathfun_expr *expr);
 
-MATHFUN_LOCAL mathfun_reg mathfun_expr_exec(const mathfun_expr *expr, const mathfun_value args[],
+MATHFUN_LOCAL mathfun_reg mathfun_expr_exec(const mathfun_expr *expr, const double args[],
 	mathfun_error_p *error);
 
 MATHFUN_LOCAL const char *mathfun_find_identifier_end(const char *str);

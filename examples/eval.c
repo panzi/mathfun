@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
 
 	char **argnames = argv + 1;
 	const size_t funct_argc = argc - 2;
-	mathfun_value *funct_args = calloc(funct_argc, sizeof(mathfun_value));
+	double *funct_args = calloc(funct_argc, sizeof(double));
 
 	if (!funct_args) {
 		perror("error allocating arguments");
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	mathfun_value value = mathfun_acall(&fun, funct_args, &error);
+	double value = mathfun_acall(&fun, funct_args, &error);
 	mathfun_cleanup(&fun);
 	free(funct_args);
 

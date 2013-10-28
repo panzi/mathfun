@@ -17,7 +17,7 @@ static mathfun_reg square_wave(const mathfun_reg args[]) {
 }
 
 static mathfun_reg triangle_wave(const mathfun_reg args[]) {
-	const mathfun_value x = fmod((args[0].number + M_PI_2), M_TAU);
+	const double x = fmod((args[0].number + M_PI_2), M_TAU);
 	return (mathfun_reg){ .number = x < M_PI ? x * M_2_PI - 1 : 3 - x * M_2_PI };
 }
 
@@ -26,40 +26,40 @@ static mathfun_reg sawtooth_wave(const mathfun_reg args[]) {
 }
 
 static mathfun_reg fadein(const mathfun_reg args[]) {
-	const mathfun_value t = args[0].number;
+	const double t = args[0].number;
 	if (t < 0) return (mathfun_reg){ .number = 0.0 };
-	const mathfun_value duration = args[1].number;
+	const double duration = args[1].number;
 	if (duration < t) return (mathfun_reg){ .number = 1.0 };
-	const mathfun_value x = t / duration;
+	const double x = t / duration;
 	return (mathfun_reg){ .number = x*x };
 }
 
 static mathfun_reg fadeout(const mathfun_reg args[]) {
-	mathfun_value t = args[0].number;
-	const mathfun_value duration = args[1].number;
+	double t = args[0].number;
+	const double duration = args[1].number;
 	if (t > duration) return (mathfun_reg){ .number = 0.0 };
 	if (t < 0.0) return (mathfun_reg){ .number = 1.0 };
-	const mathfun_value x = (t - duration) / duration;
+	const double x = (t - duration) / duration;
 	return (mathfun_reg){ .number = x*x };
 }
 
 static mathfun_reg mask(const mathfun_reg args[]) {
-	const mathfun_value t = args[0].number;
+	const double t = args[0].number;
 	return (mathfun_reg){ .number = t >= 0 && t < args[1].number ? 1.0 : 0.0 };
 }
 
 static mathfun_reg clamp(const mathfun_reg args[]) {
-	const mathfun_value x = args[0].number;
-	const mathfun_value min = args[1].number;
-	const mathfun_value max = args[2].number;
+	const double x = args[0].number;
+	const double min = args[1].number;
+	const double max = args[2].number;
 	return (mathfun_reg){ .number = x < min ? min : x > max ? max : x };
 }
 
 static mathfun_reg pop(const mathfun_reg args[]) {
-	const mathfun_value t = args[0].number;
-	const mathfun_value wavelength = args[1].number;
-	const mathfun_value half_wavelength = wavelength * 0.5;
-	const mathfun_value amplitude = args[2].number;
+	const double t = args[0].number;
+	const double wavelength = args[1].number;
+	const double half_wavelength = wavelength * 0.5;
+	const double amplitude = args[2].number;
 
 	return (mathfun_reg){ .number =
 		t >= 0.0 && t < half_wavelength ? amplitude : t >= half_wavelength && t < wavelength ? -amplitude : 0.0
@@ -173,7 +173,7 @@ bool mathfun_wavegen(const char *filename, FILE *stream, uint32_t sample_rate, u
 	}
 
 	for (size_t sample = 0; sample < samples; ++ sample) {
-		const mathfun_value t = (mathfun_value)sample / (mathfun_value)sample_rate;
+		const double t = (double)sample / (double)sample_rate;
 		for (size_t channel = 0; channel < channels; ++ channel) {
 			const mathfun *funct = channel_functs + channel;
 			// arguments are the first cells in frame:
@@ -181,7 +181,7 @@ bool mathfun_wavegen(const char *filename, FILE *stream, uint32_t sample_rate, u
 			frame[1].number = sample;
 			frame[2].number = channel;
 			// ignore math errors here (would be in errno)
-			mathfun_value value = mathfun_exec(funct, frame);
+			double value = mathfun_exec(funct, frame);
 			if (value > 1.0) value = 1.0;
 			else if (value < -1.0) value = -1.0;
 			int vol = (int)(max_volume * value) << shift;

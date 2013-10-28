@@ -111,7 +111,7 @@ bool mathfun_validate_argnames(const char *argnames[], size_t argc, mathfun_erro
 	return true;
 }
 
-bool mathfun_context_define_const(mathfun_context *ctx, const char *name, mathfun_value value,
+bool mathfun_context_define_const(mathfun_context *ctx, const char *name, double value,
 	mathfun_error_p *error) {
 	if (!mathfun_valid_name(name)) {
 		mathfun_raise_name_error(error, MATHFUN_ILLEGAL_NAME, name);
@@ -188,18 +188,18 @@ void mathfun_cleanup(mathfun *mathfun) {
 	mathfun->code = NULL;
 }
 
-mathfun_value mathfun_call(const mathfun *mathfun, mathfun_error_p *error, ...) {
+double mathfun_call(const mathfun *mathfun, mathfun_error_p *error, ...) {
 	va_list ap;
 	va_start(ap, error);
 
-	mathfun_value value = mathfun_vcall(mathfun, ap, error);
+	double value = mathfun_vcall(mathfun, ap, error);
 
 	va_end(ap);
 
 	return value;
 }
 
-mathfun_value mathfun_acall(const mathfun *mathfun, const mathfun_value args[], mathfun_error_p *error) {
+double mathfun_acall(const mathfun *mathfun, const double args[], mathfun_error_p *error) {
 	mathfun_reg *regs = calloc(mathfun->framesize, sizeof(mathfun_reg));
 
 	if (!regs) {
@@ -212,7 +212,7 @@ mathfun_value mathfun_acall(const mathfun *mathfun, const mathfun_value args[], 
 	}
 
 	errno = 0;
-	mathfun_value value = mathfun_exec(mathfun, regs);
+	double value = mathfun_exec(mathfun, regs);
 	free(regs);
 
 	if (errno != 0) {
@@ -222,7 +222,7 @@ mathfun_value mathfun_acall(const mathfun *mathfun, const mathfun_value args[], 
 	return value;
 }
 
-mathfun_value mathfun_vcall(const mathfun *mathfun, va_list ap, mathfun_error_p *error) {
+double mathfun_vcall(const mathfun *mathfun, va_list ap, mathfun_error_p *error) {
 	mathfun_reg *regs = calloc(mathfun->framesize, sizeof(mathfun_reg));
 
 	if (!regs) {
@@ -231,11 +231,11 @@ mathfun_value mathfun_vcall(const mathfun *mathfun, va_list ap, mathfun_error_p 
 	}
 
 	for (size_t i = 0; i < mathfun->argc; ++ i) {
-		regs[i].number = va_arg(ap, mathfun_value);
+		regs[i].number = va_arg(ap, double);
 	}
 
 	errno = 0;
-	mathfun_value value = mathfun_exec(mathfun, regs);
+	double value = mathfun_exec(mathfun, regs);
 	free(regs);
 
 	if (errno != 0) {
@@ -245,7 +245,7 @@ mathfun_value mathfun_vcall(const mathfun *mathfun, va_list ap, mathfun_error_p 
 	return value;
 }
 
-mathfun_value mathfun_run(const char *code, mathfun_error_p *error, ...) {
+double mathfun_run(const char *code, mathfun_error_p *error, ...) {
 	va_list ap;
 
 	va_start(ap, error);
@@ -258,7 +258,7 @@ mathfun_value mathfun_run(const char *code, mathfun_error_p *error, ...) {
 	va_end(ap);
 
 	const char **argnames = NULL;
-	mathfun_value *args = NULL;
+	double *args = NULL;
 
 	if (argc > 0) {
 		argnames = calloc(argc, sizeof(char*));
@@ -268,7 +268,7 @@ mathfun_value mathfun_run(const char *code, mathfun_error_p *error, ...) {
 			return NAN;
 		}
 
-		args = calloc(argc, sizeof(mathfun_value));
+		args = calloc(argc, sizeof(double));
 
 		if (!args) {
 			mathfun_raise_error(error, MATHFUN_OUT_OF_MEMORY);
@@ -286,12 +286,12 @@ mathfun_value mathfun_run(const char *code, mathfun_error_p *error, ...) {
 	va_arg(ap, const char *);
 
 	for (size_t i = 0; i < argc; ++ i) {
-		args[i] = va_arg(ap, mathfun_value);
+		args[i] = va_arg(ap, double);
 	}
 
 	va_end(ap);
 
-	mathfun_value value = mathfun_arun(argnames, argc, code, args, error);
+	double value = mathfun_arun(argnames, argc, code, args, error);
 
 	free(args);
 	free(argnames);
@@ -299,7 +299,7 @@ mathfun_value mathfun_run(const char *code, mathfun_error_p *error, ...) {
 	return value;
 }
 
-mathfun_value mathfun_arun(const char *argnames[], size_t argc, const char *code, const mathfun_value args[],
+double mathfun_arun(const char *argnames[], size_t argc, const char *code, const double args[],
 	mathfun_error_p *error) {
 	mathfun_context ctx;
 
@@ -314,7 +314,7 @@ mathfun_value mathfun_arun(const char *argnames[], size_t argc, const char *code
 
 	// it's only executed once, so any optimizations and byte code
 	// compilations would only add overhead
-	mathfun_value value = mathfun_expr_exec(expr, args, error).number;
+	double value = mathfun_expr_exec(expr, args, error).number;
 
 	mathfun_expr_free(expr);
 	mathfun_context_cleanup(&ctx);
@@ -479,8 +479,8 @@ const char *mathfun_type_name(mathfun_type type) {
 	}
 }
 
-mathfun_value mathfun_mod(mathfun_value x, mathfun_value y) {
-	mathfun_value mathfun_mod_result;
+double mathfun_mod(double x, double y) {
+	double mathfun_mod_result;
 	if (y == 0.0) {
 		errno = EDOM;
 		return NAN;
