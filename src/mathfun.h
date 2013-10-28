@@ -47,7 +47,7 @@ typedef uintptr_t mathfun_code;
  */
 typedef double mathfun_value;
 
-/** Type used for "registers" of the interpreter.
+/** Type used for the "registers" of the interpreter.
  */
 typedef union mathfun_reg {
 	mathfun_value number;
@@ -55,6 +55,8 @@ typedef union mathfun_reg {
 } mathfun_reg;
 
 /** Type enum.
+ *
+ * E.g. used in #mathfun_sig.
  */
 typedef enum mathfun_type {
 	MATHFUN_NUMBER,
@@ -62,11 +64,13 @@ typedef enum mathfun_type {
 } mathfun_type;
 
 /** Function signature.
+ *
+ * @see mathfun_context_define_funct()
  */
 typedef struct mathfun_sig {
-	size_t argc;
-	mathfun_type *argtypes;
-	mathfun_type rettype;
+	size_t argc;            ///< number of arguments
+	mathfun_type *argtypes; ///< array of argument types
+	mathfun_type rettype;   ///< return type
 } mathfun_sig;
 
 /** Function type for functions to be regstered with a #mathfun_context.
@@ -167,12 +171,60 @@ MATHFUN_EXPORT void mathfun_context_cleanup(mathfun_context *ctx);
  *
  * Functions:
  *
- * acos(x), acosh(x), asin(x), asinh(x), atan(x), atan2(y, x), atanh(x), cbrt(x), ceil(x), copysign(x, y),
- * cos(x), cosh(x), erf(x), erfc(x), exp(x), exp2(x), expm1(x), abs(x) (uses fabs(x)), fdim(x, y), floor(x),
- * fma(x, y, z), fmod(x, y), max(x), min(x), hypot(x, y), j0(x), j1(x), jn(n, x), ldexp(x, exp), log(x),
- * log10(x), log1p(x), log2(x), logb(x), nearbyint(x), nextafter(x, y), nexttoward(x, y), remainder(x, y), round(x),
- * scalbln(x, exp), sin(x), sinh(x), sqrt(x), tan(x), tanh(x), gamma(x) (uses tgamma(x)), trunc(x),
- * y0(x), y1(x), yn(n, x)
+ *    - isnan(x)
+ *    - isfinite(x)
+ *    - isnormal(x)
+ *    - isinf(x)
+ *    - acos(x)
+ *    - acosh(x)
+ *    - asin(x)
+ *    - asinh(x)
+ *    - atan(x)
+ *    - atan2(y, x)
+ *    - atanh(x)
+ *    - cbrt(x)
+ *    - ceil(x)
+ *    - copysign(x, y)
+ *    - cos(x)
+ *    - cosh(x)
+ *    - erf(x)
+ *    - erfc(x)
+ *    - exp(x)
+ *    - exp2(x)
+ *    - expm1(x)
+ *    - abs(x) unsing fabs(x)
+ *    - fdim(x, y)
+ *    - floor(x)
+ *    - fma(x, y, z)
+ *    - fmod(x, y)
+ *    - max(x)
+ *    - min(x)
+ *    - hypot(x, y)
+ *    - j0(x)
+ *    - j1(x)
+ *    - jn(n, x)
+ *    - ldexp(x, exp)
+ *    - log(x)
+ *    - log10(x)
+ *    - log1p(x)
+ *    - log2(x)
+ *    - logb(x)
+ *    - nearbyint(x)
+ *    - nextafter(x, y)
+ *    - nexttoward(x, y)
+ *    - remainder(x, y)
+ *    - round(x)
+ *    - scalbln(x, exp)
+ *    - sin(x)
+ *    - sinh(x)
+ *    - sqrt(x)
+ *    - tan(x)
+ *    - tanh(x)
+ *    - gamma(x) using tgamma(x)
+ *    - trunc(x)
+ *    - y0(x)
+ *    - y1(x)
+ *    - yn(n, x)
  *
  * See `man math.h` for a documentation on these functions.
  *
@@ -213,7 +265,7 @@ MATHFUN_EXPORT bool mathfun_context_define_const(mathfun_context *ctx, const cha
  * @param ctx A pointer to a #mathfun_context
  * @param name The name of the function.
  * @param funct A function pointer.
- * @param sig The function signature. sig has to have a lifetime at least as long as ctx.
+ * @param sig The function signature. sig has to have a lifetime of at least as long as ctx.
  * @param error A pointer to an error handle. Possible errors: #MATHFUN_OUT_OF_MEMORY and #MATHFUN_NAME_EXISTS
  * @return true on success, false if an error occured.
  */
