@@ -91,7 +91,11 @@ bool mathfun_valid_name(const char *name) {
 		}
 		++ name;
 	}
-	return strcasecmp(name,"inf") != 0 && strcasecmp(name,"nan") != 0;
+	return
+		strcasecmp(name, "inf")   != 0 &&
+		strcasecmp(name, "nan")   != 0 &&
+		strcasecmp(name, "true")  != 0 &&
+		strcasecmp(name, "false") != 0;
 }
 
 bool mathfun_validate_argnames(const char *argnames[], size_t argc, mathfun_error_p *error) {
