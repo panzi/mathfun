@@ -149,17 +149,74 @@ static mathfun_expr *mathfun_expr_optimize_boolean_comparison(mathfun_expr *expr
 		mathfun_expr_free(expr);
 		return other_expr;
 	}
-	else if (other_expr->type == EX_NOT) {
-		mathfun_expr *child = other_expr->ex.unary.expr;
-		other_expr->ex.unary.expr = NULL;
-		mathfun_expr_free(expr);
-		return child;
-	}
 	else {
 		mathfun_expr_free(const_expr);
 		expr->type = EX_NOT;
 		expr->ex.unary.expr = other_expr;
-		return expr;
+
+		return mathfun_expr_optimize(expr, error);
+	}
+}
+
+static mathfun_expr *mathfun_expr_optimize_not(mathfun_expr *expr, mathfun_error_p *error) {
+	expr->ex.unary.expr = mathfun_expr_optimize(expr->ex.unary.expr, error);
+
+	if (!expr->ex.unary.expr) {
+		mathfun_expr_free(expr);
+		return NULL;
+	}
+
+	switch (expr->ex.unary.expr->type) {
+		case EX_NOT:
+		{
+			mathfun_expr *child = expr->ex.unary.expr->ex.unary.expr;
+			expr->ex.unary.expr->ex.unary.expr = NULL;
+			mathfun_expr_free(expr);
+			return child;
+		}
+		case EX_CONST:
+		{
+			mathfun_expr *child = expr->ex.unary.expr;
+			expr->ex.unary.expr = NULL;
+			mathfun_expr_free(expr);
+			child->ex.value.value.boolean = !child->ex.value.value.boolean;
+			return child;
+		}
+		// can't do this for <, >, <= and >= because !(1 < NAN) != (1 >= NAN)
+		case EX_EQ:
+		{
+			mathfun_expr *child = expr->ex.unary.expr;
+			expr->ex.unary.expr = NULL;
+			mathfun_expr_free(expr);
+			child->type = EX_NE;
+			return child;
+		}
+		case EX_NE:
+		{
+			mathfun_expr *child = expr->ex.unary.expr;
+			expr->ex.unary.expr = NULL;
+			mathfun_expr_free(expr);
+			child->type = EX_EQ;
+			return child;
+		}
+		case EX_BEQ:
+		{
+			mathfun_expr *child = expr->ex.unary.expr;
+			expr->ex.unary.expr = NULL;
+			mathfun_expr_free(expr);
+			child->type = EX_BNE;
+			return child;
+		}
+		case EX_BNE:
+		{
+			mathfun_expr *child = expr->ex.unary.expr;
+			expr->ex.unary.expr = NULL;
+			mathfun_expr_free(expr);
+			child->type = EX_BEQ;
+			return child;
+		}
+		default:
+			return expr;
 	}
 }
 
@@ -238,26 +295,7 @@ mathfun_expr *mathfun_expr_optimize(mathfun_expr *expr, mathfun_error_p *error) 
 		case EX_MOD: return mathfun_expr_optimize_binary(expr, mathfun_mod, false, NAN, false, error);
 		case EX_POW: return mathfun_expr_optimize_binary(expr, pow,         true,    1, false, error);
 
-		case EX_NOT:
-			expr->ex.unary.expr = mathfun_expr_optimize(expr->ex.unary.expr, error);
-			if (!expr->ex.unary.expr) {
-				mathfun_expr_free(expr);
-				return NULL;
-			}
-			else if (expr->ex.unary.expr->type == EX_NOT) {
-				mathfun_expr *child = expr->ex.unary.expr->ex.unary.expr;
-				expr->ex.unary.expr->ex.unary.expr = NULL;
-				mathfun_expr_free(expr);
-				return child;
-			}
-			else if (expr->ex.unary.expr->type == EX_CONST) {
-				mathfun_expr *child = expr->ex.unary.expr;
-				expr->ex.unary.expr = NULL;
-				mathfun_expr_free(expr);
-				child->ex.value.value.boolean = !child->ex.value.value.boolean;
-				return child;
-			}
-			return expr;
+		case EX_NOT: return mathfun_expr_optimize_not(expr, error);
 
 		case EX_EQ: return mathfun_expr_optimize_comparison(expr, mathfun_opt_eq, error);
 		case EX_NE: return mathfun_expr_optimize_comparison(expr, mathfun_opt_ne, error);
