@@ -4,6 +4,10 @@ static const mathfun_sig mathfun_bsig1 = {
 	1, (mathfun_type[]){MATHFUN_NUMBER}, MATHFUN_BOOLEAN
 };
 
+static const mathfun_sig mathfun_bsig2 = {
+	2, (mathfun_type[]){MATHFUN_NUMBER, MATHFUN_NUMBER}, MATHFUN_BOOLEAN
+};
+
 static const mathfun_sig mathfun_sig1 = {
 	1, (mathfun_type[]){MATHFUN_NUMBER}, MATHFUN_NUMBER
 };
@@ -30,6 +34,34 @@ static mathfun_reg mathfun_funct_isnormal(const mathfun_reg args[]) {
 
 static mathfun_reg mathfun_funct_isinf(const mathfun_reg args[]) {
 	return (mathfun_reg){ .boolean = isinf(args[0].number) };
+}
+
+static mathfun_reg mathfun_funct_isgreater(const mathfun_reg args[]) {
+	return (mathfun_reg){ .boolean = isgreater(args[0].number, args[1].number) };
+}
+
+static mathfun_reg mathfun_funct_isgreaterequal(const mathfun_reg args[]) {
+	return (mathfun_reg){ .boolean = isgreaterequal(args[0].number, args[1].number) };
+}
+
+static mathfun_reg mathfun_funct_isless(const mathfun_reg args[]) {
+	return (mathfun_reg){ .boolean = isless(args[0].number, args[1].number) };
+}
+
+static mathfun_reg mathfun_funct_islessequal(const mathfun_reg args[]) {
+	return (mathfun_reg){ .boolean = islessequal(args[0].number, args[1].number) };
+}
+
+static mathfun_reg mathfun_funct_islessgreater(const mathfun_reg args[]) {
+	return (mathfun_reg){ .boolean = islessgreater(args[0].number, args[1].number) };
+}
+
+static mathfun_reg mathfun_funct_isunordered(const mathfun_reg args[]) {
+	return (mathfun_reg){ .boolean = isunordered(args[0].number, args[1].number) };
+}
+
+static mathfun_reg mathfun_funct_signbit(const mathfun_reg args[]) {
+	return (mathfun_reg){ .boolean = signbit(args[0].number) != 0 };
 }
 
 static mathfun_reg mathfun_funct_acos(const mathfun_reg args[]) {
@@ -262,6 +294,13 @@ bool mathfun_context_define_default(mathfun_context *ctx, mathfun_error_p *error
 		!mathfun_context_define_funct(ctx, "isfinite", mathfun_funct_isfinite, &mathfun_bsig1, error) ||
 		!mathfun_context_define_funct(ctx, "isnormal", mathfun_funct_isnormal, &mathfun_bsig1, error) ||
 		!mathfun_context_define_funct(ctx, "isinf", mathfun_funct_isinf, &mathfun_bsig1, error) ||
+		!mathfun_context_define_funct(ctx, "isgreater", mathfun_funct_isgreater, &mathfun_bsig2, error) ||
+		!mathfun_context_define_funct(ctx, "isgreaterequal", mathfun_funct_isgreaterequal, &mathfun_bsig2, error) ||
+		!mathfun_context_define_funct(ctx, "isless", mathfun_funct_isless, &mathfun_bsig2, error) ||
+		!mathfun_context_define_funct(ctx, "islessequal", mathfun_funct_islessequal, &mathfun_bsig2, error) ||
+		!mathfun_context_define_funct(ctx, "islessgreater", mathfun_funct_islessgreater, &mathfun_bsig2, error) ||
+		!mathfun_context_define_funct(ctx, "isunordered", mathfun_funct_isunordered, &mathfun_bsig2, error) ||
+		!mathfun_context_define_funct(ctx, "signbit", mathfun_funct_signbit, &mathfun_bsig2, error) ||
 		!mathfun_context_define_funct(ctx, "acos", mathfun_funct_acos, &mathfun_sig1, error) ||
 		!mathfun_context_define_funct(ctx, "acosh", mathfun_funct_acosh, &mathfun_sig1, error) ||
 		!mathfun_context_define_funct(ctx, "asin", mathfun_funct_asin, &mathfun_sig1, error) ||
