@@ -122,6 +122,64 @@ bool mathfun_codegen_binary(
 	return mathfun_codegen_ins3(codegen, code, leftret, rightret, *ret);
 }
 
+static bool mathfun_codegen_range(
+	mathfun_codegen *codegen,
+	mathfun_expr *expr,
+	mathfun_code valuereg,
+	mathfun_code *ret) {
+	mathfun_code rngret = codegen->currstack;
+	if (!mathfun_codegen_expr(codegen, expr->ex.binary.left, &rngret)) return false;
+
+	const mathfun_code lowerret = codegen->currstack;
+	if (!mathfun_codegen_ins3(codegen, GE, valuereg, rngret, lowerret)) return false;
+
+	size_t adr = codegen->code_used + 2;
+	if (!mathfun_codegen_ins2(codegen, JMPF, lowerret, 0)) return false;
+
+	rngret = codegen->currstack;
+	if (!mathfun_codegen_expr(codegen, expr->ex.binary.right, &rngret)) return false;
+
+	const mathfun_code upperret = codegen->currstack;
+	if (!mathfun_codegen_ins3(codegen, expr->type == EX_RNG_INCL ? LE : LT, valuereg, rngret, upperret)) return false;
+
+	if (upperret != *ret) {
+		if (!mathfun_codegen_ins2(codegen, MOV, upperret, *ret)) return false;
+	}
+	codegen->code[adr] = codegen->code_used;
+	if (lowerret != *ret) {
+		return mathfun_codegen_ins1(codegen, SETF, *ret);
+	}
+
+	return true;
+}
+
+static bool mathfun_codegen_in(
+	mathfun_codegen *codegen,
+	mathfun_expr *expr,
+	mathfun_code *ret) {
+	mathfun_code valueret = codegen->currstack;
+
+	if (!mathfun_codegen_expr(codegen, expr->ex.binary.left, &valueret)) return false;
+
+	if (valueret < codegen->currstack) {
+		return mathfun_codegen_range(codegen, expr->ex.binary.right, valueret, ret);
+	}
+	else {
+		++ codegen->currstack;
+		if (!mathfun_codegen_range(codegen, expr->ex.binary.right, valueret, ret)) return false;
+
+		// doing this *after* the codegen for the range expression
+		// optimizes the case where no extra register is needed (e.g. it
+		// just accesses an argument registers)
+		if (codegen->maxstack < codegen->currstack) {
+			codegen->maxstack = codegen->currstack;
+		}
+		-- codegen->currstack;
+
+		return true;
+	}
+}
+
 bool mathfun_codegen_unary(mathfun_codegen *codegen, mathfun_expr *expr,
 	enum mathfun_bytecode code, mathfun_code *ret) {
 	mathfun_code unret = *ret;
@@ -231,6 +289,14 @@ bool mathfun_codegen_expr(mathfun_codegen *codegen, mathfun_expr *expr, mathfun_
 
 		case EX_GE:
 			return mathfun_codegen_binary(codegen, expr, GE, ret);
+
+		case EX_IN:
+			return mathfun_codegen_in(codegen, expr, ret);
+		
+		case EX_RNG_INCL:
+		case EX_RNG_EXCL:
+			mathfun_raise_error(codegen->error, MATHFUN_INTERNAL_ERROR);
+			return false;
 
 		case EX_BEQ:
 			return mathfun_codegen_binary(codegen, expr, BEQ, ret);

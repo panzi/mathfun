@@ -340,6 +340,10 @@ void mathfun_error_log(mathfun_error_p error, FILE *stream) {
 		case MATHFUN_PARSER_EXPECTED_COLON:
 			mathfun_log_parser_error(error, stream, "expected ':'");
 			break;
+			
+		case MATHFUN_PARSER_EXPECTED_DOTS:
+			mathfun_log_parser_error(error, stream, "expected '..' or '...'");
+			break;
 
 		case MATHFUN_PARSER_TYPE_ERROR:
 			mathfun_log_parser_error(error, stream, "expression has illegal type for this position: expected %s but got %s",

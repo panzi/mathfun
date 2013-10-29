@@ -94,6 +94,7 @@ enum mathfun_error_type {
 	MATHFUN_PARSER_EXPECTED_NUMBER,             ///< expected a number but got something else or end of input
 	MATHFUN_PARSER_EXPECTED_IDENTIFIER,         ///< expected an identifier but got something else or end of input
 	MATHFUN_PARSER_EXPECTED_COLON,              ///< expected ':' but got something else or end of input
+	MATHFUN_PARSER_EXPECTED_DOTS,               ///< expected '..' or '...' but got something else or end of input
 	MATHFUN_PARSER_TYPE_ERROR,                  ///< expression with wrong type for this position
 	MATHFUN_PARSER_TRAILING_GARBAGE             ///< garbage at the end of input
 };

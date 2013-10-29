@@ -182,7 +182,7 @@ static mathfun_expr *mathfun_expr_optimize_not(mathfun_expr *expr, mathfun_error
 			child->ex.value.value.boolean = !child->ex.value.value.boolean;
 			return child;
 		}
-		// can't do this for <, >, <= and >= because !(1 < NAN) != (1 >= NAN)
+		// can't do this for <, >, <=, >= and in because !(1 < NAN) != (1 >= NAN)
 		case EX_EQ:
 		{
 			mathfun_expr *child = expr->ex.unary.expr;
@@ -303,6 +303,100 @@ mathfun_expr *mathfun_expr_optimize(mathfun_expr *expr, mathfun_error_p *error) 
 		case EX_GT: return mathfun_expr_optimize_comparison(expr, mathfun_opt_gt, error);
 		case EX_LE: return mathfun_expr_optimize_comparison(expr, mathfun_opt_le, error);
 		case EX_GE: return mathfun_expr_optimize_comparison(expr, mathfun_opt_ge, error);
+
+		case EX_IN:
+		{
+			mathfun_expr *value = expr->ex.binary.left = mathfun_expr_optimize(expr->ex.binary.left, error);
+			if (!expr->ex.binary.left) {
+				mathfun_expr_free(expr);
+				return NULL;
+			}
+
+			mathfun_expr *range = expr->ex.binary.right = mathfun_expr_optimize(expr->ex.binary.right, error);
+			if (!expr->ex.binary.right) {
+				mathfun_expr_free(expr);
+				return NULL;
+			}
+
+			if (value->type == EX_CONST) {
+				mathfun_expr *lower = range->ex.binary.left;
+				mathfun_expr *upper = range->ex.binary.right;
+
+				if (lower->type == EX_CONST && upper->type == EX_CONST) {
+					bool res = range->type == EX_RNG_INCL ?
+						value->ex.value.value.number >= lower->ex.value.value.number &&
+						value->ex.value.value.number <= lower->ex.value.value.number :
+
+						value->ex.value.value.number >= lower->ex.value.value.number &&
+						value->ex.value.value.number <  lower->ex.value.value.number;
+
+					expr->ex.binary.left = NULL;
+					mathfun_expr_free(expr);
+					value->ex.value.type = MATHFUN_BOOLEAN;
+					value->ex.value.value.boolean = res;
+					return value;
+				}
+				else if (lower->type == EX_CONST) {
+					if (value->ex.value.value.number >= lower->ex.value.value.number) {
+						expr->ex.binary.left  = NULL;
+						expr->ex.binary.right = NULL;
+						mathfun_expr_free(expr);
+						mathfun_expr_free(lower);
+						range->type = range->type == EX_RNG_INCL ? EX_LE : EX_LT;
+						range->ex.binary.left = value;
+						return range;
+					}
+					else {
+						expr->ex.binary.left = NULL;
+						mathfun_expr_free(expr);
+						value->ex.value.type = MATHFUN_BOOLEAN;
+						value->ex.value.value.boolean = false;
+						return value;
+					}
+				}
+				else if (upper->type == EX_CONST) {
+					if (range->type == EX_RNG_INCL ?
+						value->ex.value.value.number <= upper->ex.value.value.number :
+						value->ex.value.value.number <  upper->ex.value.value.number) {
+						expr->ex.binary.left  = NULL;
+						expr->ex.binary.right = NULL;
+						mathfun_expr_free(expr);
+						mathfun_expr_free(upper);
+						range->type = EX_GE;
+						range->ex.binary.left  = value;
+						range->ex.binary.right = lower;
+						return range;
+					}
+					else {
+						expr->ex.binary.left = NULL;
+						mathfun_expr_free(expr);
+						value->ex.value.type = MATHFUN_BOOLEAN;
+						value->ex.value.value.boolean = false;
+						return value;
+					}
+				}
+			}
+
+			return expr;
+		}
+
+		case EX_RNG_INCL:
+		case EX_RNG_EXCL:
+		{
+			expr->ex.binary.left = mathfun_expr_optimize(expr->ex.binary.left, error);
+			if (!expr->ex.binary.left) {
+				mathfun_expr_free(expr);
+				return NULL;
+			}
+
+			expr->ex.binary.right = mathfun_expr_optimize(expr->ex.binary.right, error);
+			if (!expr->ex.binary.right) {
+				mathfun_expr_free(expr);
+				return NULL;
+			}
+
+			return expr;
+		}
 
 		case EX_BEQ:
 		case EX_BNE: return mathfun_expr_optimize_boolean_comparison(expr, error);

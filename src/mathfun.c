@@ -95,7 +95,8 @@ bool mathfun_valid_name(const char *name) {
 		strcasecmp(name, "inf")   != 0 &&
 		strcasecmp(name, "nan")   != 0 &&
 		strcasecmp(name, "true")  != 0 &&
-		strcasecmp(name, "false") != 0;
+		strcasecmp(name, "false") != 0 &&
+		strcasecmp(name, "in")    != 0;
 }
 
 bool mathfun_validate_argnames(const char *argnames[], size_t argc, mathfun_error_p *error) {
@@ -427,6 +428,9 @@ void mathfun_expr_free(mathfun_expr *expr) {
 		case EX_BNE:
 		case EX_AND:
 		case EX_OR:
+		case EX_IN:
+		case EX_RNG_INCL:
+		case EX_RNG_EXCL:
 			mathfun_expr_free(expr->ex.binary.left);
 			mathfun_expr_free(expr->ex.binary.right);
 			expr->ex.binary.left  = NULL;
@@ -477,7 +481,12 @@ mathfun_type mathfun_expr_type(const mathfun_expr *expr) {
 		case EX_BNE:
 		case EX_AND:
 		case EX_OR:
+		case EX_IN:
 			return MATHFUN_BOOLEAN;
+
+		case EX_RNG_INCL:
+		case EX_RNG_EXCL:
+			return -1;
 
 		default:
 			assert(false);

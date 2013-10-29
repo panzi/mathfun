@@ -84,6 +84,10 @@ enum mathfun_expr_type {
 	EX_GT,
 	EX_LE,
 	EX_GE,
+
+	EX_IN,
+	EX_RNG_INCL,
+	EX_RNG_EXCL,
 	
 	EX_BEQ,
 	EX_BNE,

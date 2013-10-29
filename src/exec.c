@@ -118,6 +118,22 @@ mathfun_reg mathfun_expr_exec(const mathfun_expr *expr, const double args[]) {
 			return mathfun_expr_exec(expr->ex.iif.cond, args).boolean ?
 				mathfun_expr_exec(expr->ex.iif.then_expr, args) :
 				mathfun_expr_exec(expr->ex.iif.else_expr, args);
+
+		case EX_IN:
+		{
+			double value = mathfun_expr_exec(expr->ex.binary.left, args).number;
+			mathfun_expr *range = expr->ex.binary.right;
+			return (mathfun_reg){ .boolean = range->type == EX_RNG_INCL ?
+				value >= mathfun_expr_exec(range->ex.binary.left, args).number &&
+				value <= mathfun_expr_exec(range->ex.binary.right, args).number :
+
+				value >= mathfun_expr_exec(range->ex.binary.left, args).number &&
+				value <  mathfun_expr_exec(range->ex.binary.right, args).number};
+		}
+
+		case EX_RNG_INCL:
+		case EX_RNG_EXCL:
+			break;
 	}
 	errno = EINVAL;
 	return (mathfun_reg){ .number = NAN };

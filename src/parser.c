@@ -18,8 +18,9 @@
 // or_test      ::= and_test ("||" and_test)*
 // and_test     ::= not_test ("&&" not_test)*
 // not_test     ::= "!" not_test | comparison
-// comparison   ::= arith_expr (comp_op arith_expr)*
+// comparison   ::= arith_expr (comp_op arith_expr | "in" range)*
 // comp_op      ::= "==" | "!=" | "<" | ">" | "<=" | ">="
+// range        ::= arith_expr (".."|"...") factor
 // arith_expr   ::= term (("+"|"-") term)*
 // term         ::= factor (("*"|"/"|"%") factor)*
 // factor       ::= ("+"|"-") factor | power
@@ -39,6 +40,7 @@ static mathfun_expr *mathfun_parse_and_test(mathfun_parser *parser);
 static mathfun_expr *mathfun_parse_not_test(mathfun_parser *parser);
 static mathfun_expr *mathfun_parse_comparison(mathfun_parser *parser);
 static mathfun_expr *mathfun_parse_arith_expr(mathfun_parser *parser);
+static mathfun_expr *mathfun_parse_range(mathfun_parser *parser);
 static mathfun_expr *mathfun_parse_term(mathfun_parser *parser);
 static mathfun_expr *mathfun_parse_factor(mathfun_parser *parser);
 static mathfun_expr *mathfun_parse_power(mathfun_parser *parser);
@@ -254,28 +256,84 @@ mathfun_expr *mathfun_parse_not_test(mathfun_parser *parser) {
 	return expr;
 }
 
+mathfun_expr *mathfun_parse_range(mathfun_parser *parser) {
+	const char *errptr = parser->ptr;
+	mathfun_expr *left = mathfun_parse_arith_expr(parser);
+
+	if (!left) return NULL;
+
+	if (mathfun_expr_type(left) != MATHFUN_NUMBER) {
+		mathfun_raise_parser_type_error(parser, errptr, MATHFUN_NUMBER, mathfun_expr_type(left));
+		mathfun_expr_free(left);
+		return NULL;
+	}
+
+	if (parser->ptr[0] == '.' && parser->ptr[1] == '.') {
+		enum mathfun_expr_type type;
+		if (parser->ptr[2] == '.') {
+			type = EX_RNG_EXCL;
+			parser->ptr += 3;
+		}
+		else {
+			type = EX_RNG_INCL;
+			parser->ptr += 2;
+		}
+		skipws(parser);
+
+		mathfun_expr *right = mathfun_parse_factor(parser);
+
+		if (!right) {
+			mathfun_expr_free(left);
+			return NULL;
+		}
+
+		if (mathfun_expr_type(right) != MATHFUN_NUMBER) {
+			mathfun_raise_parser_type_error(parser, errptr, MATHFUN_NUMBER, mathfun_expr_type(right));
+			mathfun_expr_free(left);
+			mathfun_expr_free(right);
+			return NULL;
+		}
+
+		mathfun_expr *expr = mathfun_expr_alloc(type, parser->error);
+
+		if (!expr) {
+			mathfun_expr_free(left);
+			mathfun_expr_free(right);
+			return NULL;
+		}
+
+		expr->ex.binary.left  = left;
+		expr->ex.binary.right = right;
+
+		return expr;
+	}
+
+	mathfun_raise_parser_error(parser, MATHFUN_PARSER_EXPECTED_DOTS, NULL);
+	return NULL;
+}
+
 mathfun_expr *mathfun_parse_comparison(mathfun_parser *parser) {
 	const char *errptr = parser->ptr;
 	mathfun_expr *expr = mathfun_parse_arith_expr(parser);
 
 	if (!expr) return NULL;
 
-	char ch1 = parser->ptr[0];
-	char ch2 = parser->ptr[1];
-	while (((ch1 == '=' || ch1 == '!') && ch2 == '=') || ch1 == '<' || ch1 == '>') {
+	while (((parser->ptr[0] == '=' || parser->ptr[0] == '!') && parser->ptr[1] == '=') ||
+			parser->ptr[0] == '<' || parser->ptr[0] == '>' ||
+			(strncasecmp("in", parser->ptr, 2) == 0 && !isalnum(parser->ptr[2]))) {
 		enum mathfun_expr_type type;
 		mathfun_type left_type = mathfun_expr_type(expr);
 
-		if (ch1 == '=' && ch2 == '=') {
+		if (parser->ptr[0] == '=' && parser->ptr[1] == '=') {
 			parser->ptr += 2;
 			type = left_type == MATHFUN_BOOLEAN ? EX_BEQ : EX_EQ;
 		}
-		else if (ch1 == '!' && ch2 == '=') {
+		else if (parser->ptr[0] == '!' && parser->ptr[1] == '=') {
 			parser->ptr += 2;
 			type = left_type == MATHFUN_BOOLEAN ? EX_BNE : EX_NE;
 		}
-		else if (ch1 == '<') {
-			if (ch2 == '=') {
+		else if (parser->ptr[0] == '<') {
+			if (parser->ptr[1] == '=') {
 				parser->ptr += 2;
 				type = EX_LE;
 			}
@@ -284,8 +342,8 @@ mathfun_expr *mathfun_parse_comparison(mathfun_parser *parser) {
 				type = EX_LT;
 			}
 		}
-		else if (ch1 == '>') {
-			if (ch2 == '=') {
+		else if (parser->ptr[0] == '>') {
+			if (parser->ptr[1] == '=') {
 				parser->ptr += 2;
 				type = EX_GE;
 			}
@@ -293,6 +351,10 @@ mathfun_expr *mathfun_parse_comparison(mathfun_parser *parser) {
 				++ parser->ptr;
 				type = EX_GT;
 			}
+		}
+		else if (strncasecmp("in", parser->ptr, 2) == 0 && !isalnum(parser->ptr[2])) {
+			parser->ptr += 3;
+			type = EX_IN;
 		}
 		else {
 			mathfun_raise_error(parser->error, MATHFUN_INTERNAL_ERROR);
@@ -305,33 +367,50 @@ mathfun_expr *mathfun_parse_comparison(mathfun_parser *parser) {
 		errptr = parser->ptr;
 
 		mathfun_expr *left  = expr;
-		mathfun_expr *right = mathfun_parse_arith_expr(parser);
+		mathfun_expr *right = NULL;
+		if (type == EX_IN) {
+			if (left_type != MATHFUN_NUMBER) {
+				mathfun_raise_parser_type_error(parser, lefterrptr, MATHFUN_NUMBER, left_type);
+				mathfun_expr_free(expr);
+				return NULL;
+			}
 
-		if (!right) {
-			mathfun_expr_free(left);
-			return NULL;
+			right = mathfun_parse_range(parser);
+
+			if (!right) {
+				mathfun_expr_free(left);
+				return NULL;
+			}
 		}
-		mathfun_type right_type = mathfun_expr_type(right);
-		if (type == EX_BEQ || type == EX_BNE) {
-			// left_type was used to generate EX_BEQ/EX_BNE, so it is MATHFUN_BOOLEAN here
-			if (right_type != MATHFUN_BOOLEAN) {
-				mathfun_raise_parser_type_error(parser, errptr, MATHFUN_BOOLEAN, right_type);
+		else {
+			right = mathfun_parse_arith_expr(parser);
+
+			if (!right) {
+				mathfun_expr_free(left);
+				return NULL;
+			}
+			mathfun_type right_type = mathfun_expr_type(right);
+			if (type == EX_BEQ || type == EX_BNE) {
+				// left_type was used to generate EX_BEQ/EX_BNE, so it is MATHFUN_BOOLEAN here
+				if (right_type != MATHFUN_BOOLEAN) {
+					mathfun_raise_parser_type_error(parser, errptr, MATHFUN_BOOLEAN, right_type);
+					mathfun_expr_free(left);
+					mathfun_expr_free(right);
+					return NULL;
+				}
+			}
+			else if (left_type != MATHFUN_NUMBER) {
+				mathfun_raise_parser_type_error(parser, lefterrptr, MATHFUN_NUMBER, left_type);
 				mathfun_expr_free(left);
 				mathfun_expr_free(right);
 				return NULL;
 			}
-		}
-		else if (left_type != MATHFUN_NUMBER) {
-			mathfun_raise_parser_type_error(parser, lefterrptr, MATHFUN_NUMBER, left_type);
-			mathfun_expr_free(left);
-			mathfun_expr_free(right);
-			return NULL;
-		}
-		else if (right_type != MATHFUN_NUMBER) {
-			mathfun_raise_parser_type_error(parser, errptr, MATHFUN_NUMBER, right_type);
-			mathfun_expr_free(left);
-			mathfun_expr_free(right);
-			return NULL;
+			else if (right_type != MATHFUN_NUMBER) {
+				mathfun_raise_parser_type_error(parser, errptr, MATHFUN_NUMBER, right_type);
+				mathfun_expr_free(left);
+				mathfun_expr_free(right);
+				return NULL;
+			}
 		}
 		expr = mathfun_expr_alloc(type, parser->error);
 		if (!expr) {
@@ -341,9 +420,6 @@ mathfun_expr *mathfun_parse_comparison(mathfun_parser *parser) {
 		}
 		expr->ex.binary.left  = left;
 		expr->ex.binary.right = right;
-
-		ch1 = parser->ptr[0];
-		ch2 = parser->ptr[1];
 	}
 
 	return expr;
