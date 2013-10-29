@@ -299,6 +299,30 @@ bool mathfun_codegen_expr(mathfun_codegen *codegen, mathfun_expr *expr, mathfun_
 	return false;
 }
 
+// shortcut unconditional jump chain to RET
+static bool mathfun_code_shortcut(mathfun_code *code, mathfun_code *ptr, mathfun_code *retptr) {
+	switch (ptr[0]) {
+	case RET:
+		if (retptr) *retptr = ptr[1];
+		return true;
+	
+	case JMP:
+	{
+		mathfun_code ret = 0;
+		bool shortcut = mathfun_code_shortcut(code, code + ptr[1], &ret);
+
+		if (shortcut) {
+			ptr[0] = RET;
+			ptr[1] = ret;
+			if (retptr) *retptr = ret;
+		}
+		return shortcut;
+	}
+	default:
+		return false;
+	}
+}
+
 bool mathfun_expr_codegen(mathfun_expr *expr, mathfun *mathfun, mathfun_error_p *error) {
 	if (mathfun->argc > MATHFUN_REGS_MAX) {
 		mathfun_raise_error(error, MATHFUN_TOO_MANY_ARGUMENTS);
@@ -321,14 +345,8 @@ bool mathfun_expr_codegen(mathfun_expr *expr, mathfun *mathfun, mathfun_error_p 
 	}
 
 	mathfun_code ret = mathfun->argc;
-	if (!mathfun_codegen_expr(&codegen, expr, &ret)) {
-		mathfun_codegen_cleanup(&codegen);
-		return false;
-	}
-
-	const mathfun_code retadr = codegen.code_used;
-
-	if (!mathfun_codegen_ins1(&codegen, RET, ret) ||
+	if (!mathfun_codegen_expr(&codegen, expr, &ret) ||
+		!mathfun_codegen_ins1(&codegen, RET, ret) ||
 		!mathfun_codegen_ins0(&codegen, END)) {
 		mathfun_codegen_cleanup(&codegen);
 		return false;
@@ -340,17 +358,13 @@ bool mathfun_expr_codegen(mathfun_expr *expr, mathfun *mathfun, mathfun_error_p 
 		return false;
 	}
 
-	// shortcut everything that just jumps to ret
-	// TODO: more shortcutting?
+	// shortcut everything that just jumps to RET
 	mathfun_code *ptr = codegen.code;
 
 	while (*ptr != END) {
 		switch (*ptr) {
 		case JMP:
-			if (ptr[1] == retadr) {
-				ptr[0] = RET;
-				ptr[1] = ret;
-			}
+			mathfun_code_shortcut(codegen.code, ptr, NULL);
 			ptr += 2;
 			break;
 
