@@ -329,6 +329,7 @@ bool mathfun_expr_codegen(mathfun_expr *expr, mathfun *mathfun, mathfun_error_p 
 
 	if (codegen.maxstack >= MATHFUN_REGS_MAX) {
 		mathfun_raise_error(error, MATHFUN_EXCEEDS_MAX_FRAME_SIZE);
+		mathfun_codegen_cleanup(&codegen);
 		return false;
 	}
 
