@@ -26,13 +26,6 @@ extern "C" {
 #	define __attribute__(X)
 #endif
 
-#define MATHFUN_MOD(A,B) \
-	double __mathfun_mod_i = floor((double)(A)/(double)(B)); \
-	mathfun_mod_result = (double)(A) - __mathfun_mod_i * (double)(B); \
-	if (((double)(A) < 0.0) != ((double)(B) < 0.0)) { \
-		mathfun_mod_result = mathfun_mod_result - (double)(B); \
-	}
-
 #if (defined(_WIN16) || defined(_WIN32) || defined(_WIN64)) && !defined(__CYGWIN__)
 #	if defined(_WIN64)
 #		define PRIzu PRIu64
@@ -91,6 +84,9 @@ enum mathfun_expr_type {
 	EX_GT,
 	EX_LE,
 	EX_GE,
+	
+	EX_BEQ,
+	EX_BNE,
 
 	EX_AND,
 	EX_OR,
@@ -158,12 +154,15 @@ enum mathfun_bytecode {
 	LE   = 17,   // reg, reg, reg  lower or equal than
 	GE   = 18,   // reg, reg, reg  greater or equal than
 
-	JMP  = 19,   // adr            jumo to adr
-	JMPT = 20,   // reg, adr       jump to adr if reg contains true
-	JMPF = 21,   // reg, adr       jump to adr if reg contains false
+	BEQ  = 19,   // reg, reg, reg  boolean equals
+	BNE  = 20,   // reg, reg, reg  boolean not equals
 
-	SETT = 22,   // reg            set reg to true
-	SETF = 23    // reg            set reg to false
+	JMP  = 21,   // adr            jumo to adr
+	JMPT = 22,   // reg, adr       jump to adr if reg contains true
+	JMPF = 23,   // reg, adr       jump to adr if reg contains false
+
+	SETT = 24,   // reg            set reg to true
+	SETF = 25    // reg            set reg to false
 };
 
 struct mathfun_error {
@@ -241,8 +240,7 @@ MATHFUN_LOCAL mathfun_expr *mathfun_expr_optimize(mathfun_expr *expr, mathfun_er
 
 MATHFUN_LOCAL mathfun_type mathfun_expr_type(const mathfun_expr *expr);
 
-MATHFUN_LOCAL mathfun_reg mathfun_expr_exec(const mathfun_expr *expr, const double args[],
-	mathfun_error_p *error);
+MATHFUN_LOCAL mathfun_reg mathfun_expr_exec(const mathfun_expr *expr, const double args[]);
 
 MATHFUN_LOCAL const char *mathfun_find_identifier_end(const char *str);
 

@@ -3,8 +3,7 @@
 #include "mathfun_intern.h"
 
 // tree interpreter, for one time execution and debugging
-mathfun_reg mathfun_expr_exec(const mathfun_expr *expr, const double args[],
-	mathfun_error_p *error) {
+mathfun_reg mathfun_expr_exec(const mathfun_expr *expr, const double args[]) {
 	switch (expr->type) {
 		case EX_CONST:
 			return expr->ex.value.value;
@@ -17,122 +16,111 @@ mathfun_reg mathfun_expr_exec(const mathfun_expr *expr, const double args[],
 			const size_t argc = expr->ex.funct.sig->argc;
 			mathfun_reg *funct_args = malloc(argc * sizeof(mathfun_reg));
 			if (!funct_args) {
-				mathfun_raise_error(error, MATHFUN_OUT_OF_MEMORY);
+				if (errno == 0) errno = ENOMEM;
 				return (mathfun_reg){ .number = NAN };
 			}
 			for (size_t i = 0; i < argc; ++ i) {
-				funct_args[i] = mathfun_expr_exec(expr->ex.funct.args[i], args, error);
+				funct_args[i] = mathfun_expr_exec(expr->ex.funct.args[i], args);
 			}
-			errno = 0;
 			mathfun_reg value = expr->ex.funct.funct(funct_args);
 			free(funct_args);
-
-			switch (errno) {
-				case 0: break; // good
-				case ERANGE:
-				case EDOM:
-					mathfun_raise_math_error(error, errno);
-					break;
-
-				default:
-					mathfun_raise_error(error, MATHFUN_C_ERROR);
-					break;
-			}
 
 			return value;
 		}
 		case EX_NEG:
 			return (mathfun_reg){ .number =
-				-mathfun_expr_exec(expr->ex.unary.expr, args, error).number };
+				-mathfun_expr_exec(expr->ex.unary.expr, args).number };
 
 		case EX_ADD:
 			return (mathfun_reg){ .number =
-				mathfun_expr_exec(expr->ex.binary.left, args, error).number +
-				mathfun_expr_exec(expr->ex.binary.right, args, error).number };
+				mathfun_expr_exec(expr->ex.binary.left, args).number +
+				mathfun_expr_exec(expr->ex.binary.right, args).number };
 
 		case EX_SUB:
 			return (mathfun_reg){ .number =
-				mathfun_expr_exec(expr->ex.binary.left, args, error).number -
-				mathfun_expr_exec(expr->ex.binary.right, args, error).number };
+				mathfun_expr_exec(expr->ex.binary.left, args).number -
+				mathfun_expr_exec(expr->ex.binary.right, args).number };
 
 		case EX_MUL:
 			return (mathfun_reg){ .number =
-				mathfun_expr_exec(expr->ex.binary.left, args, error).number *
-				mathfun_expr_exec(expr->ex.binary.right, args, error).number };
+				mathfun_expr_exec(expr->ex.binary.left, args).number *
+				mathfun_expr_exec(expr->ex.binary.right, args).number };
 
 		case EX_DIV:
 			return (mathfun_reg){ .number =
-				mathfun_expr_exec(expr->ex.binary.left, args, error).number /
-				mathfun_expr_exec(expr->ex.binary.right, args, error).number };
+				mathfun_expr_exec(expr->ex.binary.left, args).number /
+				mathfun_expr_exec(expr->ex.binary.right, args).number };
 
 		case EX_MOD:
 		{
-			double left  = mathfun_expr_exec(expr->ex.binary.left, args, error).number;
-			double right = mathfun_expr_exec(expr->ex.binary.right, args, error).number;
-
-			if (right == 0.0) {
-				mathfun_raise_math_error(error, EDOM);
-				return (mathfun_reg){ .number = NAN };
-			}
-
-			double mathfun_mod_result;
-			MATHFUN_MOD(left, right);
-			return (mathfun_reg){ .number = mathfun_mod_result };
+			double left  = mathfun_expr_exec(expr->ex.binary.left, args).number;
+			double right = mathfun_expr_exec(expr->ex.binary.right, args).number;
+			return (mathfun_reg){ .number = mathfun_mod(left, right) };
 		}
 		case EX_POW:
 			return (mathfun_reg){ .number = pow(
-				mathfun_expr_exec(expr->ex.binary.left, args, error).number,
-				mathfun_expr_exec(expr->ex.binary.right, args, error).number) };
+				mathfun_expr_exec(expr->ex.binary.left, args).number,
+				mathfun_expr_exec(expr->ex.binary.right, args).number) };
 
 		case EX_NOT:
-			return (mathfun_reg){ .boolean = !mathfun_expr_exec(expr->ex.unary.expr, args, error).boolean };
+			return (mathfun_reg){ .boolean = !mathfun_expr_exec(expr->ex.unary.expr, args).boolean };
 
 		case EX_EQ:
 			return (mathfun_reg){ .boolean =
-				mathfun_expr_exec(expr->ex.binary.left, args, error).number ==
-				mathfun_expr_exec(expr->ex.binary.right, args, error).number };
+				mathfun_expr_exec(expr->ex.binary.left, args).number ==
+				mathfun_expr_exec(expr->ex.binary.right, args).number };
 
 		case EX_NE:
 			return (mathfun_reg){ .boolean =
-				mathfun_expr_exec(expr->ex.binary.left, args, error).number !=
-				mathfun_expr_exec(expr->ex.binary.right, args, error).number };
+				mathfun_expr_exec(expr->ex.binary.left, args).number !=
+				mathfun_expr_exec(expr->ex.binary.right, args).number };
 
 		case EX_LT:
 			return (mathfun_reg){ .boolean =
-				mathfun_expr_exec(expr->ex.binary.left, args, error).number <
-				mathfun_expr_exec(expr->ex.binary.right, args, error).number };
+				mathfun_expr_exec(expr->ex.binary.left, args).number <
+				mathfun_expr_exec(expr->ex.binary.right, args).number };
 
 		case EX_GT:
 			return (mathfun_reg){ .boolean =
-				mathfun_expr_exec(expr->ex.binary.left, args, error).number >
-				mathfun_expr_exec(expr->ex.binary.right, args, error).number };
+				mathfun_expr_exec(expr->ex.binary.left, args).number >
+				mathfun_expr_exec(expr->ex.binary.right, args).number };
 
 		case EX_LE:
 			return (mathfun_reg){ .boolean =
-				mathfun_expr_exec(expr->ex.binary.left, args, error).number <=
-				mathfun_expr_exec(expr->ex.binary.right, args, error).number };
+				mathfun_expr_exec(expr->ex.binary.left, args).number <=
+				mathfun_expr_exec(expr->ex.binary.right, args).number };
 
 		case EX_GE:
 			return (mathfun_reg){ .boolean =
-				mathfun_expr_exec(expr->ex.binary.left, args, error).number >=
-				mathfun_expr_exec(expr->ex.binary.right, args, error).number };
+				mathfun_expr_exec(expr->ex.binary.left, args).number >=
+				mathfun_expr_exec(expr->ex.binary.right, args).number };
+
+		case EX_BEQ:
+			return (mathfun_reg){ .boolean =
+				mathfun_expr_exec(expr->ex.binary.left, args).boolean ==
+				mathfun_expr_exec(expr->ex.binary.right, args).boolean };
+
+		case EX_BNE:
+			return (mathfun_reg){ .boolean =
+				mathfun_expr_exec(expr->ex.binary.left, args).boolean !=
+				mathfun_expr_exec(expr->ex.binary.right, args).boolean };
 
 		case EX_AND:
 			return (mathfun_reg){ .boolean =
-				mathfun_expr_exec(expr->ex.binary.left, args, error).boolean &&
-				mathfun_expr_exec(expr->ex.binary.right, args, error).boolean };
+				mathfun_expr_exec(expr->ex.binary.left, args).boolean &&
+				mathfun_expr_exec(expr->ex.binary.right, args).boolean };
 
 		case EX_OR:
 			return (mathfun_reg){ .boolean =
-				mathfun_expr_exec(expr->ex.binary.left, args, error).boolean ||
-				mathfun_expr_exec(expr->ex.binary.right, args, error).boolean };
+				mathfun_expr_exec(expr->ex.binary.left, args).boolean ||
+				mathfun_expr_exec(expr->ex.binary.right, args).boolean };
 
 		case EX_IIF:
-			return mathfun_expr_exec(expr->ex.iif.cond, args, error).boolean ?
-				mathfun_expr_exec(expr->ex.iif.then_expr, args, error) :
-				mathfun_expr_exec(expr->ex.iif.else_expr, args, error);
+			return mathfun_expr_exec(expr->ex.iif.cond, args).boolean ?
+				mathfun_expr_exec(expr->ex.iif.then_expr, args) :
+				mathfun_expr_exec(expr->ex.iif.else_expr, args);
 	}
-	mathfun_raise_error(error, MATHFUN_INTERNAL_ERROR);
+	errno = EINVAL;
 	return (mathfun_reg){ .number = NAN };
 }
 
@@ -169,6 +157,8 @@ double mathfun_exec(const mathfun *mathfun, mathfun_reg regs[]) {
 		/* GT   */ &&do_gt   - &&do_add,
 		/* LE   */ &&do_le   - &&do_add,
 		/* GE   */ &&do_ge   - &&do_add,
+		/* BEQ  */ &&do_beq  - &&do_add,
+		/* BNE  */ &&do_bne  - &&do_add,
 		/* JMP  */ &&do_jmp  - &&do_add,
 		/* JMPT */ &&do_jmpt - &&do_add,
 		/* JMPF */ &&do_jmpf - &&do_add,
@@ -210,23 +200,10 @@ do_div:
 
 			case MOD:
 do_mod:
-			{
-				double left  = regs[code[1]].number;
-				double right = regs[code[2]].number;
-				double mathfun_mod_result;
-				
-				if (right == 0.0) {
-					// consistenly just act c-like here
-					// caller has to handle everything
-					errno = EDOM;
-					return NAN;
-				}
-
-				MATHFUN_MOD(left, right);
-				regs[code[3]].number = mathfun_mod_result;
+				regs[code[3]].number = mathfun_mod(regs[code[1]].number, regs[code[2]].number);
 				code += 4;
 				DISPATCH;
-			}
+
 			case POW:
 do_pow:
 				regs[code[3]].number = pow(regs[code[1]].number, regs[code[2]].number);
@@ -303,6 +280,18 @@ do_ge:
 				code += 4;
 				DISPATCH;
 
+			case BEQ:
+do_beq:
+				regs[code[3]].boolean = regs[code[1]].boolean == regs[code[2]].boolean;
+				code += 4;
+				DISPATCH;
+
+			case BNE:
+do_bne:
+				regs[code[3]].boolean = regs[code[1]].boolean != regs[code[2]].boolean;
+				code += 4;
+				DISPATCH;
+
 			case JMP:
 do_jmp:
 				code = start + code[1];
@@ -348,6 +337,10 @@ do_ret:
 do_nop:
 				++ code;
 				DISPATCH;
+
+			default:
+				errno = EINVAL;
+				return NAN;
 		}
 	}
 }

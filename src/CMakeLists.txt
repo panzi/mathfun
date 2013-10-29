@@ -2,7 +2,7 @@ include(GenerateExportHeader)
 
 configure_file(config.h.in "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
 
-set(MATHFUN_SRCS bindings.c codegen.c exec.c mathfun.c parser.c error.c
+set(MATHFUN_SRCS bindings.c optimize.c codegen.c exec.c mathfun.c parser.c error.c
 	mathfun.h mathfun_intern.h config.h.in)
 
 add_compiler_export_flags()

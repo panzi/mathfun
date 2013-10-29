@@ -314,7 +314,15 @@ double mathfun_arun(const char *argnames[], size_t argc, const char *code, const
 
 	// it's only executed once, so any optimizations and byte code
 	// compilations would only add overhead
-	double value = mathfun_expr_exec(expr, args, error).number;
+	errno = 0;
+	double value = mathfun_expr_exec(expr, args).number;
+
+	if (errno != 0) {
+		mathfun_raise_c_error(error);
+		mathfun_expr_free(expr);
+		mathfun_context_cleanup(&ctx);
+		return NAN;
+	}
 
 	mathfun_expr_free(expr);
 	mathfun_context_cleanup(&ctx);
@@ -411,6 +419,8 @@ void mathfun_expr_free(mathfun_expr *expr) {
 		case EX_GT:
 		case EX_LE:
 		case EX_GE:
+		case EX_BEQ:
+		case EX_BNE:
 		case EX_AND:
 		case EX_OR:
 			mathfun_expr_free(expr->ex.binary.left);
@@ -459,6 +469,8 @@ mathfun_type mathfun_expr_type(const mathfun_expr *expr) {
 		case EX_GT:
 		case EX_LE:
 		case EX_GE:
+		case EX_BEQ:
+		case EX_BNE:
 		case EX_AND:
 		case EX_OR:
 			return MATHFUN_BOOLEAN;
@@ -480,11 +492,18 @@ const char *mathfun_type_name(mathfun_type type) {
 }
 
 double mathfun_mod(double x, double y) {
-	double mathfun_mod_result;
 	if (y == 0.0) {
 		errno = EDOM;
 		return NAN;
 	}
-	MATHFUN_MOD(x, y);
-	return mathfun_mod_result;
+	double mod = fmod(x, y);
+	if (mod) {
+		if ((y < 0.0) != (mod < 0.0)) {
+			mod += y;
+		}
+	}
+	else {
+		mod = copysign(0.0, y);
+	}
+	return mod;
 }
