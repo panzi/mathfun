@@ -1,7 +1,7 @@
 #ifndef MATHFUN_INTERN_H__
 #define MATHFUN_INTERN_H__
 
-// This is a internal header so there might be no MATHFUN_/mathfun_ prefixes.
+// This is an internal header so there might be no MATHFUN_/mathfun_ prefixes.
 
 #include "mathfun.h"
 
