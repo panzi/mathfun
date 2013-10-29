@@ -162,7 +162,9 @@ enum mathfun_bytecode {
 	JMPF = 23,   // reg, adr       jump to adr if reg contains false
 
 	SETT = 24,   // reg            set reg to true
-	SETF = 25    // reg            set reg to false
+	SETF = 25,   // reg            set reg to false
+
+	END  = 26    //                pseudo instruction. marks end of code.
 };
 
 struct mathfun_error {

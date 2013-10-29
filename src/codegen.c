@@ -321,8 +321,15 @@ bool mathfun_expr_codegen(mathfun_expr *expr, mathfun *mathfun, mathfun_error_p 
 	}
 
 	mathfun_code ret = mathfun->argc;
-	if (!mathfun_codegen_expr(&codegen, expr, &ret) ||
-		!mathfun_codegen_ins1(&codegen, RET, ret)) {
+	if (!mathfun_codegen_expr(&codegen, expr, &ret)) {
+		mathfun_codegen_cleanup(&codegen);
+		return false;
+	}
+
+	const mathfun_code retadr = codegen.code_used;
+
+	if (!mathfun_codegen_ins1(&codegen, RET, ret) ||
+		!mathfun_codegen_ins0(&codegen, END)) {
 		mathfun_codegen_cleanup(&codegen);
 		return false;
 	}
@@ -331,6 +338,52 @@ bool mathfun_expr_codegen(mathfun_expr *expr, mathfun *mathfun, mathfun_error_p 
 		mathfun_raise_error(error, MATHFUN_EXCEEDS_MAX_FRAME_SIZE);
 		mathfun_codegen_cleanup(&codegen);
 		return false;
+	}
+
+	// shortcut everything that just jumps to ret
+	// TODO: more shortcutting?
+	mathfun_code *ptr = codegen.code;
+
+	while (*ptr != END) {
+		switch (*ptr) {
+		case JMP:
+			if (ptr[1] == retadr) {
+				ptr[0] = RET;
+				ptr[1] = ret;
+			}
+			ptr += 2;
+			break;
+
+		case NOP:  ptr += 1; break;
+		case MOV:
+		case NEG:
+		case NOT:
+		case JMPF:
+		case JMPT: ptr += 3; break;
+		case VAL:  ptr += 2 + MATHFUN_VALUE_CODES; break;
+		case CALL: ptr += 3 + MATHFUN_FUNCT_CODES; break;
+		case ADD:
+		case SUB:
+		case MUL:
+		case DIV:
+		case MOD:
+		case POW:
+		case EQ:
+		case NE:
+		case LT:
+		case GT:
+		case LE:
+		case GE:
+		case BEQ:
+		case BNE:  ptr += 4; break;
+		case SETF:
+		case SETT: ptr += 2; break;
+		case RET:  ptr += 2; break;
+		default:
+			mathfun_raise_error(error, MATHFUN_INTERNAL_ERROR);
+			mathfun_codegen_cleanup(&codegen);
+			return false;
+		}
 	}
 
 	mathfun->framesize = codegen.maxstack + 1;
@@ -353,7 +406,7 @@ bool mathfun_dump(const mathfun *mathfun, FILE *stream, const mathfun_context *c
 
 	MATHFUN_DUMP((stream, "argc = %"PRIzu", framesize = %"PRIzu"\n\n", mathfun->argc, mathfun->framesize));
 
-	for (;;) {
+	while (*code != END) {
 		MATHFUN_DUMP((stream, "0x%08"PRIXPTR": ", code - mathfun->code));
 		switch (*code) {
 			case NOP:
@@ -363,7 +416,8 @@ bool mathfun_dump(const mathfun *mathfun, FILE *stream, const mathfun_context *c
 
 			case RET:
 				MATHFUN_DUMP((stream, "ret %"PRIuPTR"\n", code[1]));
-				return true;
+				code += 2;
+				break;
 
 			case MOV:
 				MATHFUN_DUMP((stream, "mov %"PRIuPTR", %"PRIuPTR"\n", code[1], code[2]));
@@ -522,4 +576,6 @@ bool mathfun_dump(const mathfun *mathfun, FILE *stream, const mathfun_context *c
 				return false;
 		}
 	}
+
+	return true;
 }
