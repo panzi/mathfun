@@ -16,11 +16,11 @@ extern "C" {
 
 // assumtions:
 // sizeof(x) == 2 ** n and sizeof(x) == __alignof__(x)
-// for x in {double, mathfun_binding_funct}
+// for x in {mathfun_reg, mathfun_binding_funct}
 
 #define MATHFUN_REGS_MAX UINTPTR_MAX
 #define MATHFUN_FUNCT_CODES (1 + ((sizeof(mathfun_binding_funct) - 1) / sizeof(mathfun_code)))
-#define MATHFUN_VALUE_CODES (1 + ((sizeof(double) - 1) / sizeof(mathfun_code)))
+#define MATHFUN_VALUE_CODES (1 + ((sizeof(mathfun_reg) - 1) / sizeof(mathfun_code)))
 
 #ifndef __GNUC__
 #	define __attribute__(X)

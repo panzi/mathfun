@@ -52,11 +52,10 @@ mathfun_reg mathfun_expr_exec(const mathfun_expr *expr, const double args[]) {
 				mathfun_expr_exec(expr->ex.binary.right, args).number };
 
 		case EX_MOD:
-		{
-			double left  = mathfun_expr_exec(expr->ex.binary.left, args).number;
-			double right = mathfun_expr_exec(expr->ex.binary.right, args).number;
-			return (mathfun_reg){ .number = mathfun_mod(left, right) };
-		}
+			return (mathfun_reg){ .number = mathfun_mod(
+				mathfun_expr_exec(expr->ex.binary.left, args).number,
+				mathfun_expr_exec(expr->ex.binary.right, args).number) };
+
 		case EX_POW:
 			return (mathfun_reg){ .number = pow(
 				mathfun_expr_exec(expr->ex.binary.left, args).number,
@@ -218,7 +217,7 @@ do_neg:
 
 			case VAL:
 do_val:
-				regs[code[1 + MATHFUN_VALUE_CODES]].number = *(double*)(code + 1);
+				regs[code[1 + MATHFUN_VALUE_CODES]] = *(mathfun_reg*)(code + 1);
 				code += 2 + MATHFUN_VALUE_CODES;
 				DISPATCH;
 

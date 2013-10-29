@@ -24,9 +24,10 @@ bool mathfun_codegen_ensure(mathfun_codegen *codegen, size_t n) {
 }
 
 bool mathfun_codegen_align(mathfun_codegen *codegen, size_t offset, size_t align) {
+	const uintptr_t mask = ~(align - 1);
 	for (;;) {
 		uintptr_t ptr = (uintptr_t)(codegen->code + codegen->code_used + offset);
-		uintptr_t aligned = ptr & ~(align - 1);
+		uintptr_t aligned = ptr & mask;
 		if (aligned == ptr) break;
 		if (!mathfun_codegen_ensure(codegen, 1)) return false;
 		codegen->code[codegen->code_used ++] = NOP;
@@ -35,7 +36,7 @@ bool mathfun_codegen_align(mathfun_codegen *codegen, size_t offset, size_t align
 }
 
 bool mathfun_codegen_val(mathfun_codegen *codegen, mathfun_reg value, mathfun_code target) {
-	if (!mathfun_codegen_align(codegen, 1, sizeof(double))) return false;
+	if (!mathfun_codegen_align(codegen, 1, sizeof(mathfun_reg))) return false;
 	if (!mathfun_codegen_ensure(codegen, MATHFUN_VALUE_CODES + 2)) return false;
 
 	codegen->code[codegen->code_used ++] = VAL;
