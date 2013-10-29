@@ -506,7 +506,7 @@ bool mathfun_dump(const mathfun *mathfun, FILE *stream, const mathfun_context *c
 				break;
 
 			case NOT:
-				MATHFUN_DUMP((stream, "net %"PRIuPTR", %"PRIuPTR"\n", code[1], code[2]));
+				MATHFUN_DUMP((stream, "not %"PRIuPTR", %"PRIuPTR"\n", code[1], code[2]));
 				code += 3;
 				break;
 
