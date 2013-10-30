@@ -270,6 +270,11 @@ static mathfun_reg mathfun_funct_yn(const mathfun_reg args[]) {
 	return (mathfun_reg){ .number = yn((int)args[0].number, args[1].number) };
 }
 
+static mathfun_reg mathfun_funct_sign(const mathfun_reg args[]) {
+	const double x = args[0].number;
+	return (mathfun_reg){ .number = isnan(x) || x == 0.0 ? x : copysign(1.0, x) };
+}
+
 bool mathfun_context_define_default(mathfun_context *ctx, mathfun_error_p *error) {
 	// Constants
 	if (!mathfun_context_define_const(ctx, "e", M_E, error) ||
@@ -350,7 +355,8 @@ bool mathfun_context_define_default(mathfun_context *ctx, mathfun_error_p *error
 		!mathfun_context_define_funct(ctx, "trunc", mathfun_funct_trunc, &mathfun_sig1, error) ||
 		!mathfun_context_define_funct(ctx, "y0", mathfun_funct_y0, &mathfun_sig1, error) ||
 		!mathfun_context_define_funct(ctx, "y1", mathfun_funct_y1, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "yn", mathfun_funct_yn, &mathfun_sig2, error)) {
+		!mathfun_context_define_funct(ctx, "yn", mathfun_funct_yn, &mathfun_sig2, error) ||
+		!mathfun_context_define_funct(ctx, "sign", mathfun_funct_sign, &mathfun_sig1, error)) {
 		return false;
 	}
 
