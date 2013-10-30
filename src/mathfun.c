@@ -81,15 +81,16 @@ const char *mathfun_context_funct_name(const mathfun_context *ctx, mathfun_bindi
 }
 
 bool mathfun_valid_name(const char *name) {
-	if (!isalpha(*name) && *name != '_') {
+	const char *ptr = name;
+	if (!isalpha(*ptr) && *ptr != '_') {
 		return false;
 	}
-	++ name;
-	while (*name) {
-		if (!isalnum(*name) && *name != '_') {
+	++ ptr;
+	while (*ptr) {
+		if (!isalnum(*ptr) && *ptr != '_') {
 			return false;
 		}
-		++ name;
+		++ ptr;
 	}
 	return
 		strcasecmp(name, "inf")   != 0 &&
@@ -307,6 +308,8 @@ double mathfun_run(const char *code, mathfun_error_p *error, ...) {
 double mathfun_arun(const char *argnames[], size_t argc, const char *code, const double args[],
 	mathfun_error_p *error) {
 	mathfun_context ctx;
+
+	if (!mathfun_validate_argnames(argnames, argc, error)) return NAN;
 
 	if (!mathfun_context_init(&ctx, true, error)) return NAN;
 
