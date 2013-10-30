@@ -268,6 +268,11 @@ mathfun_expr *mathfun_parse_range(mathfun_parser *parser) {
 		return NULL;
 	}
 
+	if (parser->ptr[-1] == '.') {
+		// got something like 5...6 and the dot after the 5 was eaten by the number.
+		-- parser->ptr;
+	}
+
 	if (parser->ptr[0] == '.' && parser->ptr[1] == '.') {
 		enum mathfun_expr_type type;
 		if (parser->ptr[2] == '.') {
