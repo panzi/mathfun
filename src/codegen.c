@@ -367,7 +367,7 @@ bool mathfun_codegen_expr(mathfun_codegen *codegen, mathfun_expr *expr, mathfun_
 }
 
 // shortcut unconditional jump chain to RET
-static bool mathfun_code_shortcut(mathfun_code *code, mathfun_code *ptr, mathfun_code *retptr) {
+static bool mathfun_code_shortcut_jmp_to_ret(mathfun_code *code, mathfun_code *ptr, mathfun_code *retptr) {
 	switch (ptr[0]) {
 	case RET:
 		if (retptr) *retptr = ptr[1];
@@ -376,7 +376,7 @@ static bool mathfun_code_shortcut(mathfun_code *code, mathfun_code *ptr, mathfun
 	case JMP:
 	{
 		mathfun_code ret = 0;
-		bool shortcut = mathfun_code_shortcut(code, code + ptr[1], &ret);
+		bool shortcut = mathfun_code_shortcut_jmp_to_ret(code, code + ptr[1], &ret);
 
 		if (shortcut) {
 			ptr[0] = RET;
@@ -387,6 +387,27 @@ static bool mathfun_code_shortcut(mathfun_code *code, mathfun_code *ptr, mathfun
 	}
 	default:
 		return false;
+	}
+}
+
+// shortcut unconditional jump chain
+static mathfun_code mathfun_code_shortcut_jmp(mathfun_code *code, mathfun_code *ptr) {
+	if (ptr[0] == JMP) {
+		return (ptr[1] = mathfun_code_shortcut_jmp(code, code + ptr[1]));
+	}
+	else {
+		return ptr - code;
+	}
+}
+
+// shortcut conditional jump chain on same condition register
+static mathfun_code mathfun_code_shortcut_jmptf(mathfun_code *code, mathfun_code *ptr,
+	enum mathfun_bytecode instr, mathfun_code reg) {
+	if (ptr[0] == instr && ptr[1] == reg) {
+		return (ptr[2] = mathfun_code_shortcut_jmptf(code, code + ptr[2], instr, reg));
+	}
+	else {
+		return ptr - code;
 	}
 }
 
@@ -431,16 +452,22 @@ bool mathfun_expr_codegen(mathfun_expr *expr, mathfun *mathfun, mathfun_error_p 
 	while (*ptr != END) {
 		switch (*ptr) {
 		case JMP:
-			mathfun_code_shortcut(codegen.code, ptr, NULL);
+			if (!mathfun_code_shortcut_jmp_to_ret(codegen.code, ptr, NULL)) {
+				mathfun_code_shortcut_jmp(codegen.code, ptr);
+			}
 			ptr += 2;
 			break;
 
 		case NOP:  ptr += 1; break;
 		case MOV:
 		case NEG:
-		case NOT:
+		case NOT:  ptr += 3; break;
 		case JMPF:
-		case JMPT: ptr += 3; break;
+		case JMPT:
+			mathfun_code_shortcut_jmptf(codegen.code, ptr, ptr[0], ptr[1]);
+			ptr += 3;
+			break;
+
 		case VAL:  ptr += 2 + MATHFUN_VALUE_CODES; break;
 		case CALL: ptr += 3 + MATHFUN_FUNCT_CODES; break;
 		case ADD:
