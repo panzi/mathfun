@@ -6,6 +6,7 @@ option(BUILD_EXAMPLES "Build examples" OFF)
 option(INSTALL_WAVEGEN "Install wavegen binary (from examples)" OFF)
 option(BUILD_SHARED_LIBS "Build Shared Libraries" OFF)
 option(BUILD_DOCS "Build doxygen documentation" OFF)
+option(BUILD_TESTS "Build tests" OFF)
 
 set(MATHFUN_MAJOR_VERSION 1)
 set(MATHFUN_MINOR_VERSION 0)
@@ -90,6 +91,17 @@ add_subdirectory(src)
 
 if(BUILD_EXAMPLES)
 	add_subdirectory(examples)
+endif()
+
+if(BUILD_TESTS)
+	include(CTest)
+
+	enable_testing()
+
+	set(CTEST_MEMORYCHECK_COMMAND "valgrind")
+	set(CTEST_MEMORYCHECK_COMMAND_OPTIONS "-v --leak-check=full")
+
+	add_subdirectory(test)
 endif()
 
 if(BUILD_DOCS)
