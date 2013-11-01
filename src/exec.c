@@ -141,9 +141,9 @@ mathfun_reg mathfun_expr_exec(const mathfun_expr *expr, const double args[]) {
 
 #pragma GCC diagnostic ignored "-pedantic"
 #pragma GCC diagnostic ignored "-Wunused-label"
-double mathfun_exec(const mathfun *mathfun, mathfun_reg regs[]) {
-	const mathfun_code *start = mathfun->code;
-	const mathfun_code *code  = mathfun->code;
+double mathfun_exec(const mathfun *fun, mathfun_reg regs[]) {
+	const mathfun_code *start = fun->code;
+	const mathfun_code *code  = fun->code;
 
 #ifdef __GNUC__
 	// http://gcc.gnu.org/onlinedocs/gcc/Labels-as-Values.html

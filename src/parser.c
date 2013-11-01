@@ -78,7 +78,7 @@ mathfun_expr *mathfun_parse_test(mathfun_parser *parser) {
 		skipws(parser);
 
 		if (*parser->ptr != ':') {
-			mathfun_raise_parser_error(parser, MATHFUN_PARSER_EXPECTED_COLON, NULL);
+			mathfun_raise_parser_error(parser, *parser->ptr ? MATHFUN_PARSER_EXPECTED_COLON : MATHFUN_PARSER_UNEXPECTED_END_OF_INPUT, NULL);
 			mathfun_expr_free(then_expr);
 			mathfun_expr_free(cond);
 			return NULL;
@@ -313,7 +313,7 @@ mathfun_expr *mathfun_parse_range(mathfun_parser *parser) {
 		return expr;
 	}
 
-	mathfun_raise_parser_error(parser, MATHFUN_PARSER_EXPECTED_DOTS, NULL);
+	mathfun_raise_parser_error(parser, *parser->ptr ? MATHFUN_PARSER_EXPECTED_DOTS : MATHFUN_PARSER_UNEXPECTED_END_OF_INPUT, NULL);
 	return NULL;
 }
 
@@ -606,7 +606,7 @@ mathfun_expr *mathfun_parse_atom(mathfun_parser *parser) {
 		if (!expr) return NULL;
 		if (*parser->ptr != ')') {
 			// missing ')'
-			mathfun_raise_parser_error(parser, MATHFUN_PARSER_EXPECTED_CLOSE_PARENTHESIS, NULL);
+			mathfun_raise_parser_error(parser, *parser->ptr ? MATHFUN_PARSER_EXPECTED_CLOSE_PARENTHESIS : MATHFUN_PARSER_UNEXPECTED_END_OF_INPUT, NULL);
 			mathfun_expr_free(expr);
 			return NULL;
 		}
@@ -762,7 +762,7 @@ mathfun_expr *mathfun_parse_atom(mathfun_parser *parser) {
 			}
 
 			if (*parser->ptr != ')') {
-				mathfun_raise_parser_error(parser, MATHFUN_PARSER_EXPECTED_CLOSE_PARENTHESIS, NULL);
+				mathfun_raise_parser_error(parser, *parser->ptr ? MATHFUN_PARSER_EXPECTED_CLOSE_PARENTHESIS : MATHFUN_PARSER_UNEXPECTED_END_OF_INPUT, NULL);
 				mathfun_expr_free(expr);
 				return NULL;
 			}
@@ -785,6 +785,8 @@ mathfun_expr *mathfun_parse_number(mathfun_parser *parser) {
 	double value = strtod(parser->ptr, &endptr);
 
 	if (parser->ptr == endptr) {
+		// can't have MATHFUN_PARSER_UNEXPECTED_END_OF_INPUT here because this function is only called
+		// if there is at least one character that can be at the start of a number literal.
 		mathfun_raise_parser_error(parser, MATHFUN_PARSER_EXPECTED_NUMBER, NULL);
 		return NULL;
 	}
@@ -818,7 +820,7 @@ size_t mathfun_parse_identifier(mathfun_parser *parser) {
 	parser->ptr = mathfun_find_identifier_end(from);
 
 	if (from == parser->ptr) {
-		mathfun_raise_parser_error(parser, MATHFUN_PARSER_EXPECTED_IDENTIFIER, from);
+		mathfun_raise_parser_error(parser, *from ? MATHFUN_PARSER_EXPECTED_IDENTIFIER : MATHFUN_PARSER_UNEXPECTED_END_OF_INPUT, from);
 		return 0;
 	}
 

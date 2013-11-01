@@ -411,17 +411,17 @@ static mathfun_code mathfun_code_shortcut_jmptf(mathfun_code *code, mathfun_code
 	}
 }
 
-bool mathfun_expr_codegen(mathfun_expr *expr, mathfun *mathfun, mathfun_error_p *error) {
-	if (mathfun->argc > MATHFUN_REGS_MAX) {
+bool mathfun_expr_codegen(mathfun_expr *expr, mathfun *fun, mathfun_error_p *error) {
+	if (fun->argc > MATHFUN_REGS_MAX) {
 		mathfun_raise_error(error, MATHFUN_TOO_MANY_ARGUMENTS);
 		return false;
 	}
 
 	mathfun_codegen codegen;
 
-	memset(&codegen, 0, sizeof(mathfun_codegen));
+	memset(&codegen, 0, sizeof(struct mathfun_codegen));
 
-	codegen.argc  = codegen.currstack = codegen.maxstack = mathfun->argc;
+	codegen.argc  = codegen.currstack = codegen.maxstack = fun->argc;
 	codegen.code_size = 16;
 	codegen.code  = calloc(codegen.code_size, sizeof(mathfun_code));
 	codegen.error = error;
@@ -432,7 +432,7 @@ bool mathfun_expr_codegen(mathfun_expr *expr, mathfun *mathfun, mathfun_error_p 
 		return false;
 	}
 
-	mathfun_code ret = mathfun->argc;
+	mathfun_code ret = fun->argc;
 	if (!mathfun_codegen_expr(&codegen, expr, &ret) ||
 		!mathfun_codegen_ins1(&codegen, RET, ret) ||
 		!mathfun_codegen_ins0(&codegen, END)) {
@@ -494,8 +494,8 @@ bool mathfun_expr_codegen(mathfun_expr *expr, mathfun *mathfun, mathfun_error_p 
 		}
 	}
 
-	mathfun->framesize = codegen.maxstack + 1;
-	mathfun->code      = codegen.code;
+	fun->framesize = codegen.maxstack + 1;
+	fun->code      = codegen.code;
 
 	codegen.code = NULL;
 	mathfun_codegen_cleanup(&codegen);
@@ -509,13 +509,13 @@ bool mathfun_expr_codegen(mathfun_expr *expr, mathfun *mathfun, mathfun_error_p 
 		return false; \
 	}
 
-bool mathfun_dump(const mathfun *mathfun, FILE *stream, const mathfun_context *ctx, mathfun_error_p *error) {
-	const mathfun_code *code = mathfun->code;
+bool mathfun_dump(const mathfun *fun, FILE *stream, const mathfun_context *ctx, mathfun_error_p *error) {
+	const mathfun_code *code = fun->code;
 
-	MATHFUN_DUMP((stream, "argc = %"PRIzu", framesize = %"PRIzu"\n\n", mathfun->argc, mathfun->framesize));
+	MATHFUN_DUMP((stream, "argc = %"PRIzu", framesize = %"PRIzu"\n\n", fun->argc, fun->framesize));
 
 	while (*code != END) {
-		MATHFUN_DUMP((stream, "0x%08"PRIXPTR": ", code - mathfun->code));
+		MATHFUN_DUMP((stream, "0x%08"PRIXPTR": ", code - fun->code));
 		switch (*code) {
 			case NOP:
 				MATHFUN_DUMP((stream, "nop\n"));

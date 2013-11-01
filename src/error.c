@@ -268,94 +268,96 @@ void mathfun_error_log(mathfun_error_p error, FILE *stream) {
 	switch (type) {
 		case MATHFUN_OK:
 			fprintf(stream, "no error\n");
-			break;
+			return;
 
 		case MATHFUN_OUT_OF_MEMORY:
 		case MATHFUN_IO_ERROR:
 		case MATHFUN_MATH_ERROR:
 		case MATHFUN_C_ERROR:
 			fprintf(stream, "error: %s\n", strerror(errnum));
-			break;
+			return;
 
 		case MATHFUN_ILLEGAL_NAME:
 			fprintf(stream, "error: illegal name: '%s'\n", error->str);
-			break;
+			return;
 
 		case MATHFUN_DUPLICATE_ARGUMENT:
 			fprintf(stream, "error: duplicate argument: '%s'\n", error->str);
-			break;
+			return;
 
 		case MATHFUN_NAME_EXISTS:
 			fprintf(stream, "error: name already exists: '%s'\n", error->str);
-			break;
+			return;
 
 		case MATHFUN_NO_SUCH_NAME:
 			fprintf(stream, "error: no such constant or function: '%s'\n", error->str);
-			break;
+			return;
 
 		case MATHFUN_TOO_MANY_ARGUMENTS:
 			fprintf(stream, "error: too many arguments\n");
-			break;
+			return;
 
 		case MATHFUN_EXCEEDS_MAX_FRAME_SIZE:
 			fprintf(stream, "error: expression would exceed maximum frame size\n");
-			break;
+			return;
 
 		case MATHFUN_INTERNAL_ERROR:
 			fprintf(stream, "error: internal error\n");
-			break;
+			return;
 
 		case MATHFUN_PARSER_EXPECTED_CLOSE_PARENTHESIS:
 			mathfun_log_parser_error(error, stream, "expected ')'");
-			break;
+			return;
 
 		case MATHFUN_PARSER_UNDEFINED_REFERENCE:
 			mathfun_log_parser_error(error, stream, "undefined reference: '%.*s'",
 				error->errlen, error->errpos);
-			break;
+			return;
 
 		case MATHFUN_PARSER_NOT_A_FUNCTION:
 			mathfun_log_parser_error(error, stream, "reference is not a function: '%.*s'",
 				error->errlen, error->errpos);
-			break;
+			return;
 
 		case MATHFUN_PARSER_NOT_A_VARIABLE:
 			mathfun_log_parser_error(error, stream, "reference is not an argument or constant: '%.*s'",
 				error->errlen, error->errpos);
-			break;
+			return;
 
 		case MATHFUN_PARSER_ILLEGAL_NUMBER_OF_ARGUMENTS:
 			mathfun_log_parser_error(error, stream, "illegal number of arguments: expected %"PRIzu" but got %"PRIzu,
 				error->err.argc.expected, error->err.argc.got);
-			break;
+			return;
 
 		case MATHFUN_PARSER_EXPECTED_NUMBER:
 			mathfun_log_parser_error(error, stream, "expected a number");
-			break;
+			return;
 
 		case MATHFUN_PARSER_EXPECTED_IDENTIFIER:
 			mathfun_log_parser_error(error, stream, "expected an identifier");
-			break;
+			return;
 
 		case MATHFUN_PARSER_EXPECTED_COLON:
 			mathfun_log_parser_error(error, stream, "expected ':'");
-			break;
+			return;
 			
 		case MATHFUN_PARSER_EXPECTED_DOTS:
 			mathfun_log_parser_error(error, stream, "expected '..' or '...'");
-			break;
+			return;
 
 		case MATHFUN_PARSER_TYPE_ERROR:
 			mathfun_log_parser_error(error, stream, "expression has illegal type for this position: expected %s but got %s",
 				mathfun_type_name(error->err.type.expected), mathfun_type_name(error->err.type.got));
-			break;
+			return;
+
+		case MATHFUN_PARSER_UNEXPECTED_END_OF_INPUT:
+			mathfun_log_parser_error(error, stream, "unexpected end of input");
+			return;
 
 		case MATHFUN_PARSER_TRAILING_GARBAGE:
 			mathfun_log_parser_error(error, stream, "trailing garbage");
-			break;
-
-		default:
-			fprintf(stream, "error: unknown error: %d\n", type);
-			break;
+			return;
 	}
+	
+	fprintf(stream, "error: unknown error: %d\n", type);
 }

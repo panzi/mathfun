@@ -189,36 +189,36 @@ bool mathfun_context_undefine(mathfun_context *ctx, const char *name, mathfun_er
 	return true;
 }
 
-void mathfun_cleanup(mathfun *mathfun) {
-	free(mathfun->code);
-	mathfun->code = NULL;
+void mathfun_cleanup(mathfun *fun) {
+	free(fun->code);
+	fun->code = NULL;
 }
 
-double mathfun_call(const mathfun *mathfun, mathfun_error_p *error, ...) {
+double mathfun_call(const mathfun *fun, mathfun_error_p *error, ...) {
 	va_list ap;
 	va_start(ap, error);
 
-	double value = mathfun_vcall(mathfun, ap, error);
+	double value = mathfun_vcall(fun, ap, error);
 
 	va_end(ap);
 
 	return value;
 }
 
-double mathfun_acall(const mathfun *mathfun, const double args[], mathfun_error_p *error) {
-	mathfun_reg *regs = calloc(mathfun->framesize, sizeof(mathfun_reg));
+double mathfun_acall(const mathfun *fun, const double args[], mathfun_error_p *error) {
+	mathfun_reg *regs = calloc(fun->framesize, sizeof(mathfun_reg));
 
 	if (!regs) {
 		mathfun_raise_error(error, MATHFUN_OUT_OF_MEMORY);
 		return NAN;
 	}
 
-	for (size_t i = 0; i < mathfun->argc; ++ i) {
+	for (size_t i = 0; i < fun->argc; ++ i) {
 		regs[i].number = args[i];
 	}
 
 	errno = 0;
-	double value = mathfun_exec(mathfun, regs);
+	double value = mathfun_exec(fun, regs);
 	free(regs);
 
 	if (errno != 0) {
@@ -228,20 +228,20 @@ double mathfun_acall(const mathfun *mathfun, const double args[], mathfun_error_
 	return value;
 }
 
-double mathfun_vcall(const mathfun *mathfun, va_list ap, mathfun_error_p *error) {
-	mathfun_reg *regs = calloc(mathfun->framesize, sizeof(mathfun_reg));
+double mathfun_vcall(const mathfun *fun, va_list ap, mathfun_error_p *error) {
+	mathfun_reg *regs = calloc(fun->framesize, sizeof(mathfun_reg));
 
 	if (!regs) {
 		mathfun_raise_error(error, MATHFUN_OUT_OF_MEMORY);
 		return NAN;
 	}
 
-	for (size_t i = 0; i < mathfun->argc; ++ i) {
+	for (size_t i = 0; i < fun->argc; ++ i) {
 		regs[i].number = va_arg(ap, double);
 	}
 
 	errno = 0;
-	double value = mathfun_exec(mathfun, regs);
+	double value = mathfun_exec(fun, regs);
 	free(regs);
 
 	if (errno != 0) {
@@ -340,12 +340,12 @@ double mathfun_arun(const char *argnames[], size_t argc, const char *code, const
 
 bool mathfun_context_compile(const mathfun_context *ctx,
 	const char *argnames[], size_t argc, const char *code,
-	mathfun *mathfun, mathfun_error_p *error) {
+	mathfun *fun, mathfun_error_p *error) {
 	if (!mathfun_validate_argnames(argnames, argc, error)) return false;
 
 	mathfun_expr *expr = mathfun_context_parse(ctx, argnames, argc, code, error);
 
-	memset(mathfun, 0, sizeof(mathfun));
+	memset(fun, 0, sizeof(struct mathfun));
 	if (!expr) return false;
 
 	mathfun_expr *opt = mathfun_expr_optimize(expr, error);
@@ -355,8 +355,8 @@ bool mathfun_context_compile(const mathfun_context *ctx,
 		return false;
 	}
 
-	mathfun->argc = argc;
-	bool ok = mathfun_expr_codegen(opt, mathfun, error);
+	fun->argc = argc;
+	bool ok = mathfun_expr_codegen(opt, fun, error);
 
 	// mathfun_expr_optimize reuses expr and frees discarded things,
 	// so only opt has to be freed:
@@ -365,13 +365,13 @@ bool mathfun_context_compile(const mathfun_context *ctx,
 	return ok;
 }
 
-bool mathfun_compile(mathfun *mathfun, const char *argnames[], size_t argc, const char *code,
+bool mathfun_compile(mathfun *fun, const char *argnames[], size_t argc, const char *code,
 	mathfun_error_p *error) {
 	mathfun_context ctx;
-	memset(mathfun, 0, sizeof(mathfun));
+	memset(fun, 0, sizeof(struct mathfun));
 	if (!mathfun_context_init(&ctx, true, error)) return false;
 
-	bool ok = mathfun_context_compile(&ctx, argnames, argc, code, mathfun, error);
+	bool ok = mathfun_context_compile(&ctx, argnames, argc, code, fun, error);
 	mathfun_context_cleanup(&ctx);
 
 	return ok;

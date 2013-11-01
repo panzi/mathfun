@@ -96,6 +96,7 @@ enum mathfun_error_type {
 	MATHFUN_PARSER_EXPECTED_COLON,              ///< expected ':' but got something else or end of input
 	MATHFUN_PARSER_EXPECTED_DOTS,               ///< expected '..' or '...' but got something else or end of input
 	MATHFUN_PARSER_TYPE_ERROR,                  ///< expression with wrong type for this position
+	MATHFUN_PARSER_UNEXPECTED_END_OF_INPUT,     ///< unexpected end of input
 	MATHFUN_PARSER_TRAILING_GARBAGE             ///< garbage at the end of input
 };
 
@@ -294,7 +295,7 @@ MATHFUN_EXPORT bool mathfun_context_undefine(mathfun_context *ctx, const char *n
  * @param argnames Array of argument names of the function expression
  * @param argc Number of arguments
  * @param code The function expression
- * @param mathfun Target byte code object (will be initialized in any case)
+ * @param fun Target byte code object (will be initialized in any case)
  * @param error A pointer to an error handle. Possible errors: #MATHFUN_ILLEGAL_NAME, #MATHFUN_DUPLICATE_ARGUMENT,
  *        #MATHFUN_OUT_OF_MEMORY, #MATHFUN_MATH_ERROR, #MATHFUN_TOO_MANY_ARGUMENTS, #MATHFUN_EXCEEDS_MAX_FRAME_SIZE,
  *        MATHFUN_PARSER_*
@@ -302,17 +303,17 @@ MATHFUN_EXPORT bool mathfun_context_undefine(mathfun_context *ctx, const char *n
  */
 MATHFUN_EXPORT bool mathfun_context_compile(const mathfun_context *ctx,
 	const char *argnames[], size_t argc, const char *code,
-	mathfun *mathfun, mathfun_error_p *error);
+	mathfun *fun, mathfun_error_p *error);
 
 /** Frees allocated resources.
  *
  * @param mathfun A pointer to a #mathfun object
  */
-MATHFUN_EXPORT void mathfun_cleanup(mathfun *mathfun);
+MATHFUN_EXPORT void mathfun_cleanup(mathfun *fun);
 
 /** Compile function expression to byte code using default function/constant definitions.
  *
- * @param mathfun Target byte code object (will be initialized in any case)
+ * @param fun Target byte code object (will be initialized in any case)
  * @param argnames Array of argument names of the function expression
  * @param argc Number of arguments
  * @param code The function expression
@@ -321,37 +322,37 @@ MATHFUN_EXPORT void mathfun_cleanup(mathfun *mathfun);
  *        MATHFUN_PARSER_*
  * @return true on success, false if an error occured.
  */
-MATHFUN_EXPORT bool mathfun_compile(mathfun *mathfun, const char *argnames[], size_t argc, const char *code,
+MATHFUN_EXPORT bool mathfun_compile(mathfun *fun, const char *argnames[], size_t argc, const char *code,
 	mathfun_error_p *error);
 
 /** Execute a compiled function expression.
  *
- * @param mathfun Byte code object to execute
+ * @param fun Byte code object to execute
  * @param error A pointer to an error handle. Possible errors: #MATHFUN_OUT_OF_MEMORY, #MATHFUN_MATH_ERROR,
  *        #MATHFUN_C_ERROR (depending on the functions called by the expression)
  * @return The result of the evaluation.
  */
-MATHFUN_EXPORT double mathfun_call(const mathfun *mathfun, mathfun_error_p *error, ...);
+MATHFUN_EXPORT double mathfun_call(const mathfun *fun, mathfun_error_p *error, ...);
 
 /** Execute a compiled function expression.
  *
- * @param mathfun Byte code object to execute
+ * @param fun Byte code object to execute
  * @param args Array of argument values
  * @param error A pointer to an error handle. Possible errors: #MATHFUN_OUT_OF_MEMORY, #MATHFUN_MATH_ERROR,
  *        #MATHFUN_C_ERROR (depending on the functions called by the expression)
  * @return The result of the evaluation.
  */
-MATHFUN_EXPORT double mathfun_acall(const mathfun *mathfun, const double args[], mathfun_error_p *error);
+MATHFUN_EXPORT double mathfun_acall(const mathfun *fun, const double args[], mathfun_error_p *error);
 
 /** Execute a compiled function expression.
  *
- * @param mathfun Byte code object to execute
+ * @param fun Byte code object to execute
  * @param ap Variable argument list pointer
  * @param error A pointer to an error handle. Possible errors: #MATHFUN_OUT_OF_MEMORY, #MATHFUN_MATH_ERROR,
  *        #MATHFUN_C_ERROR (depending on the functions called by the expression)
  * @return The result of the evaluation
  */
-MATHFUN_EXPORT double mathfun_vcall(const mathfun *mathfun, va_list ap, mathfun_error_p *error);
+MATHFUN_EXPORT double mathfun_vcall(const mathfun *fun, va_list ap, mathfun_error_p *error);
 
 /** Execute a compiled function expression.
  *
@@ -364,22 +365,22 @@ MATHFUN_EXPORT double mathfun_vcall(const mathfun *mathfun, va_list ap, mathfun_
  *
  * Sets errno when a math error occurs.
  *
- * @param mathfun The compiled function expression
+ * @param fun The compiled function expression
  * @param frame The functions execution frame
  * @return The result of the execution
  */
-MATHFUN_EXPORT double mathfun_exec(const mathfun *mathfun, mathfun_reg frame[])
+MATHFUN_EXPORT double mathfun_exec(const mathfun *fun, mathfun_reg frame[])
 	__attribute__((__noinline__,__noclone__));
 
 /** Dump text representation of byte code.
  * 
- * @param mathfun The compiled function expression
+ * @param fun The compiled function expression
  * @param stream The output FILE
  * @param ctx A pointer to a #mathfun_context. Can be NULL.
  * @param error A pointer to an error handle. Possible errors: #MATHFUN_IO_ERROR
  * @return true on success, false if an error occured.
  */
-MATHFUN_EXPORT bool mathfun_dump(const mathfun *mathfun, FILE *stream, const mathfun_context *ctx,
+MATHFUN_EXPORT bool mathfun_dump(const mathfun *fun, FILE *stream, const mathfun_context *ctx,
 	mathfun_error_p *error);
 
 /** Parse and run function expression.
