@@ -534,7 +534,7 @@ bool mathfun_dump(const mathfun *fun, FILE *stream, const mathfun_context *ctx, 
 				break;
 
 			case VAL:
-				MATHFUN_DUMP((stream, "val %.22g, %"PRIuPTR"\n", *(double*)(code + 1),
+				MATHFUN_DUMP((stream, "val %a, %"PRIuPTR"\n", *(double*)(code + 1),
 					code[1 + MATHFUN_VALUE_CODES]));
 				code += 2 + MATHFUN_VALUE_CODES;
 				break;
