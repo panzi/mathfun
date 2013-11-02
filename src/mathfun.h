@@ -39,8 +39,6 @@
 extern "C" {
 #endif
 
-typedef uintptr_t mathfun_code;
-
 /** Type used for the "registers" of the interpreter.
  */
 typedef union mathfun_reg {
@@ -143,9 +141,9 @@ struct mathfun_context {
 };
 
 struct mathfun {
-	size_t        argc;
-	size_t        framesize;
-	mathfun_code *code;
+	size_t argc;
+	size_t framesize;
+	void  *code;
 };
 
 /** Initialize a mathfun_context.

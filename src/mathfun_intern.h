@@ -42,6 +42,7 @@ extern "C" {
 #	define PRIzx "zx"
 #endif
 
+typedef uintptr_t mathfun_code;
 typedef struct mathfun_expr mathfun_expr;
 typedef struct mathfun_error mathfun_error;
 typedef struct mathfun_parser mathfun_parser;

@@ -510,12 +510,13 @@ bool mathfun_expr_codegen(mathfun_expr *expr, mathfun *fun, mathfun_error_p *err
 	}
 
 bool mathfun_dump(const mathfun *fun, FILE *stream, const mathfun_context *ctx, mathfun_error_p *error) {
-	const mathfun_code *code = fun->code;
+	const mathfun_code *start = fun->code;
+	const mathfun_code *code  = start;
 
 	MATHFUN_DUMP((stream, "argc = %"PRIzu", framesize = %"PRIzu"\n\n", fun->argc, fun->framesize));
 
 	while (*code != END) {
-		MATHFUN_DUMP((stream, "0x%08"PRIXPTR": ", code - fun->code));
+		MATHFUN_DUMP((stream, "0x%08"PRIXPTR": ", code - start));
 		switch (*code) {
 			case NOP:
 				MATHFUN_DUMP((stream, "nop\n"));
