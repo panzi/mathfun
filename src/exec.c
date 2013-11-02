@@ -3,114 +3,114 @@
 #include "mathfun_intern.h"
 
 // tree interpreter, for one time execution and debugging
-mathfun_reg mathfun_expr_exec(const mathfun_expr *expr, const double args[]) {
+mathfun_value mathfun_expr_exec(const mathfun_expr *expr, const double args[]) {
 	switch (expr->type) {
 		case EX_CONST:
 			return expr->ex.value.value;
 
 		case EX_ARG:
-			return (mathfun_reg){ .number = args[expr->ex.arg] };
+			return (mathfun_value){ .number = args[expr->ex.arg] };
 
 		case EX_CALL:
 		{
 			const size_t argc = expr->ex.funct.sig->argc;
-			mathfun_reg *funct_args = malloc(argc * sizeof(mathfun_reg));
+			mathfun_value *funct_args = malloc(argc * sizeof(mathfun_value));
 			if (!funct_args) {
 				if (errno == 0) errno = ENOMEM;
-				return (mathfun_reg){ .number = NAN };
+				return (mathfun_value){ .number = NAN };
 			}
 			for (size_t i = 0; i < argc; ++ i) {
 				funct_args[i] = mathfun_expr_exec(expr->ex.funct.args[i], args);
 			}
-			mathfun_reg value = expr->ex.funct.funct(funct_args);
+			mathfun_value value = expr->ex.funct.funct(funct_args);
 			free(funct_args);
 
 			return value;
 		}
 		case EX_NEG:
-			return (mathfun_reg){ .number =
+			return (mathfun_value){ .number =
 				-mathfun_expr_exec(expr->ex.unary.expr, args).number };
 
 		case EX_ADD:
-			return (mathfun_reg){ .number =
+			return (mathfun_value){ .number =
 				mathfun_expr_exec(expr->ex.binary.left, args).number +
 				mathfun_expr_exec(expr->ex.binary.right, args).number };
 
 		case EX_SUB:
-			return (mathfun_reg){ .number =
+			return (mathfun_value){ .number =
 				mathfun_expr_exec(expr->ex.binary.left, args).number -
 				mathfun_expr_exec(expr->ex.binary.right, args).number };
 
 		case EX_MUL:
-			return (mathfun_reg){ .number =
+			return (mathfun_value){ .number =
 				mathfun_expr_exec(expr->ex.binary.left, args).number *
 				mathfun_expr_exec(expr->ex.binary.right, args).number };
 
 		case EX_DIV:
-			return (mathfun_reg){ .number =
+			return (mathfun_value){ .number =
 				mathfun_expr_exec(expr->ex.binary.left, args).number /
 				mathfun_expr_exec(expr->ex.binary.right, args).number };
 
 		case EX_MOD:
-			return (mathfun_reg){ .number = mathfun_mod(
+			return (mathfun_value){ .number = mathfun_mod(
 				mathfun_expr_exec(expr->ex.binary.left, args).number,
 				mathfun_expr_exec(expr->ex.binary.right, args).number) };
 
 		case EX_POW:
-			return (mathfun_reg){ .number = pow(
+			return (mathfun_value){ .number = pow(
 				mathfun_expr_exec(expr->ex.binary.left, args).number,
 				mathfun_expr_exec(expr->ex.binary.right, args).number) };
 
 		case EX_NOT:
-			return (mathfun_reg){ .boolean = !mathfun_expr_exec(expr->ex.unary.expr, args).boolean };
+			return (mathfun_value){ .boolean = !mathfun_expr_exec(expr->ex.unary.expr, args).boolean };
 
 		case EX_EQ:
-			return (mathfun_reg){ .boolean =
+			return (mathfun_value){ .boolean =
 				mathfun_expr_exec(expr->ex.binary.left, args).number ==
 				mathfun_expr_exec(expr->ex.binary.right, args).number };
 
 		case EX_NE:
-			return (mathfun_reg){ .boolean =
+			return (mathfun_value){ .boolean =
 				mathfun_expr_exec(expr->ex.binary.left, args).number !=
 				mathfun_expr_exec(expr->ex.binary.right, args).number };
 
 		case EX_LT:
-			return (mathfun_reg){ .boolean =
+			return (mathfun_value){ .boolean =
 				mathfun_expr_exec(expr->ex.binary.left, args).number <
 				mathfun_expr_exec(expr->ex.binary.right, args).number };
 
 		case EX_GT:
-			return (mathfun_reg){ .boolean =
+			return (mathfun_value){ .boolean =
 				mathfun_expr_exec(expr->ex.binary.left, args).number >
 				mathfun_expr_exec(expr->ex.binary.right, args).number };
 
 		case EX_LE:
-			return (mathfun_reg){ .boolean =
+			return (mathfun_value){ .boolean =
 				mathfun_expr_exec(expr->ex.binary.left, args).number <=
 				mathfun_expr_exec(expr->ex.binary.right, args).number };
 
 		case EX_GE:
-			return (mathfun_reg){ .boolean =
+			return (mathfun_value){ .boolean =
 				mathfun_expr_exec(expr->ex.binary.left, args).number >=
 				mathfun_expr_exec(expr->ex.binary.right, args).number };
 
 		case EX_BEQ:
-			return (mathfun_reg){ .boolean =
+			return (mathfun_value){ .boolean =
 				mathfun_expr_exec(expr->ex.binary.left, args).boolean ==
 				mathfun_expr_exec(expr->ex.binary.right, args).boolean };
 
 		case EX_BNE:
-			return (mathfun_reg){ .boolean =
+			return (mathfun_value){ .boolean =
 				mathfun_expr_exec(expr->ex.binary.left, args).boolean !=
 				mathfun_expr_exec(expr->ex.binary.right, args).boolean };
 
 		case EX_AND:
-			return (mathfun_reg){ .boolean =
+			return (mathfun_value){ .boolean =
 				mathfun_expr_exec(expr->ex.binary.left, args).boolean &&
 				mathfun_expr_exec(expr->ex.binary.right, args).boolean };
 
 		case EX_OR:
-			return (mathfun_reg){ .boolean =
+			return (mathfun_value){ .boolean =
 				mathfun_expr_exec(expr->ex.binary.left, args).boolean ||
 				mathfun_expr_exec(expr->ex.binary.right, args).boolean };
 
@@ -123,7 +123,7 @@ mathfun_reg mathfun_expr_exec(const mathfun_expr *expr, const double args[]) {
 		{
 			double value = mathfun_expr_exec(expr->ex.binary.left, args).number;
 			mathfun_expr *range = expr->ex.binary.right;
-			return (mathfun_reg){ .boolean = range->type == EX_RNG_INCL ?
+			return (mathfun_value){ .boolean = range->type == EX_RNG_INCL ?
 				value >= mathfun_expr_exec(range->ex.binary.left, args).number &&
 				value <= mathfun_expr_exec(range->ex.binary.right, args).number :
 
@@ -136,12 +136,12 @@ mathfun_reg mathfun_expr_exec(const mathfun_expr *expr, const double args[]) {
 			break;
 	}
 	errno = EINVAL;
-	return (mathfun_reg){ .number = NAN };
+	return (mathfun_value){ .number = NAN };
 }
 
 #pragma GCC diagnostic ignored "-pedantic"
 #pragma GCC diagnostic ignored "-Wunused-label"
-double mathfun_exec(const mathfun *fun, mathfun_reg regs[]) {
+double mathfun_exec(const mathfun *fun, mathfun_value regs[]) {
 	const mathfun_code *start = fun->code;
 	const mathfun_code *code  = fun->code;
 
@@ -233,7 +233,7 @@ do_neg:
 
 			case VAL:
 do_val:
-				regs[code[1 + MATHFUN_VALUE_CODES]] = *(mathfun_reg*)(code + 1);
+				regs[code[1 + MATHFUN_VALUE_CODES]] = *(mathfun_value*)(code + 1);
 				code += 2 + MATHFUN_VALUE_CODES;
 				DISPATCH;
 

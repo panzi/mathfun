@@ -35,12 +35,12 @@ bool mathfun_codegen_align(mathfun_codegen *codegen, size_t offset, size_t align
 	return true;
 }
 
-bool mathfun_codegen_val(mathfun_codegen *codegen, mathfun_reg value, mathfun_code target) {
-	if (!mathfun_codegen_align(codegen, 1, sizeof(mathfun_reg))) return false;
+bool mathfun_codegen_val(mathfun_codegen *codegen, mathfun_value value, mathfun_code target) {
+	if (!mathfun_codegen_align(codegen, 1, sizeof(mathfun_value))) return false;
 	if (!mathfun_codegen_ensure(codegen, MATHFUN_VALUE_CODES + 2)) return false;
 
 	codegen->code[codegen->code_used ++] = VAL;
-	*(mathfun_reg*)(codegen->code + codegen->code_used) = value;
+	*(mathfun_value*)(codegen->code + codegen->code_used) = value;
 	codegen->code_used += MATHFUN_VALUE_CODES;
 	codegen->code[codegen->code_used ++] = target;
 

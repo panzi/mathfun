@@ -206,7 +206,7 @@ double mathfun_call(const mathfun *fun, mathfun_error_p *error, ...) {
 }
 
 double mathfun_acall(const mathfun *fun, const double args[], mathfun_error_p *error) {
-	mathfun_reg *regs = calloc(fun->framesize, sizeof(mathfun_reg));
+	mathfun_value *regs = calloc(fun->framesize, sizeof(mathfun_value));
 
 	if (!regs) {
 		mathfun_raise_error(error, MATHFUN_OUT_OF_MEMORY);
@@ -229,7 +229,7 @@ double mathfun_acall(const mathfun *fun, const double args[], mathfun_error_p *e
 }
 
 double mathfun_vcall(const mathfun *fun, va_list ap, mathfun_error_p *error) {
-	mathfun_reg *regs = calloc(fun->framesize, sizeof(mathfun_reg));
+	mathfun_value *regs = calloc(fun->framesize, sizeof(mathfun_value));
 
 	if (!regs) {
 		mathfun_raise_error(error, MATHFUN_OUT_OF_MEMORY);

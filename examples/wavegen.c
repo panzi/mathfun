@@ -12,62 +12,62 @@
 #	define M_TAU (2*M_PI)
 #endif
 
-static mathfun_reg square_wave(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = fmod(args[0].number, M_TAU) < M_PI ? 1 : -1 };
+static mathfun_value square_wave(const mathfun_value args[]) {
+	return (mathfun_value){ .number = fmod(args[0].number, M_TAU) < M_PI ? 1 : -1 };
 }
 
-static mathfun_reg triangle_wave(const mathfun_reg args[]) {
+static mathfun_value triangle_wave(const mathfun_value args[]) {
 	const double x = fmod((args[0].number + M_PI_2), M_TAU);
-	return (mathfun_reg){ .number = x < M_PI ? x * M_2_PI - 1 : 3 - x * M_2_PI };
+	return (mathfun_value){ .number = x < M_PI ? x * M_2_PI - 1 : 3 - x * M_2_PI };
 }
 
-static mathfun_reg sawtooth_wave(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = fmod(args[0].number, M_TAU) * M_1_PI - 1 };
+static mathfun_value sawtooth_wave(const mathfun_value args[]) {
+	return (mathfun_value){ .number = fmod(args[0].number, M_TAU) * M_1_PI - 1 };
 }
 
-static mathfun_reg fadein(const mathfun_reg args[]) {
+static mathfun_value fadein(const mathfun_value args[]) {
 	const double t = args[0].number;
-	if (t < 0) return (mathfun_reg){ .number = 0.0 };
+	if (t < 0) return (mathfun_value){ .number = 0.0 };
 	const double duration = args[1].number;
-	if (duration < t) return (mathfun_reg){ .number = 1.0 };
+	if (duration < t) return (mathfun_value){ .number = 1.0 };
 	const double x = t / duration;
-	return (mathfun_reg){ .number = x*x };
+	return (mathfun_value){ .number = x*x };
 }
 
-static mathfun_reg fadeout(const mathfun_reg args[]) {
+static mathfun_value fadeout(const mathfun_value args[]) {
 	double t = args[0].number;
 	const double duration = args[1].number;
-	if (t > duration) return (mathfun_reg){ .number = 0.0 };
-	if (t < 0.0) return (mathfun_reg){ .number = 1.0 };
+	if (t > duration) return (mathfun_value){ .number = 0.0 };
+	if (t < 0.0) return (mathfun_value){ .number = 1.0 };
 	const double x = (t - duration) / duration;
-	return (mathfun_reg){ .number = x*x };
+	return (mathfun_value){ .number = x*x };
 }
 
-static mathfun_reg mask(const mathfun_reg args[]) {
+static mathfun_value mask(const mathfun_value args[]) {
 	const double t = args[0].number;
-	return (mathfun_reg){ .number = t >= 0 && t < args[1].number ? 1.0 : 0.0 };
+	return (mathfun_value){ .number = t >= 0 && t < args[1].number ? 1.0 : 0.0 };
 }
 
-static mathfun_reg clamp(const mathfun_reg args[]) {
+static mathfun_value clamp(const mathfun_value args[]) {
 	const double x = args[0].number;
 	const double min = args[1].number;
 	const double max = args[2].number;
-	return (mathfun_reg){ .number = x < min ? min : x > max ? max : x };
+	return (mathfun_value){ .number = x < min ? min : x > max ? max : x };
 }
 
-static mathfun_reg pop(const mathfun_reg args[]) {
+static mathfun_value pop(const mathfun_value args[]) {
 	const double t = args[0].number;
 	const double wavelength = args[1].number;
 	const double half_wavelength = wavelength * 0.5;
 	const double amplitude = args[2].number;
 
-	return (mathfun_reg){ .number =
+	return (mathfun_value){ .number =
 		t >= 0.0 && t < half_wavelength ? amplitude : t >= half_wavelength && t < wavelength ? -amplitude : 0.0
 	};
 }
 
-static mathfun_reg drop(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = args[0].number == 0.0 ? 0.0 : 1.0 };
+static mathfun_value drop(const mathfun_value args[]) {
+	return (mathfun_value){ .number = args[0].number == 0.0 ? 0.0 : 1.0 };
 }
 
 #define RIFF_WAVE_HEADER_SIZE 44
@@ -136,7 +136,7 @@ bool mathfun_wavegen(const char *filename, FILE *stream, uint32_t sample_rate, u
 		}
 	}
 
-	mathfun_reg *frame = calloc(maxframesize, sizeof(mathfun_reg));
+	mathfun_value *frame = calloc(maxframesize, sizeof(mathfun_value));
 
 	if (!frame) {
 		perror("allocating frame");

@@ -16,11 +16,11 @@ extern "C" {
 
 // assumtions:
 // sizeof(x) == 2 ** n and sizeof(x) == __alignof__(x)
-// for x in {mathfun_reg, mathfun_binding_funct}
+// for x in {mathfun_value, mathfun_binding_funct}
 
 #define MATHFUN_REGS_MAX UINTPTR_MAX
 #define MATHFUN_FUNCT_CODES (1 + ((sizeof(mathfun_binding_funct) - 1) / sizeof(mathfun_code)))
-#define MATHFUN_VALUE_CODES (1 + ((sizeof(mathfun_reg) - 1) / sizeof(mathfun_code)))
+#define MATHFUN_VALUE_CODES (1 + ((sizeof(mathfun_value) - 1) / sizeof(mathfun_code)))
 
 #ifndef __GNUC__
 #	define __attribute__(X)
@@ -104,7 +104,7 @@ struct mathfun_expr {
 	union {
 		struct {
 			mathfun_type type;
-			mathfun_reg value;
+			mathfun_value value;
 		} value;
 
 		mathfun_code arg;
@@ -225,7 +225,7 @@ MATHFUN_LOCAL bool mathfun_expr_codegen(mathfun_expr *expr, mathfun *mathfun, ma
 
 MATHFUN_LOCAL bool mathfun_codegen_expr(mathfun_codegen *codegen, mathfun_expr *expr, mathfun_code *ret);
 
-MATHFUN_LOCAL bool mathfun_codegen_val(mathfun_codegen *codegen, mathfun_reg value, mathfun_code target);
+MATHFUN_LOCAL bool mathfun_codegen_val(mathfun_codegen *codegen, mathfun_value value, mathfun_code target);
 MATHFUN_LOCAL bool mathfun_codegen_call(mathfun_codegen *codegen, mathfun_binding_funct funct, mathfun_code firstarg, mathfun_code target);
 
 MATHFUN_LOCAL bool mathfun_codegen_ins0(mathfun_codegen *codegen, enum mathfun_bytecode code);
@@ -247,7 +247,7 @@ MATHFUN_LOCAL mathfun_expr *mathfun_expr_optimize(mathfun_expr *expr, mathfun_er
 
 MATHFUN_LOCAL mathfun_type mathfun_expr_type(const mathfun_expr *expr);
 
-MATHFUN_LOCAL mathfun_reg mathfun_expr_exec(const mathfun_expr *expr, const double args[]);
+MATHFUN_LOCAL mathfun_value mathfun_expr_exec(const mathfun_expr *expr, const double args[]);
 
 MATHFUN_LOCAL const char *mathfun_find_identifier_end(const char *str);
 

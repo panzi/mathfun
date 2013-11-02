@@ -20,259 +20,259 @@ static const mathfun_sig mathfun_sig3 = {
 	3, (mathfun_type[]){MATHFUN_NUMBER, MATHFUN_NUMBER, MATHFUN_NUMBER}, MATHFUN_NUMBER
 };
 
-static mathfun_reg mathfun_funct_isnan(const mathfun_reg args[]) {
-	return (mathfun_reg){ .boolean = isnan(args[0].number) };
+static mathfun_value mathfun_funct_isnan(const mathfun_value args[]) {
+	return (mathfun_value){ .boolean = isnan(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_isfinite(const mathfun_reg args[]) {
-	return (mathfun_reg){ .boolean = isfinite(args[0].number) };
+static mathfun_value mathfun_funct_isfinite(const mathfun_value args[]) {
+	return (mathfun_value){ .boolean = isfinite(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_isnormal(const mathfun_reg args[]) {
-	return (mathfun_reg){ .boolean = isnormal(args[0].number) };
+static mathfun_value mathfun_funct_isnormal(const mathfun_value args[]) {
+	return (mathfun_value){ .boolean = isnormal(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_isinf(const mathfun_reg args[]) {
-	return (mathfun_reg){ .boolean = isinf(args[0].number) };
+static mathfun_value mathfun_funct_isinf(const mathfun_value args[]) {
+	return (mathfun_value){ .boolean = isinf(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_isgreater(const mathfun_reg args[]) {
-	return (mathfun_reg){ .boolean = isgreater(args[0].number, args[1].number) };
+static mathfun_value mathfun_funct_isgreater(const mathfun_value args[]) {
+	return (mathfun_value){ .boolean = isgreater(args[0].number, args[1].number) };
 }
 
-static mathfun_reg mathfun_funct_isgreaterequal(const mathfun_reg args[]) {
-	return (mathfun_reg){ .boolean = isgreaterequal(args[0].number, args[1].number) };
+static mathfun_value mathfun_funct_isgreaterequal(const mathfun_value args[]) {
+	return (mathfun_value){ .boolean = isgreaterequal(args[0].number, args[1].number) };
 }
 
-static mathfun_reg mathfun_funct_isless(const mathfun_reg args[]) {
-	return (mathfun_reg){ .boolean = isless(args[0].number, args[1].number) };
+static mathfun_value mathfun_funct_isless(const mathfun_value args[]) {
+	return (mathfun_value){ .boolean = isless(args[0].number, args[1].number) };
 }
 
-static mathfun_reg mathfun_funct_islessequal(const mathfun_reg args[]) {
-	return (mathfun_reg){ .boolean = islessequal(args[0].number, args[1].number) };
+static mathfun_value mathfun_funct_islessequal(const mathfun_value args[]) {
+	return (mathfun_value){ .boolean = islessequal(args[0].number, args[1].number) };
 }
 
-static mathfun_reg mathfun_funct_islessgreater(const mathfun_reg args[]) {
-	return (mathfun_reg){ .boolean = islessgreater(args[0].number, args[1].number) };
+static mathfun_value mathfun_funct_islessgreater(const mathfun_value args[]) {
+	return (mathfun_value){ .boolean = islessgreater(args[0].number, args[1].number) };
 }
 
-static mathfun_reg mathfun_funct_isunordered(const mathfun_reg args[]) {
-	return (mathfun_reg){ .boolean = isunordered(args[0].number, args[1].number) };
+static mathfun_value mathfun_funct_isunordered(const mathfun_value args[]) {
+	return (mathfun_value){ .boolean = isunordered(args[0].number, args[1].number) };
 }
 
-static mathfun_reg mathfun_funct_signbit(const mathfun_reg args[]) {
-	return (mathfun_reg){ .boolean = signbit(args[0].number) != 0 };
+static mathfun_value mathfun_funct_signbit(const mathfun_value args[]) {
+	return (mathfun_value){ .boolean = signbit(args[0].number) != 0 };
 }
 
-static mathfun_reg mathfun_funct_acos(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = acos(args[0].number) };
+static mathfun_value mathfun_funct_acos(const mathfun_value args[]) {
+	return (mathfun_value){ .number = acos(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_acosh(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = acosh(args[0].number) };
+static mathfun_value mathfun_funct_acosh(const mathfun_value args[]) {
+	return (mathfun_value){ .number = acosh(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_asin(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = asin(args[0].number) };
+static mathfun_value mathfun_funct_asin(const mathfun_value args[]) {
+	return (mathfun_value){ .number = asin(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_asinh(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = asinh(args[0].number) };
+static mathfun_value mathfun_funct_asinh(const mathfun_value args[]) {
+	return (mathfun_value){ .number = asinh(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_atan(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = atan(args[0].number) };
+static mathfun_value mathfun_funct_atan(const mathfun_value args[]) {
+	return (mathfun_value){ .number = atan(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_atan2(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = atan2(args[0].number, args[1].number) };
+static mathfun_value mathfun_funct_atan2(const mathfun_value args[]) {
+	return (mathfun_value){ .number = atan2(args[0].number, args[1].number) };
 }
 
-static mathfun_reg mathfun_funct_atanh(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = atanh(args[0].number) };
+static mathfun_value mathfun_funct_atanh(const mathfun_value args[]) {
+	return (mathfun_value){ .number = atanh(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_cbrt(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = cbrt(args[0].number) };
+static mathfun_value mathfun_funct_cbrt(const mathfun_value args[]) {
+	return (mathfun_value){ .number = cbrt(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_ceil(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = ceil(args[0].number) };
+static mathfun_value mathfun_funct_ceil(const mathfun_value args[]) {
+	return (mathfun_value){ .number = ceil(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_copysign(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = copysign(args[0].number, args[1].number) };
+static mathfun_value mathfun_funct_copysign(const mathfun_value args[]) {
+	return (mathfun_value){ .number = copysign(args[0].number, args[1].number) };
 }
 
-static mathfun_reg mathfun_funct_cos(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = cos(args[0].number) };
+static mathfun_value mathfun_funct_cos(const mathfun_value args[]) {
+	return (mathfun_value){ .number = cos(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_cosh(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = cosh(args[0].number) };
+static mathfun_value mathfun_funct_cosh(const mathfun_value args[]) {
+	return (mathfun_value){ .number = cosh(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_erf(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = erf(args[0].number) };
+static mathfun_value mathfun_funct_erf(const mathfun_value args[]) {
+	return (mathfun_value){ .number = erf(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_erfc(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = erfc(args[0].number) };
+static mathfun_value mathfun_funct_erfc(const mathfun_value args[]) {
+	return (mathfun_value){ .number = erfc(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_exp(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = exp(args[0].number) };
+static mathfun_value mathfun_funct_exp(const mathfun_value args[]) {
+	return (mathfun_value){ .number = exp(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_exp2(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = exp2(args[0].number) };
+static mathfun_value mathfun_funct_exp2(const mathfun_value args[]) {
+	return (mathfun_value){ .number = exp2(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_expm1(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = expm1(args[0].number) };
+static mathfun_value mathfun_funct_expm1(const mathfun_value args[]) {
+	return (mathfun_value){ .number = expm1(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_abs(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = fabs(args[0].number) };
+static mathfun_value mathfun_funct_abs(const mathfun_value args[]) {
+	return (mathfun_value){ .number = fabs(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_fdim(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = fdim(args[0].number, args[1].number) };
+static mathfun_value mathfun_funct_fdim(const mathfun_value args[]) {
+	return (mathfun_value){ .number = fdim(args[0].number, args[1].number) };
 }
 
-static mathfun_reg mathfun_funct_floor(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = floor(args[0].number) };
+static mathfun_value mathfun_funct_floor(const mathfun_value args[]) {
+	return (mathfun_value){ .number = floor(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_fma(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = fma(args[0].number, args[1].number, args[2].number) };
+static mathfun_value mathfun_funct_fma(const mathfun_value args[]) {
+	return (mathfun_value){ .number = fma(args[0].number, args[1].number, args[2].number) };
 }
 
-static mathfun_reg mathfun_funct_fmod(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = fmod(args[0].number, args[1].number) };
+static mathfun_value mathfun_funct_fmod(const mathfun_value args[]) {
+	return (mathfun_value){ .number = fmod(args[0].number, args[1].number) };
 }
 
-static mathfun_reg mathfun_funct_max(const mathfun_reg args[]) {
+static mathfun_value mathfun_funct_max(const mathfun_value args[]) {
 	double x = args[0].number;
 	double y = args[1].number;
-	return (mathfun_reg){ .number = (x >= y || isnan(x)) ? x : y };
-//	return (mathfun_reg){ .number = fmax(args[0].number, args[1].number) };
+	return (mathfun_value){ .number = (x >= y || isnan(x)) ? x : y };
+//	return (mathfun_value){ .number = fmax(args[0].number, args[1].number) };
 }
 
-static mathfun_reg mathfun_funct_min(const mathfun_reg args[]) {
+static mathfun_value mathfun_funct_min(const mathfun_value args[]) {
 	double x = args[0].number;
 	double y = args[1].number;
-	return (mathfun_reg){ .number = (x <= y || isnan(y)) ? x : y };
-//	return (mathfun_reg){ .number = fmin(args[0].number, args[1].number) };
+	return (mathfun_value){ .number = (x <= y || isnan(y)) ? x : y };
+//	return (mathfun_value){ .number = fmin(args[0].number, args[1].number) };
 }
 
-static mathfun_reg mathfun_funct_hypot(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = hypot(args[0].number, args[1].number) };
+static mathfun_value mathfun_funct_hypot(const mathfun_value args[]) {
+	return (mathfun_value){ .number = hypot(args[0].number, args[1].number) };
 }
 
-static mathfun_reg mathfun_funct_j0(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = j0(args[0].number) };
+static mathfun_value mathfun_funct_j0(const mathfun_value args[]) {
+	return (mathfun_value){ .number = j0(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_j1(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = j1(args[0].number) };
+static mathfun_value mathfun_funct_j1(const mathfun_value args[]) {
+	return (mathfun_value){ .number = j1(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_jn(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = jn((int)args[0].number, args[1].number) };
+static mathfun_value mathfun_funct_jn(const mathfun_value args[]) {
+	return (mathfun_value){ .number = jn((int)args[0].number, args[1].number) };
 }
 
-static mathfun_reg mathfun_funct_ldexp(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = ldexp(args[0].number, (int)args[1].number) };
+static mathfun_value mathfun_funct_ldexp(const mathfun_value args[]) {
+	return (mathfun_value){ .number = ldexp(args[0].number, (int)args[1].number) };
 }
 
-static mathfun_reg mathfun_funct_log(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = log(args[0].number) };
+static mathfun_value mathfun_funct_log(const mathfun_value args[]) {
+	return (mathfun_value){ .number = log(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_log10(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = log10(args[0].number) };
+static mathfun_value mathfun_funct_log10(const mathfun_value args[]) {
+	return (mathfun_value){ .number = log10(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_log1p(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = log1p(args[0].number) };
+static mathfun_value mathfun_funct_log1p(const mathfun_value args[]) {
+	return (mathfun_value){ .number = log1p(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_log2(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = log2(args[0].number) };
+static mathfun_value mathfun_funct_log2(const mathfun_value args[]) {
+	return (mathfun_value){ .number = log2(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_logb(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = logb(args[0].number) };
+static mathfun_value mathfun_funct_logb(const mathfun_value args[]) {
+	return (mathfun_value){ .number = logb(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_nearbyint(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = nearbyint(args[0].number) };
+static mathfun_value mathfun_funct_nearbyint(const mathfun_value args[]) {
+	return (mathfun_value){ .number = nearbyint(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_nextafter(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = nextafter(args[0].number, args[1].number) };
+static mathfun_value mathfun_funct_nextafter(const mathfun_value args[]) {
+	return (mathfun_value){ .number = nextafter(args[0].number, args[1].number) };
 }
 
-static mathfun_reg mathfun_funct_nexttoward(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = nexttoward(args[0].number, args[1].number) };
+static mathfun_value mathfun_funct_nexttoward(const mathfun_value args[]) {
+	return (mathfun_value){ .number = nexttoward(args[0].number, args[1].number) };
 }
 
-static mathfun_reg mathfun_funct_remainder(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = remainder(args[0].number, args[1].number) };
+static mathfun_value mathfun_funct_remainder(const mathfun_value args[]) {
+	return (mathfun_value){ .number = remainder(args[0].number, args[1].number) };
 }
 
-static mathfun_reg mathfun_funct_round(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = round(args[0].number) };
+static mathfun_value mathfun_funct_round(const mathfun_value args[]) {
+	return (mathfun_value){ .number = round(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_scalbln(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = scalbln(args[0].number, (long)args[1].number) };
+static mathfun_value mathfun_funct_scalbln(const mathfun_value args[]) {
+	return (mathfun_value){ .number = scalbln(args[0].number, (long)args[1].number) };
 }
 
-static mathfun_reg mathfun_funct_sin(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = sin(args[0].number) };
+static mathfun_value mathfun_funct_sin(const mathfun_value args[]) {
+	return (mathfun_value){ .number = sin(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_sinh(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = sinh(args[0].number) };
+static mathfun_value mathfun_funct_sinh(const mathfun_value args[]) {
+	return (mathfun_value){ .number = sinh(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_sqrt(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = sqrt(args[0].number) };
+static mathfun_value mathfun_funct_sqrt(const mathfun_value args[]) {
+	return (mathfun_value){ .number = sqrt(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_tan(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = tan(args[0].number) };
+static mathfun_value mathfun_funct_tan(const mathfun_value args[]) {
+	return (mathfun_value){ .number = tan(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_tanh(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = tanh(args[0].number) };
+static mathfun_value mathfun_funct_tanh(const mathfun_value args[]) {
+	return (mathfun_value){ .number = tanh(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_gamma(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = tgamma(args[0].number) };
+static mathfun_value mathfun_funct_gamma(const mathfun_value args[]) {
+	return (mathfun_value){ .number = tgamma(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_trunc(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = trunc(args[0].number) };
+static mathfun_value mathfun_funct_trunc(const mathfun_value args[]) {
+	return (mathfun_value){ .number = trunc(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_y0(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = y0(args[0].number) };
+static mathfun_value mathfun_funct_y0(const mathfun_value args[]) {
+	return (mathfun_value){ .number = y0(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_y1(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = y1(args[0].number) };
+static mathfun_value mathfun_funct_y1(const mathfun_value args[]) {
+	return (mathfun_value){ .number = y1(args[0].number) };
 }
 
-static mathfun_reg mathfun_funct_yn(const mathfun_reg args[]) {
-	return (mathfun_reg){ .number = yn((int)args[0].number, args[1].number) };
+static mathfun_value mathfun_funct_yn(const mathfun_value args[]) {
+	return (mathfun_value){ .number = yn((int)args[0].number, args[1].number) };
 }
 
-static mathfun_reg mathfun_funct_sign(const mathfun_reg args[]) {
+static mathfun_value mathfun_funct_sign(const mathfun_value args[]) {
 	const double x = args[0].number;
-	return (mathfun_reg){ .number = isnan(x) || x == 0.0 ? x : copysign(1.0, x) };
+	return (mathfun_value){ .number = isnan(x) || x == 0.0 ? x : copysign(1.0, x) };
 }
 
 bool mathfun_context_define_default(mathfun_context *ctx, mathfun_error_p *error) {

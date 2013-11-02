@@ -242,7 +242,7 @@ mathfun_expr *mathfun_expr_optimize(mathfun_expr *expr, mathfun_error_p *error) 
 				}
 			}
 			if (allconst) {
-				mathfun_reg *args = calloc(argc, sizeof(mathfun_reg));
+				mathfun_value *args = calloc(argc, sizeof(mathfun_value));
 				if (!args) return NULL;
 				for (size_t i = 0; i < argc; ++ i) {
 					args[i] = expr->ex.funct.args[i]->ex.value.value;
@@ -251,7 +251,7 @@ mathfun_expr *mathfun_expr_optimize(mathfun_expr *expr, mathfun_error_p *error) 
 				// math errors are communicated via errno
 				// XXX: buggy. see NOTES in man math_error
 				errno = 0;
-				mathfun_reg value = expr->ex.funct.funct(args);
+				mathfun_value value = expr->ex.funct.funct(args);
 
 				free(args);
 				expr->type = EX_CONST;

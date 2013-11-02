@@ -41,10 +41,10 @@ extern "C" {
 
 /** Type used for the "registers" of the interpreter.
  */
-typedef union mathfun_reg {
+typedef union mathfun_value {
 	double number; ///< numeric value
 	bool boolean;  ///< boolean value
-} mathfun_reg;
+} mathfun_value;
 
 /** Type enum.
  *
@@ -65,9 +65,9 @@ typedef struct mathfun_sig {
 	mathfun_type rettype;   ///< return type
 } mathfun_sig;
 
-/** Function type for functions to be regstered with a #mathfun_context.
+/** Function type for functions to be registered with a #mathfun_context.
  */
-typedef mathfun_reg (*mathfun_binding_funct)(const mathfun_reg args[]);
+typedef mathfun_value (*mathfun_binding_funct)(const mathfun_value args[]);
 
 /** Error code as returned by mathfun_error_type(mathfun_error_p error)
  */
@@ -379,7 +379,7 @@ MATHFUN_EXPORT double mathfun_vcall(const mathfun *fun, va_list ap, mathfun_erro
  * @param frame The functions execution frame
  * @return The result of the execution
  */
-MATHFUN_EXPORT double mathfun_exec(const mathfun *fun, mathfun_reg frame[])
+MATHFUN_EXPORT double mathfun_exec(const mathfun *fun, mathfun_value frame[])
 	__attribute__((__noinline__,__noclone__));
 
 /** Dump text representation of byte code.
