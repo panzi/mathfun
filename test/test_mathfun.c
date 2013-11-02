@@ -49,6 +49,10 @@
 	mathfun_error_cleanup(&error); \
 	CU_ASSERT(issame(cexpr, mathfun_call(&fun, &error, __VA_ARGS__))); \
 	CU_ASSERT_EQUAL(mathfun_error_type(error), MATHFUN_OK); \
+	mathfun_error_cleanup(&error); \
+	const double args[] = {__VA_ARGS__}; \
+	CU_ASSERT(issame(cexpr, mathfun_acall(&fun, args, &error))); \
+	CU_ASSERT_EQUAL(mathfun_error_type(error), MATHFUN_OK); \
 	mathfun_error_cleanup(&error);
 
 #define ASSERT_EXEC_DIRECT(expr, ...) ASSERT_EXEC(STRINGIFY(expr), expr, __VA_ARGS__)
