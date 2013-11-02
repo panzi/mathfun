@@ -124,13 +124,13 @@ typedef struct mathfun mathfun;
  * To free the object use mathfun_error_cleanup() or mathfun_error_log_and_cleanup(),
  * which also sets the refered error handle to NULL again.
  *
- * @code
- * mathfun_error_p error = NULL;
- * double value = mathfun_run("sin(x) + cos(y)", &error, "x", "y", NULL, 1.2, 3.4);
- * if (error) {
- *     mathfun_error_log_and_cleanup(&error, stderr);
- * }
- * @endcode
+@code
+mathfun_error_p error = NULL;
+double value = mathfun_run("sin(x) + cos(y)", &error, "x", "y", NULL, 1.2, 3.4);
+if (error) {
+    mathfun_error_log_and_cleanup(&error, stderr);
+}
+@endcode
  */
 typedef const struct mathfun_error *mathfun_error_p;
 
@@ -163,7 +163,7 @@ MATHFUN_EXPORT void mathfun_context_cleanup(mathfun_context *ctx);
 
 /** Define default set of functions and constants.
  *
- * Functions:
+ * <strong>Functions:</strong>
  *
  *    - bool isnan(double x)
  *    - bool isfinite(double x)
@@ -198,8 +198,8 @@ MATHFUN_EXPORT void mathfun_context_cleanup(mathfun_context *ctx);
  *    - double floor(double x)
  *    - double fma(double x, double y, double z)
  *    - double fmod(double x, double y)
- *    - double max(double x)
- *    - double min(double x)
+ *    - double max(double x, double y) equivalent to fmax(double x, double y)
+ *    - double min(double x, double y) equivalent to fmin(double x, double y)
  *    - double hypot(double x, double y)
  *    - double j0(double x)
  *    - double j1(double x)
@@ -226,10 +226,22 @@ MATHFUN_EXPORT void mathfun_context_cleanup(mathfun_context *ctx);
  *    - double y0(double x)
  *    - double y1(double x)
  *    - double yn(int n, double x)
+ *    - double sign(double x)
  *
- * See `man math.h` for a documentation on these functions.
+ * See `man math.h` for a documentation on these functions, except for sign().
  *
- * Constants:
+ * <strong>double sign(double x)</strong>
+ *
+ * Returns sign of x, idecating whether x is positive, negative or zero.
+ *
+ *    - If x is +NaN, the result is +NaN.
+ *    - If x is -NaN, the result is -NaN.
+ *    - If x is +0, the result is +0.
+ *    - If x is -0, the result is -0.
+ *    - If x is negative and not -0 or -NaN, the result is -1.
+ *    - If x is positive and not +0 or +NaN, the result is +1.
+ *
+ * <strong>Constants:</strong>
  *
  *    - e = 2.7182818284590452354
  *    - log2e = log2(e)
@@ -305,7 +317,7 @@ MATHFUN_EXPORT bool mathfun_context_compile(const mathfun_context *ctx,
 
 /** Frees allocated resources.
  *
- * @param mathfun A pointer to a #mathfun object
+ * @param fun A pointer to a #mathfun object
  */
 MATHFUN_EXPORT void mathfun_cleanup(mathfun *fun);
 
@@ -386,9 +398,9 @@ MATHFUN_EXPORT bool mathfun_dump(const mathfun *fun, FILE *stream, const mathfun
  * This doesn't optimize or compile the expression but instead directly runs on the abstract syntax tree.
  * Use this for one-time executions.
  *
- * @code
- * double mathfun_run(const char *code, mathfun_error_p *error, const char *argname..., NULL, double argvalue...);
- * @endcode
+@code
+double mathfun_run(const char *code, mathfun_error_p *error, const char *argname..., NULL, double argvalue...);
+@endcode
  *
  * @param code The function expression.
  * @param error A pointer to an error handle.

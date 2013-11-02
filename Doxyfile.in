@@ -1,15 +1,21 @@
-INPUT                = @CMAKE_CURRENT_SOURCE_DIR@/src
-STRIP_FROM_PATH      = @CMAKE_CURRENT_SOURCE_DIR@/src
-OUTPUT_DIRECTORY     = @CMAKE_CURRENT_BINARY_DIR@/docs
-EXCLUDE_PATTERNS     = *_intern.h
-GENERATE_LATEX       = NO
-GENERATE_HTML        = YES
-GENERATE_MAN         = YES
-HIDE_UNDOC_MEMBERS   = YES
-HIDE_UNDOC_CLASSES   = YES
-ENABLE_PREPROCESSING = YES
-MACRO_EXPANSION      = YES
-EXPAND_ONLY_PREDEF   = YES
-PREDEFINED           = MATHFUN_EXPORT= \
-                       MATHFUN_LOCAL= \
-                       __attribute__(X)=
+PROJECT_NAME          = mathfun
+PROJECT_BRIEF         = "Evaluate simple mathematical functions."
+INPUT                 = @CMAKE_CURRENT_SOURCE_DIR@/src
+STRIP_FROM_PATH       = @CMAKE_CURRENT_SOURCE_DIR@/src
+OUTPUT_DIRECTORY      = @CMAKE_CURRENT_BINARY_DIR@/docs
+EXCLUDE_PATTERNS      = *_intern.h
+OPTIMIZE_OUTPUT_FOR_C = YES
+FULL_PATH_NAMES       = NO
+GENERATE_LATEX        = NO
+GENERATE_HTML         = YES
+GENERATE_MAN          = YES
+SEARCHENGINE          = YES
+MAN_LINKS             = YES
+HIDE_UNDOC_MEMBERS    = YES
+HIDE_UNDOC_CLASSES    = YES
+ENABLE_PREPROCESSING  = YES
+MACRO_EXPANSION       = YES
+EXPAND_ONLY_PREDEF    = YES
+PREDEFINED            = MATHFUN_EXPORT= \
+                        MATHFUN_LOCAL= \
+                        __attribute__(X)=
