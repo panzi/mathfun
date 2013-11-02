@@ -51,8 +51,8 @@ typedef union mathfun_value {
  * E.g. used in #mathfun_sig.
  */
 typedef enum mathfun_type {
-	MATHFUN_NUMBER,
-	MATHFUN_BOOLEAN
+	MATHFUN_NUMBER, ///< value is number (double)
+	MATHFUN_BOOLEAN ///< value is boolean (bool)
 } mathfun_type;
 
 /** Function signature.
@@ -84,15 +84,15 @@ enum mathfun_error_type {
 	MATHFUN_TOO_MANY_ARGUMENTS,     ///< number of arguments to big
 	MATHFUN_EXCEEDS_MAX_FRAME_SIZE, ///< frame size of compiled function exceeds maximum
 	MATHFUN_INTERNAL_ERROR,         ///< internal error (e.g. unknown bytecode)
-	MATHFUN_PARSER_EXPECTED_CLOSE_PARENTHESIS,  ///< expected ')' but got something else or end of input
+	MATHFUN_PARSER_EXPECTED_CLOSE_PARENTHESIS,  ///< expected ')' but got something else
 	MATHFUN_PARSER_UNDEFINED_REFERENCE,         ///< undefined reference
 	MATHFUN_PARSER_NOT_A_FUNCTION,              ///< reference does not define a function (but a constant or argument)
 	MATHFUN_PARSER_NOT_A_VARIABLE,              ///< reference does not define a constant or argument (but a function)
 	MATHFUN_PARSER_ILLEGAL_NUMBER_OF_ARGUMENTS, ///< function called with an illegal number of arguments
-	MATHFUN_PARSER_EXPECTED_NUMBER,             ///< expected a number but got something else or end of input
-	MATHFUN_PARSER_EXPECTED_IDENTIFIER,         ///< expected an identifier but got something else or end of input
-	MATHFUN_PARSER_EXPECTED_COLON,              ///< expected ':' but got something else or end of input
-	MATHFUN_PARSER_EXPECTED_DOTS,               ///< expected '..' or '...' but got something else or end of input
+	MATHFUN_PARSER_EXPECTED_NUMBER,             ///< expected a number but got something else
+	MATHFUN_PARSER_EXPECTED_IDENTIFIER,         ///< expected an identifier but got something else
+	MATHFUN_PARSER_EXPECTED_COLON,              ///< expected ':' but got something else
+	MATHFUN_PARSER_EXPECTED_DOTS,               ///< expected '..' or '...' but got something else
 	MATHFUN_PARSER_TYPE_ERROR,                  ///< expression with wrong type for this position
 	MATHFUN_PARSER_UNEXPECTED_END_OF_INPUT,     ///< unexpected end of input
 	MATHFUN_PARSER_TRAILING_GARBAGE             ///< garbage at the end of input

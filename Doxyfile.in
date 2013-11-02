@@ -10,12 +10,12 @@ GENERATE_LATEX        = NO
 GENERATE_HTML         = YES
 GENERATE_MAN          = YES
 SEARCHENGINE          = YES
-MAN_LINKS             = YES
 HIDE_UNDOC_MEMBERS    = YES
 HIDE_UNDOC_CLASSES    = YES
 ENABLE_PREPROCESSING  = YES
 MACRO_EXPANSION       = YES
 EXPAND_ONLY_PREDEF    = YES
+TYPEDEF_HIDES_STRUCT  = YES
 PREDEFINED            = MATHFUN_EXPORT= \
                         MATHFUN_LOCAL= \
                         __attribute__(X)=
