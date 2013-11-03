@@ -276,89 +276,90 @@ static mathfun_value mathfun_funct_sign(const mathfun_value args[]) {
 }
 
 bool mathfun_context_define_default(mathfun_context *ctx, mathfun_error_p *error) {
-	// Constants
-	if (!mathfun_context_define_const(ctx, "e", M_E, error) ||
-		!mathfun_context_define_const(ctx, "log2e", M_LOG2E, error) ||
-		!mathfun_context_define_const(ctx, "log10e", M_LOG10E, error) ||
-		!mathfun_context_define_const(ctx, "ln2", M_LN2, error) ||
-		!mathfun_context_define_const(ctx, "ln10", M_LN10, error) ||
-		!mathfun_context_define_const(ctx, "pi", M_PI, error) ||
-		!mathfun_context_define_const(ctx, "tau", 2*M_PI, error) ||
-		!mathfun_context_define_const(ctx, "pi_2", M_PI_2, error) ||
-		!mathfun_context_define_const(ctx, "pi_4", M_PI_4, error) ||
-		!mathfun_context_define_const(ctx, "_1_pi", M_1_PI, error) ||
-		!mathfun_context_define_const(ctx, "_2_pi", M_2_PI, error) ||
-		!mathfun_context_define_const(ctx, "_2_sqrtpi", M_2_SQRTPI, error) ||
-		!mathfun_context_define_const(ctx, "sqrt2", M_SQRT2, error) ||
-		!mathfun_context_define_const(ctx, "sqrt1_2", M_SQRT1_2, error)) {
-		return false;
-	}
+	const mathfun_decl decls[] = {
 
-	// Functions
-	if (!mathfun_context_define_funct(ctx, "isnan", mathfun_funct_isnan, &mathfun_bsig1, error) ||
-		!mathfun_context_define_funct(ctx, "isfinite", mathfun_funct_isfinite, &mathfun_bsig1, error) ||
-		!mathfun_context_define_funct(ctx, "isnormal", mathfun_funct_isnormal, &mathfun_bsig1, error) ||
-		!mathfun_context_define_funct(ctx, "isinf", mathfun_funct_isinf, &mathfun_bsig1, error) ||
-		!mathfun_context_define_funct(ctx, "isgreater", mathfun_funct_isgreater, &mathfun_bsig2, error) ||
-		!mathfun_context_define_funct(ctx, "isgreaterequal", mathfun_funct_isgreaterequal, &mathfun_bsig2, error) ||
-		!mathfun_context_define_funct(ctx, "isless", mathfun_funct_isless, &mathfun_bsig2, error) ||
-		!mathfun_context_define_funct(ctx, "islessequal", mathfun_funct_islessequal, &mathfun_bsig2, error) ||
-		!mathfun_context_define_funct(ctx, "islessgreater", mathfun_funct_islessgreater, &mathfun_bsig2, error) ||
-		!mathfun_context_define_funct(ctx, "isunordered", mathfun_funct_isunordered, &mathfun_bsig2, error) ||
-		!mathfun_context_define_funct(ctx, "signbit", mathfun_funct_signbit, &mathfun_bsig2, error) ||
-		!mathfun_context_define_funct(ctx, "acos", mathfun_funct_acos, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "acosh", mathfun_funct_acosh, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "asin", mathfun_funct_asin, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "asinh", mathfun_funct_asinh, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "atan", mathfun_funct_atan, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "atan2", mathfun_funct_atan2, &mathfun_sig2, error) ||
-		!mathfun_context_define_funct(ctx, "atanh", mathfun_funct_atanh, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "cbrt", mathfun_funct_cbrt, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "ceil", mathfun_funct_ceil, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "copysign", mathfun_funct_copysign, &mathfun_sig2, error) ||
-		!mathfun_context_define_funct(ctx, "cos", mathfun_funct_cos, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "cosh", mathfun_funct_cosh, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "erf", mathfun_funct_erf, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "erfc", mathfun_funct_erfc, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "exp", mathfun_funct_exp, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "exp2", mathfun_funct_exp2, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "expm1", mathfun_funct_expm1, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "abs", mathfun_funct_abs, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "fdim", mathfun_funct_fdim, &mathfun_sig2, error) ||
-		!mathfun_context_define_funct(ctx, "floor", mathfun_funct_floor, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "fma", mathfun_funct_fma, &mathfun_sig3, error) ||
-		!mathfun_context_define_funct(ctx, "fmod", mathfun_funct_fmod, &mathfun_sig2, error) ||
-		!mathfun_context_define_funct(ctx, "max", mathfun_funct_max, &mathfun_sig2, error) ||
-		!mathfun_context_define_funct(ctx, "min", mathfun_funct_min, &mathfun_sig2, error) ||
-		!mathfun_context_define_funct(ctx, "hypot", mathfun_funct_hypot, &mathfun_sig2, error) ||
-		!mathfun_context_define_funct(ctx, "j0", mathfun_funct_j0, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "j1", mathfun_funct_j1, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "jn", mathfun_funct_jn, &mathfun_sig2, error) ||
-		!mathfun_context_define_funct(ctx, "ldexp", mathfun_funct_ldexp, &mathfun_sig2, error) ||
-		!mathfun_context_define_funct(ctx, "log", mathfun_funct_log, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "log10", mathfun_funct_log10, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "log1p", mathfun_funct_log1p, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "log2", mathfun_funct_log2, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "logb", mathfun_funct_logb, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "nearbyint", mathfun_funct_nearbyint, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "nextafter", mathfun_funct_nextafter, &mathfun_sig2, error) ||
-		!mathfun_context_define_funct(ctx, "nexttoward", mathfun_funct_nexttoward, &mathfun_sig2, error) ||
-		!mathfun_context_define_funct(ctx, "remainder", mathfun_funct_remainder, &mathfun_sig2, error) ||
-		!mathfun_context_define_funct(ctx, "round", mathfun_funct_round, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "scalbln", mathfun_funct_scalbln, &mathfun_sig2, error) ||
-		!mathfun_context_define_funct(ctx, "sin", mathfun_funct_sin, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "sinh", mathfun_funct_sinh, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "sqrt", mathfun_funct_sqrt, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "tan", mathfun_funct_tan, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "tanh", mathfun_funct_tanh, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "gamma", mathfun_funct_gamma, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "trunc", mathfun_funct_trunc, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "y0", mathfun_funct_y0, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "y1", mathfun_funct_y1, &mathfun_sig1, error) ||
-		!mathfun_context_define_funct(ctx, "yn", mathfun_funct_yn, &mathfun_sig2, error) ||
-		!mathfun_context_define_funct(ctx, "sign", mathfun_funct_sign, &mathfun_sig1, error)) {
-		return false;
-	}
+		// Constants
+		{ MATHFUN_DECL_CONST, "e",         { .value = M_E } },
+		{ MATHFUN_DECL_CONST, "log2e",     { .value = M_LOG2E } },
+		{ MATHFUN_DECL_CONST, "log10e",    { .value = M_LOG10E } },
+		{ MATHFUN_DECL_CONST, "ln2",       { .value = M_LN2 } },
+		{ MATHFUN_DECL_CONST, "ln10",      { .value = M_LN10 } },
+		{ MATHFUN_DECL_CONST, "pi",        { .value = M_PI } },
+		{ MATHFUN_DECL_CONST, "tau",       { .value = 2*M_PI } },
+		{ MATHFUN_DECL_CONST, "pi_2",      { .value = M_PI_2 } },
+		{ MATHFUN_DECL_CONST, "pi_4",      { .value = M_PI_4 } },
+		{ MATHFUN_DECL_CONST, "_1_pi",     { .value = M_1_PI } },
+		{ MATHFUN_DECL_CONST, "_2_pi",     { .value = M_2_PI } },
+		{ MATHFUN_DECL_CONST, "_2_sqrtpi", { .value = M_2_SQRTPI } },
+		{ MATHFUN_DECL_CONST, "sqrt2",     { .value = M_SQRT2 } },
+		{ MATHFUN_DECL_CONST, "sqrt1_2",   { .value = M_SQRT1_2 } },
 
-	return true;
+		// Functions
+		{ MATHFUN_DECL_FUNCT, "isnan",          { .funct = { mathfun_funct_isnan,          &mathfun_bsig1 } } },
+		{ MATHFUN_DECL_FUNCT, "isfinite",       { .funct = { mathfun_funct_isfinite,       &mathfun_bsig1 } } },
+		{ MATHFUN_DECL_FUNCT, "isnormal",       { .funct = { mathfun_funct_isnormal,       &mathfun_bsig1 } } },
+		{ MATHFUN_DECL_FUNCT, "isinf",          { .funct = { mathfun_funct_isinf,          &mathfun_bsig1 } } },
+		{ MATHFUN_DECL_FUNCT, "isgreater",      { .funct = { mathfun_funct_isgreater,      &mathfun_bsig2 } } },
+		{ MATHFUN_DECL_FUNCT, "isgreaterequal", { .funct = { mathfun_funct_isgreaterequal, &mathfun_bsig2 } } },
+		{ MATHFUN_DECL_FUNCT, "isless",         { .funct = { mathfun_funct_isless,         &mathfun_bsig2 } } },
+		{ MATHFUN_DECL_FUNCT, "islessequal",    { .funct = { mathfun_funct_islessequal,    &mathfun_bsig2 } } },
+		{ MATHFUN_DECL_FUNCT, "islessgreater",  { .funct = { mathfun_funct_islessgreater,  &mathfun_bsig2 } } },
+		{ MATHFUN_DECL_FUNCT, "isunordered",    { .funct = { mathfun_funct_isunordered,    &mathfun_bsig2 } } },
+		{ MATHFUN_DECL_FUNCT, "signbit",        { .funct = { mathfun_funct_signbit,        &mathfun_bsig2 } } },
+		{ MATHFUN_DECL_FUNCT, "acos",           { .funct = { mathfun_funct_acos,           &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "acosh",          { .funct = { mathfun_funct_acosh,          &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "asin",           { .funct = { mathfun_funct_asin,           &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "asinh",          { .funct = { mathfun_funct_asinh,          &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "atan",           { .funct = { mathfun_funct_atan,           &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "atan2",          { .funct = { mathfun_funct_atan2,          &mathfun_sig2 } } },
+		{ MATHFUN_DECL_FUNCT, "atanh",          { .funct = { mathfun_funct_atanh,          &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "cbrt",           { .funct = { mathfun_funct_cbrt,           &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "ceil",           { .funct = { mathfun_funct_ceil,           &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "copysign",       { .funct = { mathfun_funct_copysign,       &mathfun_sig2 } } },
+		{ MATHFUN_DECL_FUNCT, "cos",            { .funct = { mathfun_funct_cos,            &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "cosh",           { .funct = { mathfun_funct_cosh,           &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "erf",            { .funct = { mathfun_funct_erf,            &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "erfc",           { .funct = { mathfun_funct_erfc,           &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "exp",            { .funct = { mathfun_funct_exp,            &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "exp2",           { .funct = { mathfun_funct_exp2,           &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "expm1",          { .funct = { mathfun_funct_expm1,          &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "abs",            { .funct = { mathfun_funct_abs,            &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "fdim",           { .funct = { mathfun_funct_fdim,           &mathfun_sig2 } } },
+		{ MATHFUN_DECL_FUNCT, "floor",          { .funct = { mathfun_funct_floor,          &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "fma",            { .funct = { mathfun_funct_fma,            &mathfun_sig3 } } },
+		{ MATHFUN_DECL_FUNCT, "fmod",           { .funct = { mathfun_funct_fmod,           &mathfun_sig2 } } },
+		{ MATHFUN_DECL_FUNCT, "max",            { .funct = { mathfun_funct_max,            &mathfun_sig2 } } },
+		{ MATHFUN_DECL_FUNCT, "min",            { .funct = { mathfun_funct_min,            &mathfun_sig2 } } },
+		{ MATHFUN_DECL_FUNCT, "hypot",          { .funct = { mathfun_funct_hypot,          &mathfun_sig2 } } },
+		{ MATHFUN_DECL_FUNCT, "j0",             { .funct = { mathfun_funct_j0,             &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "j1",             { .funct = { mathfun_funct_j1,             &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "jn",             { .funct = { mathfun_funct_jn,             &mathfun_sig2 } } },
+		{ MATHFUN_DECL_FUNCT, "ldexp",          { .funct = { mathfun_funct_ldexp,          &mathfun_sig2 } } },
+		{ MATHFUN_DECL_FUNCT, "log",            { .funct = { mathfun_funct_log,            &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "log10",          { .funct = { mathfun_funct_log10,          &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "log1p",          { .funct = { mathfun_funct_log1p,          &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "log2",           { .funct = { mathfun_funct_log2,           &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "logb",           { .funct = { mathfun_funct_logb,           &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "nearbyint",      { .funct = { mathfun_funct_nearbyint,      &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "nextafter",      { .funct = { mathfun_funct_nextafter,      &mathfun_sig2 } } },
+		{ MATHFUN_DECL_FUNCT, "nexttoward",     { .funct = { mathfun_funct_nexttoward,     &mathfun_sig2 } } },
+		{ MATHFUN_DECL_FUNCT, "remainder",      { .funct = { mathfun_funct_remainder,      &mathfun_sig2 } } },
+		{ MATHFUN_DECL_FUNCT, "round",          { .funct = { mathfun_funct_round,          &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "scalbln",        { .funct = { mathfun_funct_scalbln,        &mathfun_sig2 } } },
+		{ MATHFUN_DECL_FUNCT, "sin",            { .funct = { mathfun_funct_sin,            &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "sinh",           { .funct = { mathfun_funct_sinh,           &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "sqrt",           { .funct = { mathfun_funct_sqrt,           &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "tan",            { .funct = { mathfun_funct_tan,            &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "tanh",           { .funct = { mathfun_funct_tanh,           &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "gamma",          { .funct = { mathfun_funct_gamma,          &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "trunc",          { .funct = { mathfun_funct_trunc,          &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "y0",             { .funct = { mathfun_funct_y0,             &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "y1",             { .funct = { mathfun_funct_y1,             &mathfun_sig1 } } },
+		{ MATHFUN_DECL_FUNCT, "yn",             { .funct = { mathfun_funct_yn,             &mathfun_sig2 } } },
+		{ MATHFUN_DECL_FUNCT, "sign",           { .funct = { mathfun_funct_sign,           &mathfun_sig1 } } },
+
+		{ -1, NULL, { .value = 0 } }
+	};
+
+	return mathfun_context_define(ctx, decls, error);
 }

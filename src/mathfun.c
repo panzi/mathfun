@@ -33,8 +33,10 @@ void mathfun_context_cleanup(mathfun_context *ctx) {
 	ctx->decl_used     = 0;
 }
 
-bool mathfun_context_grow(mathfun_context *ctx, mathfun_error_p *error) {
-	const size_t size = ctx->decl_capacity * 2;
+bool mathfun_context_ensure(mathfun_context *ctx, size_t n, mathfun_error_p *error) {
+	size_t size = ctx->decl_capacity + n;
+	size_t rem  = size % 256;
+	if (rem) size += 256 - rem;
 	mathfun_decl *decls = realloc(ctx->decls, size * sizeof(mathfun_decl));
 
 	if (!decls) {
@@ -105,7 +107,7 @@ const mathfun_decl *mathfun_context_getn(const mathfun_context *ctx, const char 
 const char *mathfun_context_funct_name(const mathfun_context *ctx, mathfun_binding_funct funct) {
 	for (size_t i = 0; i < ctx->decl_used; ++ i) {
 		const mathfun_decl *decl = &ctx->decls[i];
-		if (decl->type == DECL_FUNCT && decl->decl.funct.funct == funct) {
+		if (decl->type == MATHFUN_DECL_FUNCT && decl->decl.funct.funct == funct) {
 			return decl->name;
 		}
 	}
@@ -150,6 +152,30 @@ bool mathfun_validate_argnames(const char *argnames[], size_t argc, mathfun_erro
 	return true;
 }
 
+static int mathfun_decl_cmp(const void *a, const void *b) {
+	return strcmp(((const mathfun_decl*)a)->name, ((const mathfun_decl*)b)->name);
+}
+
+bool mathfun_context_define(mathfun_context *ctx, const mathfun_decl decls[], mathfun_error_p *error) {
+	size_t n = 0;
+	const mathfun_decl *ptr = decls;
+	while (ptr->name) {
+		if (mathfun_context_get(ctx, ptr->name)) {
+			mathfun_raise_name_error(error, MATHFUN_NAME_EXISTS, ptr->name);
+			return false;
+		}
+		++ ptr;
+		++ n;
+	}
+	if (ctx->decl_used + n >= ctx->decl_capacity && !mathfun_context_ensure(ctx, n, error)) {
+		return false;
+	}
+	memcpy(ctx->decls, decls, n * sizeof(mathfun_decl));
+	ctx->decl_used += n;
+	qsort(ctx->decls, ctx->decl_used, sizeof(mathfun_decl), mathfun_decl_cmp);
+	return true;
+}
+
 bool mathfun_context_define_const(mathfun_context *ctx, const char *name, double value,
 	mathfun_error_p *error) {
 	if (!mathfun_valid_name(name)) {
@@ -163,14 +189,14 @@ bool mathfun_context_define_const(mathfun_context *ctx, const char *name, double
 		return false;
 	}
 
-	if (ctx->decl_used == ctx->decl_capacity && !mathfun_context_grow(ctx, error)) {
+	if (ctx->decl_used == ctx->decl_capacity && !mathfun_context_ensure(ctx, 1, error)) {
 		return false;
 	}
 
 	memmove(ctx->decls + index + 1, ctx->decls + index, (ctx->decl_used - index) * sizeof(mathfun_decl));
 
 	mathfun_decl *decl = ctx->decls + index;
-	decl->type = DECL_CONST;
+	decl->type = MATHFUN_DECL_CONST;
 	decl->name = name;
 	decl->decl.value = value;
 
@@ -197,14 +223,14 @@ bool mathfun_context_define_funct(mathfun_context *ctx, const char *name, mathfu
 		return false;
 	}
 
-	if (ctx->decl_used == ctx->decl_capacity && !mathfun_context_grow(ctx, error)) {
+	if (ctx->decl_used == ctx->decl_capacity && !mathfun_context_ensure(ctx, 1, error)) {
 		return false;
 	}
 
 	memmove(ctx->decls + index + 1, ctx->decls + index, (ctx->decl_used - index) * sizeof(mathfun_decl));
 
 	mathfun_decl *decl = ctx->decls + index;
-	decl->type = DECL_FUNCT;
+	decl->type = MATHFUN_DECL_FUNCT;
 	decl->name = name;
 	decl->decl.funct.funct = funct;
 	decl->decl.funct.sig   = sig;

@@ -48,23 +48,6 @@ typedef struct mathfun_error mathfun_error;
 typedef struct mathfun_parser mathfun_parser;
 typedef struct mathfun_codegen mathfun_codegen;
 
-enum mathfun_decl_type {
-	DECL_CONST,
-	DECL_FUNCT
-};
-
-struct mathfun_decl {
-	enum mathfun_decl_type type;
-	const char *name;
-	union {
-		double value;
-		struct {
-			mathfun_binding_funct funct;
-			const mathfun_sig *sig;
-		} funct;
-	} decl;
-};
-
 enum mathfun_expr_type {
 	EX_CONST,
 	EX_ARG,
@@ -212,7 +195,7 @@ struct mathfun_codegen {
 	mathfun_error_p *error;
 };
 
-MATHFUN_LOCAL bool mathfun_context_grow(mathfun_context *ctx, mathfun_error_p *error);
+MATHFUN_LOCAL bool mathfun_context_ensure(mathfun_context *ctx, size_t n, mathfun_error_p *error);
 
 MATHFUN_LOCAL const mathfun_decl *mathfun_context_get(const mathfun_context *ctx, const char *name);
 

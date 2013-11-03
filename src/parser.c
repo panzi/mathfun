@@ -675,7 +675,7 @@ mathfun_expr *mathfun_parse_atom(mathfun_parser *parser) {
 				return NULL;
 			}
 
-			if (decl->type != DECL_CONST) {
+			if (decl->type != MATHFUN_DECL_CONST) {
 				mathfun_raise_parser_error(parser, MATHFUN_PARSER_NOT_A_VARIABLE, idstart);
 				return NULL;
 			}
@@ -699,7 +699,7 @@ mathfun_expr *mathfun_parse_atom(mathfun_parser *parser) {
 				return NULL;
 			}
 
-			if (decl->type != DECL_FUNCT) {
+			if (decl->type != MATHFUN_DECL_FUNCT) {
 				mathfun_raise_parser_error(parser, MATHFUN_PARSER_NOT_A_FUNCTION, idstart);
 				return NULL;
 			}

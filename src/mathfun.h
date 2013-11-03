@@ -98,7 +98,23 @@ enum mathfun_error_type {
 	MATHFUN_PARSER_TRAILING_GARBAGE             ///< garbage at the end of input
 };
 
-struct mathfun_decl;
+enum mathfun_decl_type {
+	MATHFUN_DECL_CONST,
+	MATHFUN_DECL_FUNCT
+};
+
+struct mathfun_decl {
+	enum mathfun_decl_type type;
+	const char *name;
+	union {
+		double value;
+		struct {
+			mathfun_binding_funct funct;
+			const mathfun_sig *sig;
+		} funct;
+	} decl;
+};
+
 struct mathfun_error;
 
 typedef struct mathfun_decl mathfun_decl;
@@ -259,10 +275,18 @@ MATHFUN_EXPORT void mathfun_context_cleanup(mathfun_context *ctx);
  *    - sqrt1_2 = 1 / sqrt(2)
  *
  * @param ctx A pointer to a #mathfun_context
- * @param error A pointer to an error handle.
- * @return true on success, false if an error occured. Possible errors: #MATHFUN_OUT_OF_MEMORY and #MATHFUN_NAME_EXISTS
+ * @param error A pointer to an error handle. Possible errors: #MATHFUN_OUT_OF_MEMORY and #MATHFUN_NAME_EXISTS
+ * @return true on success, false if an error occured.
  */
 MATHFUN_EXPORT bool mathfun_context_define_default(mathfun_context *ctx, mathfun_error_p *error);
+
+/** Define multiple functions and constants at once.
+ * @param ctx A pointer to a #mathfun_context
+ * @param decls A array of declarations. The array is terminated by a declaration with a NULL pointer for it's name.
+ * @param error A pointer to an error handle. Possible errors: #MATHFUN_OUT_OF_MEMORY and #MATHFUN_NAME_EXISTS
+ * @return true on success, false if an error occured.
+ */
+MATHFUN_EXPORT bool mathfun_context_define(mathfun_context *ctx, const mathfun_decl decls[], mathfun_error_p *error);
 
 /** Define a constant value.
  * @param ctx A pointer to a #mathfun_context
