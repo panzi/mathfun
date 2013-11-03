@@ -197,8 +197,6 @@ struct mathfun_codegen {
 
 MATHFUN_LOCAL bool mathfun_context_ensure(mathfun_context *ctx, size_t n, mathfun_error_p *error);
 
-MATHFUN_LOCAL const mathfun_decl *mathfun_context_get(const mathfun_context *ctx, const char *name);
-
 MATHFUN_LOCAL const mathfun_decl *mathfun_context_getn(const mathfun_context *ctx, const char *name, size_t n);
 
 MATHFUN_LOCAL mathfun_expr *mathfun_context_parse(const mathfun_context *ctx,

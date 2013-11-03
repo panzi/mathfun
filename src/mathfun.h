@@ -329,13 +329,22 @@ MATHFUN_EXPORT bool mathfun_context_define_const(mathfun_context *ctx, const cha
  * @param error A pointer to an error handle. Possible errors: #MATHFUN_OUT_OF_MEMORY and #MATHFUN_NAME_EXISTS
  * @return true on success, false if an error occured.
  */
-MATHFUN_EXPORT bool mathfun_context_define_funct(mathfun_context *ctx, const char *name, mathfun_binding_funct funct, const mathfun_sig *sig,
-	mathfun_error_p *error);
+MATHFUN_EXPORT bool mathfun_context_define_funct(mathfun_context *ctx, const char *name, mathfun_binding_funct funct,
+	const mathfun_sig *sig, mathfun_error_p *error);
 
 /** Find the name of a given function.
+ * @param ctx A pointer to a #mathfun_context
+ * @param funct Function pointer to the function that shall be found.
  * @return The name of the function or NULL if not found.
  */
 MATHFUN_EXPORT const char *mathfun_context_funct_name(const mathfun_context *ctx, mathfun_binding_funct funct);
+
+/** Get declaration of a reference by name.
+ * @param ctx A pointer to a #mathfun_context
+ * @param name The name of the function/constant.
+ * @return Pointer to the #mathfun_decl or NULL if no such reference exists.
+ */
+MATHFUN_EXPORT const mathfun_decl *mathfun_context_get(const mathfun_context *ctx, const char *name);
 
 /** Removes a function/constant from the context.
  * @param ctx A pointer to a #mathfun_context
