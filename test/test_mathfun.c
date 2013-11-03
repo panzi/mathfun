@@ -36,24 +36,30 @@
 #define ASSERT_COMPILE_ERROR_NOARGS(expected, code) \
 	CU_ASSERT_EQUAL(test_compile_error(NULL, 0, code), expected);
 
-
 #define ASSERT_EXEC(expr, cexpr, ...) \
+{ \
 	mathfun_error_p error = NULL; \
 	CU_ASSERT(issame(cexpr, mathfun_run(expr, &error, STRINGIFY_LIST(__VA_ARGS__), NULL, __VA_ARGS__))); \
-	CU_ASSERT_EQUAL(mathfun_error_type(error), MATHFUN_OK); \
-	mathfun_error_cleanup(&error); \
+	CU_ASSERT(error == NULL); \
+	if (error) mathfun_error_log_and_cleanup(&error, stderr); \
 	mathfun fun; \
 	const char *argnames[] = {STRINGIFY_LIST(__VA_ARGS__)}; \
 	mathfun_compile(&fun, argnames, PP_NARG(__VA_ARGS__), expr, &error); \
-	CU_ASSERT_EQUAL(mathfun_error_type(error), MATHFUN_OK); \
-	mathfun_error_cleanup(&error); \
-	CU_ASSERT(issame(cexpr, mathfun_call(&fun, &error, __VA_ARGS__))); \
-	CU_ASSERT_EQUAL(mathfun_error_type(error), MATHFUN_OK); \
-	mathfun_error_cleanup(&error); \
-	const double args[] = {__VA_ARGS__}; \
-	CU_ASSERT(issame(cexpr, mathfun_acall(&fun, args, &error))); \
-	CU_ASSERT_EQUAL(mathfun_error_type(error), MATHFUN_OK); \
-	mathfun_error_cleanup(&error);
+	CU_ASSERT(error == NULL); \
+	if (error) { \
+		mathfun_error_log_and_cleanup(&error, stderr); \
+	} \
+	else { \
+		CU_ASSERT(issame(cexpr, mathfun_call(&fun, &error, __VA_ARGS__))); \
+		CU_ASSERT(error == NULL); \
+		if (error) mathfun_error_log_and_cleanup(&error, stderr); \
+		const double args[] = {__VA_ARGS__}; \
+		CU_ASSERT(issame(cexpr, mathfun_acall(&fun, args, &error))); \
+		CU_ASSERT(error == NULL); \
+		if (error) mathfun_error_log_and_cleanup(&error, stderr); \
+		mathfun_cleanup(&fun); \
+	}\
+}
 
 #define ASSERT_EXEC_DIRECT(expr, ...) ASSERT_EXEC(STRINGIFY(expr), expr, __VA_ARGS__)
 
@@ -75,11 +81,11 @@ static bool test_compile_success(const char *argnames[], size_t argc, const char
 static enum mathfun_error_type test_compile_error(const char *argnames[], size_t argc, const char *code) {
 	mathfun fun;
 	mathfun_error_p error = NULL;
-	mathfun_compile(&fun, argnames, argc, code, &error);
-	enum mathfun_error_type got = error ? mathfun_error_type(error) : MATHFUN_OK;
+	enum mathfun_error_type error_type = mathfun_compile(&fun, argnames, argc, code, &error) ?
+		MATHFUN_OK : mathfun_error_type(error);
 	mathfun_error_cleanup(&error);
 	mathfun_cleanup(&fun);
-	return got;
+	return error_type;
 }
 
 static void test_compile() {
