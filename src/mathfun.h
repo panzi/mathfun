@@ -98,25 +98,31 @@ enum mathfun_error_type {
 	MATHFUN_PARSER_TRAILING_GARBAGE             ///< garbage at the end of input
 };
 
+/** Declaration type enum.
+ * @see #mathfun_decl
+ */
 enum mathfun_decl_type {
-	MATHFUN_DECL_CONST,
-	MATHFUN_DECL_FUNCT
+	MATHFUN_DECL_CONST, ///< reference declares a constant
+	MATHFUN_DECL_FUNCT  ///< reference declares a function
 };
 
 struct mathfun_decl {
-	enum mathfun_decl_type type;
-	const char *name;
+	enum mathfun_decl_type type; ///< type of the declared reference
+	const char *name;            ///< name of the declared reference
 	union {
-		double value;
+		double value; ///< numeric value
 		struct {
-			mathfun_binding_funct funct;
-			const mathfun_sig *sig;
-		} funct;
-	} decl;
+			mathfun_binding_funct funct;  ///< function pointer
+			const mathfun_sig *sig;       ///< function signature
+		} funct;      ///< function info
+	} decl; ///< declaration info
 };
 
 struct mathfun_error;
 
+/** Function/constant declaration.
+ * @see mathfun_context_define()
+ */
 typedef struct mathfun_decl mathfun_decl;
 
 /** Object that holds function and constant definitions.
