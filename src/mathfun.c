@@ -185,7 +185,7 @@ bool mathfun_context_undefine(mathfun_context *ctx, const char *name, mathfun_er
 
 	memmove(decl, decl + 1, (ctx->decl_used - (decl + 1 - ctx->decls)) * sizeof(mathfun_decl));
 
-	++ ctx->decl_used;
+	-- ctx->decl_used;
 	return true;
 }
 
