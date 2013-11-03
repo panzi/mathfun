@@ -47,25 +47,58 @@ bool mathfun_context_grow(mathfun_context *ctx, mathfun_error_p *error) {
 	return true;
 }
 
-const mathfun_decl *mathfun_context_get(const mathfun_context *ctx, const char *name) {
-	for (size_t i = 0; i < ctx->decl_used; ++ i) {
-		const mathfun_decl *decl = &ctx->decls[i];
-		if (strcmp(decl->name, name) == 0) {
-			return decl;
+// first string is NUL terminated, second string has a defined length
+static int strn2cmp(const char *s1, const char *s2, size_t n2) {
+	const char *s2end = s2 + n2;
+	for (; *s1 == (s2 == s2end ? 0 : *s2); ++ s1, ++ s2) {
+		if (*s1 == 0) {
+			return 0;
 		}
 	}
+	return (*(const unsigned char *)s1 < (s2 == s2end ? 0 : *(const unsigned char *)s2)) ? -1 : +1;
+}
 
+static bool mathfun_context_find(const mathfun_context *ctx, const char *name, size_t n, size_t *index) {
+	// binary search
+	// exclusive range: [lower, upper)
+	size_t lower = 0;
+	size_t upper = ctx->decl_used;
+	const mathfun_decl *decls = ctx->decls;
+
+	while (lower < upper) {
+		const size_t mid = lower + (upper - lower) / 2;
+		const mathfun_decl *decl = decls + mid;
+		int cmp = strn2cmp(decl->name, name, n);
+
+		if (cmp < 0) {
+			lower = mid + 1;
+		}
+		else if (cmp > 0) {
+			upper = mid;
+		}
+		else {
+			*index = mid;
+			return true;
+		}
+	}
+	
+	*index = lower;
+	return false;
+}
+
+const mathfun_decl *mathfun_context_get(const mathfun_context *ctx, const char *name) {
+	size_t index = 0;
+	if (mathfun_context_find(ctx, name, strlen(name), &index)) {
+		return ctx->decls + index;
+	}
 	return NULL;
 }
 
 const mathfun_decl *mathfun_context_getn(const mathfun_context *ctx, const char *name, size_t n) {
-	for (size_t i = 0; i < ctx->decl_used; ++ i) {
-		const mathfun_decl *decl = &ctx->decls[i];
-		if (strncmp(decl->name, name, n) == 0 && !decl->name[n]) {
-			return decl;
-		}
+	size_t index = 0;
+	if (mathfun_context_find(ctx, name, n, &index)) {
+		return ctx->decls + index;
 	}
-
 	return NULL;
 }
 
@@ -124,7 +157,8 @@ bool mathfun_context_define_const(mathfun_context *ctx, const char *name, double
 		return false;
 	}
 
-	if (mathfun_context_get(ctx, name)) {
+	size_t index = 0;
+	if (mathfun_context_find(ctx, name, strlen(name), &index)) {
 		mathfun_raise_name_error(error, MATHFUN_NAME_EXISTS, name);
 		return false;
 	}
@@ -133,7 +167,9 @@ bool mathfun_context_define_const(mathfun_context *ctx, const char *name, double
 		return false;
 	}
 
-	mathfun_decl *decl = ctx->decls + ctx->decl_used;
+	memmove(ctx->decls + index + 1, ctx->decls + index, (ctx->decl_used - index) * sizeof(mathfun_decl));
+
+	mathfun_decl *decl = ctx->decls + index;
 	decl->type = DECL_CONST;
 	decl->name = name;
 	decl->decl.value = value;
@@ -155,7 +191,8 @@ bool mathfun_context_define_funct(mathfun_context *ctx, const char *name, mathfu
 		return false;
 	}
 
-	if (mathfun_context_get(ctx, name)) {
+	size_t index = 0;
+	if (mathfun_context_find(ctx, name, strlen(name), &index)) {
 		mathfun_raise_name_error(error, MATHFUN_NAME_EXISTS, name);
 		return false;
 	}
@@ -164,7 +201,9 @@ bool mathfun_context_define_funct(mathfun_context *ctx, const char *name, mathfu
 		return false;
 	}
 
-	mathfun_decl *decl = ctx->decls + ctx->decl_used;
+	memmove(ctx->decls + index + 1, ctx->decls + index, (ctx->decl_used - index) * sizeof(mathfun_decl));
+
+	mathfun_decl *decl = ctx->decls + index;
 	decl->type = DECL_FUNCT;
 	decl->name = name;
 	decl->decl.funct.funct = funct;
@@ -176,14 +215,13 @@ bool mathfun_context_define_funct(mathfun_context *ctx, const char *name, mathfu
 }
 
 bool mathfun_context_undefine(mathfun_context *ctx, const char *name, mathfun_error_p *error) {
-	mathfun_decl *decl = (mathfun_decl*)mathfun_context_get(ctx, name);
-
-	if (!decl) {
+	size_t index = 0;
+	if (!mathfun_context_find(ctx, name, strlen(name), &index)) {
 		mathfun_raise_name_error(error, MATHFUN_NO_SUCH_NAME, name);
 		return false;
 	}
 
-	memmove(decl, decl + 1, (ctx->decl_used - (decl + 1 - ctx->decls)) * sizeof(mathfun_decl));
+	memmove(ctx->decls + index, ctx->decls + index + 1, (ctx->decl_used - index - 1) * sizeof(mathfun_decl));
 
 	-- ctx->decl_used;
 	return true;

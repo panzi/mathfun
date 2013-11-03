@@ -739,7 +739,6 @@ mathfun_expr *mathfun_parse_atom(mathfun_parser *parser) {
 					return NULL;
 				}
 
-
 				if (argc >= expr->ex.funct.sig->argc) {
 					mathfun_expr_free(arg);
 				}
@@ -763,7 +762,9 @@ mathfun_expr *mathfun_parse_atom(mathfun_parser *parser) {
 			}
 
 			if (*parser->ptr != ')') {
-				mathfun_raise_parser_error(parser, *parser->ptr ? MATHFUN_PARSER_EXPECTED_CLOSE_PARENTHESIS : MATHFUN_PARSER_UNEXPECTED_END_OF_INPUT, NULL);
+				mathfun_raise_parser_error(parser, *parser->ptr ?
+					MATHFUN_PARSER_EXPECTED_CLOSE_PARENTHESIS :
+					MATHFUN_PARSER_UNEXPECTED_END_OF_INPUT, NULL);
 				mathfun_expr_free(expr);
 				return NULL;
 			}
