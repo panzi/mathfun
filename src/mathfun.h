@@ -149,7 +149,7 @@ struct mathfun {
 /** Initialize a mathfun_context.
  *
  * @param ctx A pointer to a #mathfun_context
- * @param define_default If true then a lot of default functions (mainly from math.h) and
+ * @param define_default If true then a lot of default functions (mainly from <math.h>) and
  *        constans will be defined in the math_context. See mathfun_context_define_default() for more details.
  * @param error A pointer to an error handle.
  * @return true on success, false if an error occured.
@@ -228,7 +228,7 @@ MATHFUN_EXPORT void mathfun_context_cleanup(mathfun_context *ctx);
  *    - double yn(int n, double x)
  *    - double sign(double x)
  *
- * See `man math.h` for a documentation on these functions, except for sign().
+ * See man <math.h> for a documentation on these functions, except for sign().
  *
  * <strong>double sign(double x)</strong>
  *
@@ -260,7 +260,7 @@ MATHFUN_EXPORT void mathfun_context_cleanup(mathfun_context *ctx);
  *
  * @param ctx A pointer to a #mathfun_context
  * @param error A pointer to an error handle.
- * @return true on success, false if an error occured.
+ * @return true on success, false if an error occured. Possible errors: #MATHFUN_OUT_OF_MEMORY and #MATHFUN_NAME_EXISTS
  */
 MATHFUN_EXPORT bool mathfun_context_define_default(mathfun_context *ctx, mathfun_error_p *error);
 
