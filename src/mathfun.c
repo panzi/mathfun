@@ -157,7 +157,7 @@ static int mathfun_decl_cmp(const void *a, const void *b) {
 }
 
 bool mathfun_context_define(mathfun_context *ctx, const mathfun_decl decls[], mathfun_error_p *error) {
-	size_t n = 0;
+	size_t new_count = 0;
 	const mathfun_decl *ptr = decls;
 	while (ptr->name) {
 		if (mathfun_context_get(ctx, ptr->name)) {
@@ -165,14 +165,85 @@ bool mathfun_context_define(mathfun_context *ctx, const mathfun_decl decls[], ma
 			return false;
 		}
 		++ ptr;
-		++ n;
+		++ new_count;
 	}
-	if (ctx->decl_used + n >= ctx->decl_capacity && !mathfun_context_ensure(ctx, n, error)) {
+	size_t old_count = ctx->decl_used;
+	size_t size = old_count + new_count;
+	size_t rem  = size % 256;
+	if (rem) size += 256 - rem;
+
+	mathfun_decl *merged = calloc(size, sizeof(mathfun_decl));
+
+	if (!merged) {
+		mathfun_raise_error(error, MATHFUN_OUT_OF_MEMORY);
 		return false;
 	}
-	memcpy(ctx->decls, decls, n * sizeof(mathfun_decl));
-	ctx->decl_used += n;
-	qsort(ctx->decls, ctx->decl_used, sizeof(mathfun_decl), mathfun_decl_cmp);
+
+	mathfun_decl *old_decls = ctx->decls;
+	mathfun_decl *new_decls = merged + old_count;
+
+	// copy new list to new buffer where I can sort it
+	memcpy(new_decls, decls, new_count * sizeof(mathfun_decl));
+	qsort(new_decls, new_count, sizeof(mathfun_decl), mathfun_decl_cmp);
+
+	// merge old and new lists
+	size_t i = 0, j = 0, index = 0;
+	while (i < old_count && j < new_count) {
+		int cmp = strcmp(old_decls[i].name, new_decls[j].name);
+		if (cmp < 0) {
+			merged[index] = old_decls[i ++];
+		}
+		else if (cmp > 0) {
+			merged[index] = new_decls[j ++];
+		}
+		else {
+			mathfun_raise_name_error(error, MATHFUN_NAME_EXISTS, old_decls[i].name);
+			free(merged);
+			return false;
+		}
+
+		if (index > 0 && strcmp(merged[index].name, merged[index - 1].name) == 0) {
+			mathfun_raise_name_error(error, MATHFUN_NAME_EXISTS, merged[index].name);
+			free(merged);
+			return false;
+		}
+
+		++ index;
+	}
+
+	// add rest of old list
+	while (i < old_count) {
+		merged[index] = old_decls[i];
+
+		if (index > 0 && strcmp(merged[index].name, merged[index - 1].name) == 0) {
+			mathfun_raise_name_error(error, MATHFUN_NAME_EXISTS, merged[index].name);
+			free(merged);
+			return false;
+		}
+
+		++ i;
+		++ index;
+	}
+
+	// new list should be in place, just validate uniquness of names
+	assert(merged + index == new_decls + j);
+	while (j < new_count) {
+		if (index > 0 && strcmp(merged[index].name, merged[index - 1].name) == 0) {
+			mathfun_raise_name_error(error, MATHFUN_NAME_EXISTS, merged[index].name);
+			free(merged);
+			return false;
+		}
+
+		++ j;
+		++ index;
+	}
+
+	// use merged lists
+	free(ctx->decls);
+	ctx->decls         = merged;
+	ctx->decl_used     = old_count + new_count;
+	ctx->decl_capacity = size;
+
 	return true;
 }
 
