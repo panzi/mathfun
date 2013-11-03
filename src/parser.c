@@ -313,6 +313,7 @@ mathfun_expr *mathfun_parse_range(mathfun_parser *parser) {
 		return expr;
 	}
 
+	mathfun_expr_free(left);
 	mathfun_raise_parser_error(parser, *parser->ptr ? MATHFUN_PARSER_EXPECTED_DOTS : MATHFUN_PARSER_UNEXPECTED_END_OF_INPUT, NULL);
 	return NULL;
 }
