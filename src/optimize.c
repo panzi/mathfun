@@ -10,12 +10,12 @@ static double mathfun_sub(double a, double b) { return a - b; }
 static double mathfun_mul(double a, double b) { return a * b; }
 static double mathfun_div(double a, double b) { return a / b; }
 
-static bool mathfun_opt_eq(double a, double b) { return a == b; }
-static bool mathfun_opt_ne(double a, double b) { return a != b; }
-static bool mathfun_opt_gt(double a, double b) { return a >  b; }
-static bool mathfun_opt_lt(double a, double b) { return a <  b; }
-static bool mathfun_opt_ge(double a, double b) { return a >= b; }
-static bool mathfun_opt_le(double a, double b) { return a <= b; }
+static bool mathfun_eq(double a, double b) { return a == b; }
+static bool mathfun_ne(double a, double b) { return a != b; }
+static bool mathfun_gt(double a, double b) { return a >  b; }
+static bool mathfun_lt(double a, double b) { return a <  b; }
+static bool mathfun_ge(double a, double b) { return a >= b; }
+static bool mathfun_le(double a, double b) { return a <= b; }
 
 static mathfun_expr *mathfun_expr_optimize_binary(mathfun_expr *expr,
 	mathfun_binary_op op, bool has_neutral, double neutral, bool commutative,
@@ -245,8 +245,11 @@ mathfun_expr *mathfun_expr_optimize(mathfun_expr *expr, mathfun_error_p *error) 
 				mathfun_value *args = calloc(argc, sizeof(mathfun_value));
 				if (!args) return NULL;
 				for (size_t i = 0; i < argc; ++ i) {
-					args[i] = expr->ex.funct.args[i]->ex.value.value;
+					mathfun_expr *arg = expr->ex.funct.args[i];
+					args[i] = arg->ex.value.value;
+					mathfun_expr_free(arg);
 				}
+				free(expr->ex.funct.args);
 
 				// math errors are communicated via errno
 				// XXX: buggy. see NOTES in man math_error
@@ -297,23 +300,23 @@ mathfun_expr *mathfun_expr_optimize(mathfun_expr *expr, mathfun_error_p *error) 
 
 		case EX_NOT: return mathfun_expr_optimize_not(expr, error);
 
-		case EX_EQ: return mathfun_expr_optimize_comparison(expr, mathfun_opt_eq, error);
-		case EX_NE: return mathfun_expr_optimize_comparison(expr, mathfun_opt_ne, error);
-		case EX_LT: return mathfun_expr_optimize_comparison(expr, mathfun_opt_lt, error);
-		case EX_GT: return mathfun_expr_optimize_comparison(expr, mathfun_opt_gt, error);
-		case EX_LE: return mathfun_expr_optimize_comparison(expr, mathfun_opt_le, error);
-		case EX_GE: return mathfun_expr_optimize_comparison(expr, mathfun_opt_ge, error);
+		case EX_EQ: return mathfun_expr_optimize_comparison(expr, mathfun_eq, error);
+		case EX_NE: return mathfun_expr_optimize_comparison(expr, mathfun_ne, error);
+		case EX_LT: return mathfun_expr_optimize_comparison(expr, mathfun_lt, error);
+		case EX_GT: return mathfun_expr_optimize_comparison(expr, mathfun_gt, error);
+		case EX_LE: return mathfun_expr_optimize_comparison(expr, mathfun_le, error);
+		case EX_GE: return mathfun_expr_optimize_comparison(expr, mathfun_ge, error);
 
 		case EX_IN:
 		{
 			mathfun_expr *value = expr->ex.binary.left = mathfun_expr_optimize(expr->ex.binary.left, error);
-			if (!expr->ex.binary.left) {
+			if (!value) {
 				mathfun_expr_free(expr);
 				return NULL;
 			}
 
 			mathfun_expr *range = expr->ex.binary.right = mathfun_expr_optimize(expr->ex.binary.right, error);
-			if (!expr->ex.binary.right) {
+			if (!range) {
 				mathfun_expr_free(expr);
 				return NULL;
 			}
