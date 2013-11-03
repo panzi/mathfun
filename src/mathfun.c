@@ -322,6 +322,7 @@ double mathfun_run(const char *code, mathfun_error_p *error, ...) {
 
 	size_t argc = 0;
 	while (va_arg(ap, const char *)) {
+		va_arg(ap, double);
 		++ argc;
 	}
 
@@ -351,12 +352,7 @@ double mathfun_run(const char *code, mathfun_error_p *error, ...) {
 
 	for (size_t i = 0; i < argc; ++ i) {
 		argnames[i] = va_arg(ap, const char *);
-	}
-
-	va_arg(ap, const char *);
-
-	for (size_t i = 0; i < argc; ++ i) {
-		args[i] = va_arg(ap, double);
+		args[i]     = va_arg(ap, double);
 	}
 
 	va_end(ap);

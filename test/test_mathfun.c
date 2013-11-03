@@ -24,6 +24,19 @@
 #define STRINGIFY_LIST_(N, ...) CONCATENATE(STRINGIFY_LIST_, N)(__VA_ARGS__)
 #define STRINGIFY_LIST(...) STRINGIFY_LIST_(PP_NARG(__VA_ARGS__), __VA_ARGS__)
 
+#define MATHFUN_RUN_VARARGS_0()
+#define MATHFUN_RUN_VARARGS_1(x) STRINGIFY(x), x
+#define MATHFUN_RUN_VARARGS_2(x, ...) STRINGIFY(x), x, MATHFUN_RUN_VARARGS_1(__VA_ARGS__)
+#define MATHFUN_RUN_VARARGS_3(x, ...) STRINGIFY(x), x, MATHFUN_RUN_VARARGS_2(__VA_ARGS__)
+#define MATHFUN_RUN_VARARGS_4(x, ...) STRINGIFY(x), x, MATHFUN_RUN_VARARGS_3(__VA_ARGS__)
+#define MATHFUN_RUN_VARARGS_5(x, ...) STRINGIFY(x), x, MATHFUN_RUN_VARARGS_4(__VA_ARGS__)
+#define MATHFUN_RUN_VARARGS_6(x, ...) STRINGIFY(x), x, MATHFUN_RUN_VARARGS_5(__VA_ARGS__)
+#define MATHFUN_RUN_VARARGS_7(x, ...) STRINGIFY(x), x, MATHFUN_RUN_VARARGS_6(__VA_ARGS__)
+#define MATHFUN_RUN_VARARGS_8(x, ...) STRINGIFY(x), x, MATHFUN_RUN_VARARGS_7(__VA_ARGS__)
+
+#define MATHFUN_RUN_VARARGS_(N, ...) CONCATENATE(MATHFUN_RUN_VARARGS_, N)(__VA_ARGS__)
+#define MATHFUN_RUN_VARARGS(...) MATHFUN_RUN_VARARGS_(PP_NARG(__VA_ARGS__), __VA_ARGS__)
+
 #define PP_NARG(...) PP_NARG_(__VA_ARGS__,PP_RSEQ_N())
 #define PP_NARG_(...) PP_ARG_N(__VA_ARGS__)
 #define PP_ARG_N(_1,_2,_3,_4,_5,_6,_7,_8,N,...) N
@@ -39,7 +52,7 @@
 #define ASSERT_EXEC(expr, cexpr, ...) \
 { \
 	mathfun_error_p error = NULL; \
-	CU_ASSERT(issame(cexpr, mathfun_run(expr, &error, STRINGIFY_LIST(__VA_ARGS__), NULL, __VA_ARGS__))); \
+	CU_ASSERT(issame(cexpr, MATHFUN_RUN(expr, &error, MATHFUN_RUN_VARARGS(__VA_ARGS__)))); \
 	CU_ASSERT(error == NULL); \
 	if (error) mathfun_error_log_and_cleanup(&error, stderr); \
 	mathfun fun; \

@@ -30,10 +30,27 @@
 #endif
 
 /** Test if given mathfun_error_type is a parser error.
+ *
+ * @param ERROR The #error_type.
+ * @return true if ERROR is a parser error type, false otherwise.
  */
 #define MATHFUN_IS_PARSER_ERROR(ERROR) ( \
 	(ERROR) >= MATHFUN_PARSER_EXPECTED_CLOSE_PARENTHESIS && \
 	(ERROR) <= MATHFUN_PARSER_TRAILING_GARBAGE)
+
+/** Parse and run a function expression.
+ *
+ * Macro wrapper for mathfun_run() that ensures the existence of the terminating NULL.
+ *
+ * @param code The function expression.
+ * @param error A pointer to an error handle.
+ * @return The result of the execution.
+ */
+#ifdef __GNUC__
+#	define MATHFUN_RUN(code, error, ...) mathfun_run(code, error, ##__VA_ARGS__, NULL) 
+#else
+#	define MATHFUN_RUN(code, error, ...) mathfun_run(code, error, __VA_ARGS__, NULL) 
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -148,7 +165,7 @@ typedef struct mathfun mathfun;
  *
 @code
 mathfun_error_p error = NULL;
-double value = mathfun_run("sin(x) + cos(y)", &error, "x", "y", NULL, 1.2, 3.4);
+double value = mathfun_run("sin(x) + cos(y)", &error, "x", 1.2, "y", 3.4, NULL);
 if (error) {
     mathfun_error_log_and_cleanup(&error, stderr);
 }
@@ -423,13 +440,13 @@ MATHFUN_EXPORT double mathfun_exec(const mathfun *fun, mathfun_value frame[])
 MATHFUN_EXPORT bool mathfun_dump(const mathfun *fun, FILE *stream, const mathfun_context *ctx,
 	mathfun_error_p *error);
 
-/** Parse and run function expression.
+/** Parse and run a function expression.
  * 
  * This doesn't optimize or compile the expression but instead directly runs on the abstract syntax tree.
  * Use this for one-time executions.
  *
 @code
-double mathfun_run(const char *code, mathfun_error_p *error, const char *argname..., NULL, double argvalue...);
+double mathfun_run(const char *code, mathfun_error_p *error, [const char *argname, double argvalue]..., NULL);
 @endcode
  *
  * @param code The function expression.
