@@ -277,6 +277,173 @@ static void test_exec_all() {
 		x, y, z);
 }
 
+static mathfun_value test_funct1(const mathfun_value args[]) {
+	return (mathfun_value){ .number = args[0].number + args[1].number };
+}
+
+static mathfun_value test_funct2(const mathfun_value args[]) {
+	return (mathfun_value){ .number = args[0].number - args[1].number };
+}
+
+static mathfun_value test_funct3(const mathfun_value args[]) {
+	return (mathfun_value){ .number = args[0].number * args[1].number };
+}
+
+#define TEST_CONTEXT \
+	mathfun_context ctx; \
+	mathfun_error_p error = NULL; \
+	CU_ASSERT(mathfun_context_init(&ctx, false, &error)); \
+	if (error) { \
+		mathfun_error_log_and_cleanup(&error, stderr); \
+		return; \
+	}
+
+#define TEST_CONTEXT_DEFAULTS \
+	mathfun_context ctx; \
+	mathfun_error_p error = NULL; \
+	CU_ASSERT(mathfun_context_init(&ctx, true, &error)); \
+	if (error) { \
+		mathfun_error_log_and_cleanup(&error, stderr); \
+		return; \
+	}
+
+static void test_define_funct() {
+	TEST_CONTEXT;
+
+	const mathfun_sig sig = {2, (mathfun_type[]){MATHFUN_NUMBER, MATHFUN_NUMBER}, MATHFUN_NUMBER};
+
+	CU_ASSERT(mathfun_context_define_funct(&ctx, "funct1", test_funct1, &sig, &error));
+
+	if (error) mathfun_error_log_and_cleanup(&error, stderr);
+	mathfun_context_cleanup(&ctx);
+}
+
+static void test_define_const() {
+	TEST_CONTEXT;
+
+	CU_ASSERT(mathfun_context_define_const(&ctx, "const", 1.0, &error));
+
+	if (error) mathfun_error_log_and_cleanup(&error, stderr);
+	mathfun_context_cleanup(&ctx);
+}
+
+static void test_define_multiple() {
+	TEST_CONTEXT;
+
+	const mathfun_sig sig = {2, (mathfun_type[]){MATHFUN_NUMBER, MATHFUN_NUMBER}, MATHFUN_NUMBER};
+	const mathfun_decl decls1[] = {
+		{ MATHFUN_DECL_CONST, "b", { .value = 2.0 } },
+		{ MATHFUN_DECL_CONST, "a", { .value = 1.0 } },
+
+		{ MATHFUN_DECL_FUNCT, "funct1", { .funct = { test_funct1, &sig } } },
+		{ MATHFUN_DECL_FUNCT, "funct2", { .funct = { test_funct2, &sig } } },
+
+		{ -1, NULL, { .value = 0 } }
+	};
+	const mathfun_decl decls2[] = {
+		{ MATHFUN_DECL_CONST, "c", { .value = 3.0 } },
+
+		{ MATHFUN_DECL_FUNCT, "funct3", { .funct = { test_funct3, &sig } } },
+
+		{ -1, NULL, { .value = 0 } }
+	};
+
+	CU_ASSERT(mathfun_context_define(&ctx, decls1, &error));
+	if (error) mathfun_error_log_and_cleanup(&error, stderr);
+
+	CU_ASSERT(mathfun_context_define(&ctx, decls2, &error));
+	if (error) mathfun_error_log_and_cleanup(&error, stderr);
+
+	mathfun_context_cleanup(&ctx);
+}
+
+static void test_define_defaults() {
+	TEST_CONTEXT_DEFAULTS;
+	mathfun_context_cleanup(&ctx);
+}
+
+static void test_get_funct() {
+	TEST_CONTEXT_DEFAULTS;
+
+	const mathfun_decl *decl = mathfun_context_get(&ctx, "sin");
+	CU_ASSERT(decl != NULL && decl->type == MATHFUN_DECL_FUNCT);
+
+	mathfun_context_cleanup(&ctx);
+}
+
+static void test_get_const() {
+	TEST_CONTEXT_DEFAULTS;
+
+	const mathfun_decl *decl = mathfun_context_get(&ctx, "e");
+	CU_ASSERT(decl != NULL && decl->type == MATHFUN_DECL_CONST);
+
+	mathfun_context_cleanup(&ctx);
+}
+
+static void test_get_funct_name() {
+	TEST_CONTEXT;
+
+	const mathfun_sig sig = {2, (mathfun_type[]){MATHFUN_NUMBER, MATHFUN_NUMBER}, MATHFUN_NUMBER};
+
+	CU_ASSERT(mathfun_context_define_funct(&ctx, "funct1", test_funct1, &sig, &error));
+	if (error) mathfun_error_log_and_cleanup(&error, stderr);
+
+	const char *name = mathfun_context_funct_name(&ctx, test_funct1);
+	CU_ASSERT(name != NULL && strcmp(name, "funct1") == 0);
+
+	mathfun_context_cleanup(&ctx);
+}
+
+static void test_undefine() {
+	TEST_CONTEXT_DEFAULTS;
+
+	CU_ASSERT(mathfun_context_undefine(&ctx, "sin", &error));
+	if (error) mathfun_error_log_and_cleanup(&error, stderr);
+
+	CU_ASSERT(mathfun_context_get(&ctx, "sin") == NULL);
+
+	mathfun_context_cleanup(&ctx);
+}
+
+static void test_define_existing() {
+	TEST_CONTEXT_DEFAULTS;
+
+	const mathfun_sig sig = {2, (mathfun_type[]){MATHFUN_NUMBER, MATHFUN_NUMBER}, MATHFUN_NUMBER};
+
+	CU_ASSERT(!mathfun_context_define_funct(&ctx, "sin", test_funct1, &sig, &error));
+	mathfun_error_cleanup(&error);
+
+	CU_ASSERT(!mathfun_context_define_const(&ctx, "e", M_E, &error));
+	mathfun_error_cleanup(&error);
+
+	mathfun_context_cleanup(&ctx);
+}
+
+static void test_undefine_none_existing() {
+	TEST_CONTEXT_DEFAULTS;
+
+	CU_ASSERT(!mathfun_context_undefine(&ctx, "blargh", &error));
+	mathfun_error_cleanup(&error);
+
+	mathfun_context_cleanup(&ctx);
+}
+
+static void test_get_none_existing() {
+	TEST_CONTEXT_DEFAULTS;
+
+	CU_ASSERT(mathfun_context_get(&ctx, "blargh") == NULL);
+
+	mathfun_context_cleanup(&ctx);
+}
+
+static void test_get_funct_name_none_existing() {
+	TEST_CONTEXT_DEFAULTS;
+
+	CU_ASSERT(mathfun_context_funct_name(&ctx, test_funct1) == NULL);
+
+	mathfun_context_cleanup(&ctx);
+}
+
 CU_TestInfo compile_test_infos[] = {
 	{"compile", test_compile},
 	{"empty argument name", test_empty_argument_name},
@@ -319,7 +486,26 @@ CU_TestInfo exec_test_infos[] = {
 	{NULL, NULL}
 };
 
+CU_TestInfo context_test_infos[] = {
+	{"define a function", test_define_funct},
+	{"define a constant", test_define_const},
+	{"define multiple references", test_define_multiple},
+	{"define defaults", test_define_defaults},
+	{"get declaration a function", test_get_funct},
+	{"get declaration a constant", test_get_const},
+	{"get name of a function", test_get_funct_name},
+	{"undefine a reference", test_undefine},
+
+	{"define same reference twice", test_define_existing},
+	{"undefine not existing reference", test_undefine_none_existing},
+	{"get declaration of not existing reference", test_get_none_existing},
+	{"get name of not existing function", test_get_funct_name_none_existing},
+
+	{NULL, NULL}
+};
+
 CU_SuiteInfo test_suite_infos[] = {
+	{"context", NULL, NULL, context_test_infos},
 	{"compile", NULL, NULL, compile_test_infos},
 	{"execute", NULL, NULL, exec_test_infos},
 	{NULL, NULL, NULL, NULL}
