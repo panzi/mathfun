@@ -411,9 +411,11 @@ static void test_define_existing() {
 	const mathfun_sig sig = {2, (mathfun_type[]){MATHFUN_NUMBER, MATHFUN_NUMBER}, MATHFUN_NUMBER};
 
 	CU_ASSERT(!mathfun_context_define_funct(&ctx, "sin", test_funct1, &sig, &error));
+	CU_ASSERT_EQUAL(mathfun_error_type(error), MATHFUN_NAME_EXISTS);
 	mathfun_error_cleanup(&error);
 
 	CU_ASSERT(!mathfun_context_define_const(&ctx, "e", M_E, &error));
+	CU_ASSERT_EQUAL(mathfun_error_type(error), MATHFUN_NAME_EXISTS);
 	mathfun_error_cleanup(&error);
 
 	mathfun_context_cleanup(&ctx);
@@ -423,6 +425,7 @@ static void test_undefine_none_existing() {
 	TEST_CONTEXT_DEFAULTS;
 
 	CU_ASSERT(!mathfun_context_undefine(&ctx, "blargh", &error));
+	CU_ASSERT_EQUAL(mathfun_error_type(error), MATHFUN_NO_SUCH_NAME);
 	mathfun_error_cleanup(&error);
 
 	mathfun_context_cleanup(&ctx);
@@ -480,7 +483,7 @@ CU_TestInfo compile_test_infos[] = {
 };
 
 CU_TestInfo exec_test_infos[] = {
-	{"%", test_mod},
+	{"mathfun_mod", test_mod},
 	{"sin(x)", test_exec_sin_x},
 	{"expression with all operators", test_exec_all},
 	{NULL, NULL}
