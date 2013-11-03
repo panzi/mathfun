@@ -851,7 +851,6 @@ mathfun_expr *mathfun_context_parse(const mathfun_context *ctx,
 		if (mathfun_expr_type(expr) != MATHFUN_NUMBER) {
 			const char *ptr = code;
 			while (isspace(*ptr)) ++ ptr;
-			mathfun_raise_parser_error(&parser, MATHFUN_PARSER_TYPE_ERROR, ptr);
 			mathfun_raise_parser_type_error(&parser, ptr, MATHFUN_NUMBER, mathfun_expr_type(expr));
 			mathfun_expr_free(expr);
 			return NULL;
