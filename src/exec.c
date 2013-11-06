@@ -139,6 +139,29 @@ mathfun_value mathfun_expr_exec(const mathfun_expr *expr, const double args[]) {
 	return (mathfun_value){ .number = NAN };
 }
 
+#ifdef MATHFUN_HAS_LIBJIT
+
+#include "codegen_jit.h"
+
+double mathfun_exec(const mathfun *fun, mathfun_value regs[]) {
+	double res = NAN;
+	void **args = (void **)(regs + fun->argc);
+
+	for (size_t i = 0; i < fun->argc; ++ i) {
+		args[i] = &regs[i];
+	}
+
+	mathfun_jit_code *code = (mathfun_jit_code *)fun->code;
+
+	if (!jit_function_apply(code->funct, args, &res)) {
+		errno = EINVAL;
+	}
+
+	return res;
+}
+
+#else
+
 #pragma GCC diagnostic ignored "-pedantic"
 #pragma GCC diagnostic ignored "-Wunused-label"
 double mathfun_exec(const mathfun *fun, mathfun_value regs[]) {
@@ -360,3 +383,5 @@ do_nop:
 	}
 }
 #pragma GCC diagnostic pop
+
+#endif

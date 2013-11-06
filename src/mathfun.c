@@ -278,6 +278,11 @@ bool mathfun_context_define_const(mathfun_context *ctx, const char *name, double
 
 bool mathfun_context_define_funct(mathfun_context *ctx, const char *name, mathfun_binding_funct funct,
 	const mathfun_sig *sig, mathfun_error_p *error) {
+	return mathfun_context_define_native_funct(ctx, name, funct, sig, NULL, error);
+}
+
+bool mathfun_context_define_native_funct(mathfun_context *ctx, const char *name, mathfun_binding_funct funct,
+	const mathfun_sig *sig, mathfun_native_funct native_funct, mathfun_error_p *error) {
 	if (!mathfun_valid_name(name)) {
 		mathfun_raise_name_error(error, MATHFUN_ILLEGAL_NAME, name);
 		return false;
@@ -305,6 +310,7 @@ bool mathfun_context_define_funct(mathfun_context *ctx, const char *name, mathfu
 	decl->name = name;
 	decl->decl.funct.funct = funct;
 	decl->decl.funct.sig   = sig;
+	decl->decl.funct.native_funct = native_funct;
 
 	++ ctx->decl_used;
 

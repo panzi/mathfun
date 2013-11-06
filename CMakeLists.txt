@@ -38,6 +38,17 @@ if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
 	endif()
 endif()
 
+find_library(LIBJIT_LIBRARY NAMES jit)
+find_path(LIBJIT_INCLUDE_DIR NAMES jit/jit.h)
+
+if(LIBJIT_LIBRARY AND LIBJIT_INCLUDE_DIR)
+	set(MATHFUN_HAS_LIBJIT ON)
+endif()
+
+if(MATHFUN_HAS_LIBJIT)
+	include_directories(${LIBJIT_INCLUDE_DIR})
+endif()
+
 if(NOT WIN32)
 	find_library(M_LIBRARY
 		NAMES m

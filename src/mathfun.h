@@ -123,14 +123,17 @@ enum mathfun_decl_type {
 	MATHFUN_DECL_FUNCT  ///< reference declares a function
 };
 
+typedef void (*mathfun_native_funct)();
+
 struct mathfun_decl {
 	enum mathfun_decl_type type; ///< type of the declared reference
 	const char *name;            ///< name of the declared reference
 	union {
 		double value; ///< numeric value
 		struct {
-			mathfun_binding_funct funct;  ///< function pointer
-			const mathfun_sig *sig;       ///< function signature
+			mathfun_binding_funct funct;       ///< function pointer
+			const mathfun_sig *sig;            ///< function signature
+			mathfun_native_funct native_funct; ///< function pointer (can be NULL, use it for increased performance)
 		} funct;      ///< function info
 	} decl; ///< declaration info
 };
@@ -331,6 +334,9 @@ MATHFUN_EXPORT bool mathfun_context_define_const(mathfun_context *ctx, const cha
  */
 MATHFUN_EXPORT bool mathfun_context_define_funct(mathfun_context *ctx, const char *name, mathfun_binding_funct funct,
 	const mathfun_sig *sig, mathfun_error_p *error);
+
+MATHFUN_EXPORT bool mathfun_context_define_native_funct(mathfun_context *ctx, const char *name,
+	mathfun_binding_funct funct, const mathfun_sig *sig, mathfun_native_funct native_funct, mathfun_error_p *error);
 
 /** Find the name of a given function.
  * @param ctx A pointer to a #mathfun_context

@@ -46,7 +46,6 @@ typedef uintptr_t mathfun_code;
 typedef struct mathfun_expr mathfun_expr;
 typedef struct mathfun_error mathfun_error;
 typedef struct mathfun_parser mathfun_parser;
-typedef struct mathfun_codegen mathfun_codegen;
 
 enum mathfun_expr_type {
 	EX_CONST,
@@ -185,40 +184,12 @@ struct mathfun_parser {
 	mathfun_error_p *error;
 };
 
-struct mathfun_codegen {
-	size_t argc;
-	size_t maxstack;
-	size_t currstack;
-	size_t code_size;
-	size_t code_used;
-	mathfun_code *code;
-	mathfun_error_p *error;
-};
-
 MATHFUN_LOCAL bool mathfun_context_ensure(mathfun_context *ctx, size_t n, mathfun_error_p *error);
 
 MATHFUN_LOCAL const mathfun_decl *mathfun_context_getn(const mathfun_context *ctx, const char *name, size_t n);
 
 MATHFUN_LOCAL mathfun_expr *mathfun_context_parse(const mathfun_context *ctx,
 	const char *argnames[], size_t argc, const char *code, mathfun_error_p *error);
-
-MATHFUN_LOCAL bool mathfun_expr_codegen(mathfun_expr *expr, mathfun *mathfun, mathfun_error_p *error);
-
-MATHFUN_LOCAL bool mathfun_codegen_expr(mathfun_codegen *codegen, mathfun_expr *expr, mathfun_code *ret);
-
-MATHFUN_LOCAL bool mathfun_codegen_val(mathfun_codegen *codegen, mathfun_value value, mathfun_code target);
-MATHFUN_LOCAL bool mathfun_codegen_call(mathfun_codegen *codegen, mathfun_binding_funct funct, mathfun_code firstarg, mathfun_code target);
-
-MATHFUN_LOCAL bool mathfun_codegen_ins0(mathfun_codegen *codegen, enum mathfun_bytecode code);
-MATHFUN_LOCAL bool mathfun_codegen_ins1(mathfun_codegen *codegen, enum mathfun_bytecode code, mathfun_code arg1);
-MATHFUN_LOCAL bool mathfun_codegen_ins2(mathfun_codegen *codegen, enum mathfun_bytecode code, mathfun_code arg1, mathfun_code arg2);
-MATHFUN_LOCAL bool mathfun_codegen_ins3(mathfun_codegen *codegen, enum mathfun_bytecode code, mathfun_code arg1, mathfun_code arg2, mathfun_code arg3);
-
-MATHFUN_LOCAL bool mathfun_codegen_binary(mathfun_codegen *codegen, mathfun_expr *expr,
-	enum mathfun_bytecode code, mathfun_code *ret);
-
-MATHFUN_LOCAL bool mathfun_codegen_unary(mathfun_codegen *codegen, mathfun_expr *expr,
-	enum mathfun_bytecode code, mathfun_code *ret);
 
 MATHFUN_LOCAL mathfun_expr *mathfun_expr_alloc(enum mathfun_expr_type type, mathfun_error_p *error);
 
@@ -250,6 +221,8 @@ MATHFUN_LOCAL void mathfun_raise_parser_type_error(const mathfun_parser *parser,
 MATHFUN_LOCAL bool mathfun_validate_argnames(const char *argnames[], size_t argc, mathfun_error_p *error);
 
 MATHFUN_LOCAL const char *mathfun_type_name(mathfun_type type);
+
+MATHFUN_LOCAL bool mathfun_expr_codegen(mathfun_expr *expr, mathfun *mathfun, mathfun_error_p *error);
 
 #ifdef __cplusplus
 }

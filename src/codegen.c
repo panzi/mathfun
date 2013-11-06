@@ -1,6 +1,6 @@
 #include <string.h>
 
-#include "mathfun_intern.h"
+#include "codegen.h"
 
 void mathfun_codegen_cleanup(mathfun_codegen *codegen) {
 	free(codegen->code);
@@ -268,7 +268,7 @@ bool mathfun_codegen_expr(mathfun_codegen *codegen, mathfun_expr *expr, mathfun_
 
 		case EX_POW:
 			return mathfun_codegen_binary(codegen, expr, POW, ret);
-			
+
 		case EX_NOT:
 			return mathfun_codegen_unary(codegen, expr, NOT, ret);
 
@@ -292,7 +292,7 @@ bool mathfun_codegen_expr(mathfun_codegen *codegen, mathfun_expr *expr, mathfun_
 
 		case EX_IN:
 			return mathfun_codegen_in(codegen, expr, ret);
-		
+
 		case EX_RNG_INCL:
 		case EX_RNG_EXCL:
 			mathfun_raise_error(codegen->error, MATHFUN_INTERNAL_ERROR);

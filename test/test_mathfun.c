@@ -281,6 +281,10 @@ static mathfun_value test_funct1(const mathfun_value args[]) {
 	return (mathfun_value){ .number = args[0].number + args[1].number };
 }
 
+static double test_native_funct1(double a, double b) {
+	return a + b;
+}
+
 static mathfun_value test_funct2(const mathfun_value args[]) {
 	return (mathfun_value){ .number = args[0].number - args[1].number };
 }
@@ -335,15 +339,15 @@ static void test_define_multiple() {
 		{ MATHFUN_DECL_CONST, "b", { .value = 2.0 } },
 		{ MATHFUN_DECL_CONST, "a", { .value = 1.0 } },
 
-		{ MATHFUN_DECL_FUNCT, "funct1", { .funct = { test_funct1, &sig } } },
-		{ MATHFUN_DECL_FUNCT, "funct2", { .funct = { test_funct2, &sig } } },
+		{ MATHFUN_DECL_FUNCT, "funct1", { .funct = { test_funct1, &sig, (mathfun_native_funct)test_native_funct1 } } },
+		{ MATHFUN_DECL_FUNCT, "funct2", { .funct = { test_funct2, &sig, NULL } } },
 
 		{ -1, NULL, { .value = 0 } }
 	};
 	const mathfun_decl decls2[] = {
 		{ MATHFUN_DECL_CONST, "c", { .value = 3.0 } },
 
-		{ MATHFUN_DECL_FUNCT, "funct3", { .funct = { test_funct3, &sig } } },
+		{ MATHFUN_DECL_FUNCT, "funct3", { .funct = { test_funct3, &sig, NULL } } },
 
 		{ -1, NULL, { .value = 0 } }
 	};
