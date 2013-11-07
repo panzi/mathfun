@@ -94,6 +94,8 @@ struct mathfun_expr {
 		struct {
 			mathfun_binding_funct funct;
 			const mathfun_sig *sig;
+			mathfun_native_funct native_funct;
+			const char *name;
 			mathfun_expr **args;
 		} funct;
 

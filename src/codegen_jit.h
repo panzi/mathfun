@@ -25,7 +25,7 @@ struct mathfun_jit_code {
 	jit_function_t funct;
 };
 
-MATHFUN_LOCAL bool mathfun_jit_expr(mathfun_jit *jit, mathfun_expr *expr);
+MATHFUN_LOCAL jit_value_t mathfun_jit_expr(mathfun_jit *jit, mathfun_expr *expr);
 
 #ifdef __cplusplus
 }

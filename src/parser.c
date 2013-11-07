@@ -710,8 +710,10 @@ mathfun_expr *mathfun_parse_atom(mathfun_parser *parser) {
 				return NULL;
 			}
 
+			expr->ex.funct.name  = decl->name;
 			expr->ex.funct.funct = decl->decl.funct.funct;
 			expr->ex.funct.sig   = decl->decl.funct.sig;
+			expr->ex.funct.native_funct = decl->decl.funct.native_funct;
 
 			if (expr->ex.funct.sig->argc > 0) {
 				expr->ex.funct.args = calloc(expr->ex.funct.sig->argc, sizeof(mathfun_expr*));
