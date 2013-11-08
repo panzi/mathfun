@@ -1,5 +1,6 @@
 #include "codegen_jit.h"
 
+#include <jit/jit-dump.h>
 #include <errno.h>
 
 static void mathfun_set_errno(int errnum) {
@@ -72,7 +73,25 @@ static jit_value_t mathfun_jit_mod(jit_function_t funct, jit_value_t left, jit_v
 	return mod;
 }
 
-// TODO: error handling
+typedef jit_value_t (*jit_insn1)(jit_function_t funct, jit_value_t arg1);
+typedef jit_value_t (*jit_insn2)(jit_function_t funct, jit_value_t arg1, jit_value_t arg2);
+
+static jit_value_t mathfun_jit_builtin1(mathfun_jit *jit, mathfun_expr *expr, jit_insn1 jit_insn) {
+	jit_value_t arg = mathfun_jit_expr(jit, expr->ex.funct.args[0]);
+	if (!arg) return NULL;
+	return jit_insn(jit->funct, arg);
+}
+
+static jit_value_t mathfun_jit_builtin2(mathfun_jit *jit, mathfun_expr *expr, jit_insn2 jit_insn) {
+	jit_value_t arg1 = mathfun_jit_expr(jit, expr->ex.funct.args[0]);
+	if (!arg1) return NULL;
+
+	jit_value_t arg2 = mathfun_jit_expr(jit, expr->ex.funct.args[1]);
+	if (!arg2) return NULL;
+	
+	return jit_insn(jit->funct, arg1, arg2);
+}
+
 jit_value_t mathfun_jit_expr(mathfun_jit *jit, mathfun_expr *expr) {
 	switch (expr->type) {
 		case EX_CONST:
@@ -88,15 +107,38 @@ jit_value_t mathfun_jit_expr(mathfun_jit *jit, mathfun_expr *expr) {
 
 		case EX_CALL:
 			if (expr->ex.funct.native_funct) {
+				mathfun_native_funct native_funct = expr->ex.funct.native_funct;
+				// use possibly optimized buliltin versions of some known functions
+				if      (native_funct == (mathfun_native_funct)acos)  return mathfun_jit_builtin1(jit, expr, jit_insn_acos);
+				else if (native_funct == (mathfun_native_funct)asin)  return mathfun_jit_builtin1(jit, expr, jit_insn_asin);
+				else if (native_funct == (mathfun_native_funct)atan)  return mathfun_jit_builtin1(jit, expr, jit_insn_atan);
+				else if (native_funct == (mathfun_native_funct)atan2) return mathfun_jit_builtin2(jit, expr, jit_insn_atan2);
+				else if (native_funct == (mathfun_native_funct)cos)   return mathfun_jit_builtin1(jit, expr, jit_insn_cos);
+				else if (native_funct == (mathfun_native_funct)cosh)  return mathfun_jit_builtin1(jit, expr, jit_insn_cosh);
+				else if (native_funct == (mathfun_native_funct)exp)   return mathfun_jit_builtin1(jit, expr, jit_insn_exp);
+				else if (native_funct == (mathfun_native_funct)log)   return mathfun_jit_builtin1(jit, expr, jit_insn_log);
+				else if (native_funct == (mathfun_native_funct)log10) return mathfun_jit_builtin1(jit, expr, jit_insn_log10);
+				else if (native_funct == (mathfun_native_funct)pow)   return mathfun_jit_builtin2(jit, expr, jit_insn_pow);
+				else if (native_funct == (mathfun_native_funct)sin)   return mathfun_jit_builtin1(jit, expr, jit_insn_sin);
+				else if (native_funct == (mathfun_native_funct)sinh)  return mathfun_jit_builtin1(jit, expr, jit_insn_sinh);
+				else if (native_funct == (mathfun_native_funct)sqrt)  return mathfun_jit_builtin1(jit, expr, jit_insn_sqrt);
+				else if (native_funct == (mathfun_native_funct)tan)   return mathfun_jit_builtin1(jit, expr, jit_insn_tan);
+				else if (native_funct == (mathfun_native_funct)tanh)  return mathfun_jit_builtin1(jit, expr, jit_insn_tanh);
+				else if (native_funct == (mathfun_native_funct)ceil)  return mathfun_jit_builtin1(jit, expr, jit_insn_ceil);
+				else if (native_funct == (mathfun_native_funct)floor) return mathfun_jit_builtin1(jit, expr, jit_insn_floor);
+				else if (native_funct == (mathfun_native_funct)round) return mathfun_jit_builtin1(jit, expr, jit_insn_round);
+				else if (native_funct == (mathfun_native_funct)trunc) return mathfun_jit_builtin1(jit, expr, jit_insn_trunc);
+				else if (native_funct == (mathfun_native_funct)fabs)  return mathfun_jit_builtin1(jit, expr, jit_insn_abs);
+				else if (native_funct == (mathfun_native_funct)fmin)  return mathfun_jit_builtin2(jit, expr, jit_insn_min);
+				else if (native_funct == (mathfun_native_funct)fmax)  return mathfun_jit_builtin2(jit, expr, jit_insn_max);
+
 				jit_type_t *params = calloc(expr->ex.funct.sig->argc, sizeof(jit_type_t));
 				if (!params) {
-					mathfun_raise_error(jit->error, MATHFUN_OUT_OF_MEMORY);
 					return NULL;
 				}
 				jit_value_t *args = calloc(expr->ex.funct.sig->argc, sizeof(jit_value_t));
 				if (!args) {
 					free(params);
-					mathfun_raise_error(jit->error, MATHFUN_OUT_OF_MEMORY);
 					return NULL;
 				}
 				for (size_t i = 0; i < expr->ex.funct.sig->argc; ++ i) {
@@ -117,12 +159,10 @@ jit_value_t mathfun_jit_expr(mathfun_jit *jit, mathfun_expr *expr) {
 				
 				if (sig) {
 #pragma GCC diagnostic ignored "-pedantic"
-					value = jit_insn_call_native(jit->funct, expr->ex.funct.name, expr->ex.funct.native_funct,
+					value = jit_insn_call_native(jit->funct, expr->ex.funct.name, native_funct,
 						 sig, args, expr->ex.funct.sig->argc, JIT_CALL_NOTHROW);
 #pragma GCC diagnostic pop
-				}
-				else {
-					mathfun_raise_error(jit->error, MATHFUN_OUT_OF_MEMORY);
+					jit_type_free(sig);
 				}
 
 				free(params);
@@ -131,19 +171,26 @@ jit_value_t mathfun_jit_expr(mathfun_jit *jit, mathfun_expr *expr) {
 				return value;
 			}
 			else {
-				// TODO: memleaks everywhere
-				jit_type_t union_fields[] = { jit_type_sys_double, jit_type_sys_bool };
-				jit_type_t value_union = jit_type_create_union(union_fields, 2, 1);
-				if (!value_union) return NULL;
+				if (!jit->mathfun_value) {
+					jit->mathfun_value = jit_type_create_union(jit->mathfun_value_fields, 2, 1);
+					if (!jit->mathfun_value) return NULL;
+				}
+
+				if (!jit->mathfun_binding_funct_t) {
+					if (!jit->mathfun_binding_funct_params[0]) {
+						jit->mathfun_binding_funct_params[0] = jit_type_create_pointer(jit->mathfun_value, 1);
+						if (!jit->mathfun_binding_funct_params[0]) return NULL;
+					}
+
+					jit->mathfun_binding_funct_t = jit_type_create_signature(
+						jit_abi_cdecl, jit->mathfun_value, jit->mathfun_binding_funct_params, 1, 1);
+				}
 
 				jit_type_t *array_fields = calloc(expr->ex.funct.sig->argc, sizeof(jit_type_t));
-				if (!array_fields) {
-					mathfun_raise_error(jit->error, MATHFUN_OUT_OF_MEMORY);
-					return NULL;
-				}
+				if (!array_fields) return NULL;
 				
 				for (size_t i = 0; i < expr->ex.funct.sig->argc; ++ i) {
-					array_fields[i] = value_union;
+					array_fields[i] = jit->mathfun_value;
 				}
 
 				jit_type_t args_array_type = jit_type_create_struct(array_fields, expr->ex.funct.sig->argc, 1);
@@ -156,21 +203,16 @@ jit_value_t mathfun_jit_expr(mathfun_jit *jit, mathfun_expr *expr) {
 				jit_value_t args_array = jit_value_create(jit->funct, args_array_type);
 
 				if (!args_array) {
+					jit_type_free(args_array_type);
 					free(array_fields);
 					return NULL;
 				}
-				
-				jit_type_t params[] = { jit_type_create_pointer(value_union, 1) };
+
 				jit_value_t args[] = { args_array };
-
-				if (!params[0]) {
-					free(array_fields);
-					return NULL;
-				}
-
 				jit_value_t array_adr = jit_insn_address_of(jit->funct, args_array);
 
 				if (!array_adr) {
+					jit_type_free(args_array_type);
 					free(array_fields);
 					return NULL;
 				}
@@ -184,20 +226,16 @@ jit_value_t mathfun_jit_expr(mathfun_jit *jit, mathfun_expr *expr) {
 						return NULL;
 					}
 				}
-				
-				jit_type_t sig = jit_type_create_signature(jit_abi_cdecl, value_union,
-					params, expr->ex.funct.sig->argc, 1);
 
 				jit_value_t value = NULL;
 
 #pragma GCC diagnostic ignored "-pedantic"
-				if (sig) {
-					value = jit_insn_call_native(jit->funct, expr->ex.funct.name, expr->ex.funct.funct,
-						 sig, args, expr->ex.funct.sig->argc, JIT_CALL_NOTHROW);
-				}
+				value = jit_insn_call_native(jit->funct, expr->ex.funct.name, expr->ex.funct.funct,
+					 jit->mathfun_binding_funct_t, args, 1, JIT_CALL_NOTHROW);
 #pragma GCC diagnostic pop
 				
 				free(array_fields);
+				jit_type_free(args_array_type);
 
 				return value;
 			}
@@ -400,7 +438,6 @@ jit_value_t mathfun_jit_expr(mathfun_jit *jit, mathfun_expr *expr) {
 		
 		case EX_RNG_INCL:
 		case EX_RNG_EXCL:
-			mathfun_raise_error(jit->error, MATHFUN_INTERNAL_ERROR);
 			return NULL;
 
 		case EX_AND:
@@ -497,54 +534,112 @@ jit_value_t mathfun_jit_expr(mathfun_jit *jit, mathfun_expr *expr) {
 		}
 	}
 
-	mathfun_raise_error(jit->error, MATHFUN_INTERNAL_ERROR);
 	return NULL;
 }
 
 bool mathfun_expr_codegen(mathfun_expr *expr, mathfun *fun, mathfun_error_p *error) {
-	jit_context_t context;
-	jit_type_t *params;
-	jit_type_t signature;
+	jit_context_t context = NULL;
+	jit_type_t *params = NULL;
+	jit_type_t signature = NULL;
 	mathfun_jit jit;
-	mathfun_jit_code *code;
+	mathfun_jit_code *code = NULL;
 
 	jit.argc  = fun->argc;
 	jit.funct = NULL;
-	jit.error = error;
+	jit.mathfun_value_fields[0] = jit_type_sys_double;
+	jit.mathfun_value_fields[1] = jit_type_sys_bool;
+	jit.mathfun_value = NULL;
+	jit.mathfun_binding_funct_params[0] = NULL;
+	jit.mathfun_binding_funct_t = NULL;
 
-	context = jit_context_create();
-
-	jit_context_build_start(context);
+	fun->framesize = fun->argc + (1 + ((sizeof(void *) * fun->argc) - 1) / sizeof(mathfun_value));
 
 	code = malloc(sizeof(mathfun_jit_code));
+	if (!code) goto onerror;
+
 	params = calloc(fun->argc, sizeof(jit_type_t));
+	if (!params) goto onerror;
+
+	context = jit_context_create();
+	if (!context) goto onerror;
+
+	jit_context_build_start(context);
 
 	for (size_t i = 0; i < fun->argc; ++ i) {
 		params[i] = jit_type_sys_double;
 	}
 
 	signature = jit_type_create_signature(jit_abi_cdecl, jit_type_sys_double, params, fun->argc, 1);
+	if (!signature) goto onerror;
 
 	jit.funct = jit_function_create(context, signature);
+	if (!jit.funct) goto onerror;
 
 	jit_value_t ret = mathfun_jit_expr(&jit, expr);
+	if (!ret) goto onerror;
+
 	jit_insn_return(jit.funct, ret);
 
 	jit_context_build_end(context);
 
+	if (!jit_function_compile(jit.funct)) goto onerror;
+
+	free(params);
+	params = NULL;
+
+	if (jit.mathfun_value) jit_type_free(jit.mathfun_value);
+	jit.mathfun_value = NULL;
+
+	if (jit.mathfun_binding_funct_t) jit_type_free(jit.mathfun_binding_funct_t);
+	jit.mathfun_binding_funct_t = NULL;
+
+	if (jit.mathfun_binding_funct_params[0]) jit_type_free(jit.mathfun_binding_funct_params[0]);
+	jit.mathfun_binding_funct_params[0] = NULL;
+
 	code->context = context;
 	code->funct   = jit.funct;
 
-	fun->framesize = fun->argc + (1 + ((sizeof(void *) * fun->argc) - 1) / sizeof(mathfun_value));
-	fun->code      = code;
+	fun->code = code;
 
 	return true;
+
+onerror:
+	if (errno == 0) {
+		mathfun_raise_error(error, MATHFUN_INTERNAL_ERROR);
+	}
+	else {
+		mathfun_raise_c_error(error);
+	}
+
+	if (jit.funct) jit_function_abandon(jit.funct);
+	if (signature) jit_type_free(signature);
+	if (jit.mathfun_binding_funct_t) jit_type_free(jit.mathfun_binding_funct_t);
+	if (jit.mathfun_binding_funct_params[0]) jit_type_free(jit.mathfun_binding_funct_params[0]);
+	if (jit.mathfun_value) jit_type_free(jit.mathfun_value);
+	if (context)   jit_context_destroy(context);
+
+	free(params);
+	free(code);
+
+	return false;
+}
+
+void mathfun_cleanup(mathfun *fun) {
+	mathfun_jit_code *code = fun->code;
+	if (code && code->context) {
+		jit_context_destroy(code->context);
+	}
+
+	free(fun->code);
+	fun->code = NULL;
 }
 
 bool mathfun_dump(const mathfun *fun, FILE *stream, const mathfun_context *ctx, mathfun_error_p *error) {
-	(void)fun;
 	(void)ctx;
-	fprintf(stream, "mathfun_dump not yet implemented when using libjit\n");
-	mathfun_raise_error(error, MATHFUN_INTERNAL_ERROR);
-	return false;
+	(void)error;
+	
+	mathfun_jit_code *code = fun->code;
+	jit_dump_function(stream, code->funct, NULL);
+
+	return true;
 }

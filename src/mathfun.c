@@ -330,11 +330,6 @@ bool mathfun_context_undefine(mathfun_context *ctx, const char *name, mathfun_er
 	return true;
 }
 
-void mathfun_cleanup(mathfun *fun) {
-	free(fun->code);
-	fun->code = NULL;
-}
-
 double mathfun_call(const mathfun *fun, mathfun_error_p *error, ...) {
 	va_list ap;
 	va_start(ap, error);

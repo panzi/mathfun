@@ -17,7 +17,10 @@ typedef struct mathfun_jit_code mathfun_jit_code;
 struct mathfun_jit {
 	size_t           argc;
 	jit_function_t   funct;
-	mathfun_error_p *error;
+	jit_type_t       mathfun_value_fields[2];
+	jit_type_t       mathfun_value;
+	jit_type_t       mathfun_binding_funct_t;
+	jit_type_t       mathfun_binding_funct_params[1];
 };
 
 struct mathfun_jit_code {

@@ -2,6 +2,11 @@
 
 #include "codegen.h"
 
+void mathfun_cleanup(mathfun *fun) {
+	free(fun->code);
+	fun->code = NULL;
+}
+
 void mathfun_codegen_cleanup(mathfun_codegen *codegen) {
 	free(codegen->code);
 	codegen->code = NULL;

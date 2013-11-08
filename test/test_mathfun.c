@@ -3,78 +3,12 @@
 #include <mathfun.h>
 #include <stdlib.h>
 
-#define STRINGIFY(arg)  STRINGIFY1(arg)
-#define STRINGIFY1(arg) STRINGIFY2(arg)
-#define STRINGIFY2(arg) #arg
-
-#define CONCATENATE(arg1, arg2)   CONCATENATE1(arg1, arg2)
-#define CONCATENATE1(arg1, arg2)  CONCATENATE2(arg1, arg2)
-#define CONCATENATE2(arg1, arg2)  arg1##arg2
-
-#define STRINGIFY_LIST_0()
-#define STRINGIFY_LIST_1(x) STRINGIFY(x)
-#define STRINGIFY_LIST_2(x, ...) STRINGIFY(x), STRINGIFY_LIST_1(__VA_ARGS__)
-#define STRINGIFY_LIST_3(x, ...) STRINGIFY(x), STRINGIFY_LIST_2(__VA_ARGS__)
-#define STRINGIFY_LIST_4(x, ...) STRINGIFY(x), STRINGIFY_LIST_3(__VA_ARGS__)
-#define STRINGIFY_LIST_5(x, ...) STRINGIFY(x), STRINGIFY_LIST_4(__VA_ARGS__)
-#define STRINGIFY_LIST_6(x, ...) STRINGIFY(x), STRINGIFY_LIST_5(__VA_ARGS__)
-#define STRINGIFY_LIST_7(x, ...) STRINGIFY(x), STRINGIFY_LIST_6(__VA_ARGS__)
-#define STRINGIFY_LIST_8(x, ...) STRINGIFY(x), STRINGIFY_LIST_7(__VA_ARGS__)
-
-#define STRINGIFY_LIST_(N, ...) CONCATENATE(STRINGIFY_LIST_, N)(__VA_ARGS__)
-#define STRINGIFY_LIST(...) STRINGIFY_LIST_(PP_NARG(__VA_ARGS__), __VA_ARGS__)
-
-#define MATHFUN_RUN_VARARGS_0()
-#define MATHFUN_RUN_VARARGS_1(x) STRINGIFY(x), x
-#define MATHFUN_RUN_VARARGS_2(x, ...) STRINGIFY(x), x, MATHFUN_RUN_VARARGS_1(__VA_ARGS__)
-#define MATHFUN_RUN_VARARGS_3(x, ...) STRINGIFY(x), x, MATHFUN_RUN_VARARGS_2(__VA_ARGS__)
-#define MATHFUN_RUN_VARARGS_4(x, ...) STRINGIFY(x), x, MATHFUN_RUN_VARARGS_3(__VA_ARGS__)
-#define MATHFUN_RUN_VARARGS_5(x, ...) STRINGIFY(x), x, MATHFUN_RUN_VARARGS_4(__VA_ARGS__)
-#define MATHFUN_RUN_VARARGS_6(x, ...) STRINGIFY(x), x, MATHFUN_RUN_VARARGS_5(__VA_ARGS__)
-#define MATHFUN_RUN_VARARGS_7(x, ...) STRINGIFY(x), x, MATHFUN_RUN_VARARGS_6(__VA_ARGS__)
-#define MATHFUN_RUN_VARARGS_8(x, ...) STRINGIFY(x), x, MATHFUN_RUN_VARARGS_7(__VA_ARGS__)
-
-#define MATHFUN_RUN_VARARGS_(N, ...) CONCATENATE(MATHFUN_RUN_VARARGS_, N)(__VA_ARGS__)
-#define MATHFUN_RUN_VARARGS(...) MATHFUN_RUN_VARARGS_(PP_NARG(__VA_ARGS__), __VA_ARGS__)
-
-#define PP_NARG(...) PP_NARG_(__VA_ARGS__,PP_RSEQ_N())
-#define PP_NARG_(...) PP_ARG_N(__VA_ARGS__)
-#define PP_ARG_N(_1,_2,_3,_4,_5,_6,_7,_8,N,...) N
-#define PP_RSEQ_N() 8,7,6,5,4,3,2,1,0
-
 #define ASSERT_COMPILE_ERROR(expected, code, ...) \
 	const size_t argc = sizeof((const char *[]){__VA_ARGS__}) / sizeof(const char *); \
 	CU_ASSERT_EQUAL(test_compile_error((const char *[]){__VA_ARGS__}, argc, code), expected);
 
 #define ASSERT_COMPILE_ERROR_NOARGS(expected, code) \
 	CU_ASSERT_EQUAL(test_compile_error(NULL, 0, code), expected);
-
-#define ASSERT_EXEC(expr, cexpr, ...) \
-{ \
-	mathfun_error_p error = NULL; \
-	CU_ASSERT(issame(cexpr, MATHFUN_RUN(expr, &error, MATHFUN_RUN_VARARGS(__VA_ARGS__)))); \
-	CU_ASSERT(error == NULL); \
-	if (error) mathfun_error_log_and_cleanup(&error, stderr); \
-	mathfun fun; \
-	const char *argnames[] = {STRINGIFY_LIST(__VA_ARGS__)}; \
-	mathfun_compile(&fun, argnames, PP_NARG(__VA_ARGS__), expr, &error); \
-	CU_ASSERT(error == NULL); \
-	if (error) { \
-		mathfun_error_log_and_cleanup(&error, stderr); \
-	} \
-	else { \
-		CU_ASSERT(issame(cexpr, mathfun_call(&fun, &error, __VA_ARGS__))); \
-		CU_ASSERT(error == NULL); \
-		if (error) mathfun_error_log_and_cleanup(&error, stderr); \
-		const double args[] = {__VA_ARGS__}; \
-		CU_ASSERT(issame(cexpr, mathfun_acall(&fun, args, &error))); \
-		CU_ASSERT(error == NULL); \
-		if (error) mathfun_error_log_and_cleanup(&error, stderr); \
-		mathfun_cleanup(&fun); \
-	}\
-}
-
-#define ASSERT_EXEC_DIRECT(expr, ...) ASSERT_EXEC(STRINGIFY(expr), expr, __VA_ARGS__)
 
 static bool issame(double x, double y) {
 	return isnan(x) ? isnan(y) : x == y;
@@ -262,19 +196,65 @@ static void test_mod() {
 
 static void test_exec_sin_x() {
 	const double x = M_PI_2;
-	ASSERT_EXEC_DIRECT(sin(x), x);
+	const double res = sin(x);
+
+	mathfun_error_p error = NULL;
+	CU_ASSERT(issame(res, MATHFUN_RUN("sin(x)", &error, "x", x)));
+	CU_ASSERT(error == NULL);
+	if (error) mathfun_error_log_and_cleanup(&error, stderr);
+	mathfun fun;
+	const char *argnames[] = {"x"};
+	mathfun_compile(&fun, argnames, 1, "sin(x)", &error);
+	CU_ASSERT(error == NULL);
+	if (error) {
+		mathfun_error_log_and_cleanup(&error, stderr);
+	}
+	else {
+		CU_ASSERT(issame(res, mathfun_call(&fun, &error, x)));
+		CU_ASSERT(error == NULL);
+		if (error) mathfun_error_log_and_cleanup(&error, stderr);
+		const double args[] = {x};
+		CU_ASSERT(issame(res, mathfun_acall(&fun, args, &error)));
+		CU_ASSERT(error == NULL);
+		if (error) mathfun_error_log_and_cleanup(&error, stderr);
+		mathfun_cleanup(&fun);
+	}
 }
 
 static void test_exec_all() {
 	const double x = M_PI_2;
 	const double y = 1.0;
 	const double z = 2.0;
-	ASSERT_EXEC(
-		"x in (-3e2 * y)...Inf && y == 1 || !(x <= pi_2 ? z >= 2 || x > NaN || y in -10..10 : z != -2 && z < x) ? x % z / 3 : -x ** y - z + +cos(5.5)",
-		((x >= (-3e2 * y) && x < INFINITY) && y == 1) || !(x <= M_PI_2 ?
-			z >= 2 || x > NAN || (y >= -10 && y <= 10) : z != -2 && z < x) ?
-			mathfun_mod(x, z) / 3 : pow(-x, y) - z + +cos(5.5),
-		x, y, z);
+
+	const char *code =
+		"x in (-3e2 * y)...Inf && y == 1 || !(x <= pi_2 ? z >= 2 || x > NaN || "
+		"y in -10..10 : z != -2 && z < x) ? x % z / 3 : -x ** y - z + +cos(5.5)";
+
+	const double res = ((x >= (-3e2 * y) && x < INFINITY) && y == 1) || !(x <= M_PI_2 ?
+		z >= 2 || x > NAN || (y >= -10 && y <= 10) : z != -2 && z < x) ?
+		mathfun_mod(x, z) / 3 : pow(-x, y) - z + +cos(5.5);
+
+	mathfun_error_p error = NULL;
+	CU_ASSERT(issame(res, MATHFUN_RUN(code, &error, "x", x, "y", y, "z", z)));
+	CU_ASSERT(error == NULL);
+	if (error) mathfun_error_log_and_cleanup(&error, stderr);
+	mathfun fun;
+	const char *argnames[] = {"x", "y", "z"};
+	mathfun_compile(&fun, argnames, 3, code, &error);
+	CU_ASSERT(error == NULL);
+	if (error) {
+		mathfun_error_log_and_cleanup(&error, stderr);
+	}
+	else {
+		CU_ASSERT(issame(res, mathfun_call(&fun, &error, x, y, z)));
+		CU_ASSERT(error == NULL);
+		if (error) mathfun_error_log_and_cleanup(&error, stderr);
+		const double args[] = {x, y, z};
+		CU_ASSERT(issame(res, mathfun_acall(&fun, args, &error)));
+		CU_ASSERT(error == NULL);
+		if (error) mathfun_error_log_and_cleanup(&error, stderr);
+		mathfun_cleanup(&fun);
+	}
 }
 
 static mathfun_value test_funct1(const mathfun_value args[]) {
