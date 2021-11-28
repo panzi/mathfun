@@ -230,6 +230,12 @@ bool wavegen(const char *filename, FILE *stream, uint32_t sample_rate, uint16_t 
 	}
 
 	mathfun *functs = calloc(channels, sizeof(mathfun));
+
+	if (!functs) {
+		perror("allocating function buffer");
+		return false;
+	}
+
 	// t ... time in seconds
 	// s ... sample
 	// c ... channel
