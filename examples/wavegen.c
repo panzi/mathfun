@@ -174,12 +174,14 @@ bool mathfun_wavegen(const char *filename, FILE *stream, uint32_t sample_rate, u
 
 	for (size_t sample = 0; sample < samples; ++ sample) {
 		const double t = (double)sample / (double)sample_rate;
+		const double r = t * M_TAU;
 		for (size_t channel = 0; channel < channels; ++ channel) {
 			const mathfun *funct = channel_functs + channel;
 			// arguments are the first cells in frame:
 			frame[0].number = t;
-			frame[1].number = sample;
-			frame[2].number = channel;
+			frame[1].number = r;
+			frame[2].number = sample;
+			frame[3].number = channel;
 			// ignore math errors here (would be in errno)
 			double value = mathfun_exec(funct, frame);
 			if (value > 1.0) value = 1.0;
@@ -216,6 +218,115 @@ bool wavegen(const char *filename, FILE *stream, uint32_t sample_rate, uint16_t 
 	mathfun_error_p error = NULL;
 
 	if (!mathfun_context_init(&ctx, true, &error) ||
+		!mathfun_context_define_const(&ctx, "C0",  16.35, &error) ||
+		!mathfun_context_define_const(&ctx, "Cs0", 17.32, &error) ||
+		!mathfun_context_define_const(&ctx, "D0",  18.35, &error) ||
+		!mathfun_context_define_const(&ctx, "Ds0", 19.45, &error) ||
+		!mathfun_context_define_const(&ctx, "E0",  20.60, &error) ||
+		!mathfun_context_define_const(&ctx, "F0",  21.83, &error) ||
+		!mathfun_context_define_const(&ctx, "Fs0", 23.12, &error) ||
+		!mathfun_context_define_const(&ctx, "G0",  24.50, &error) ||
+		!mathfun_context_define_const(&ctx, "Gs0", 25.96, &error) ||
+		!mathfun_context_define_const(&ctx, "A0",  27.50, &error) ||
+		!mathfun_context_define_const(&ctx, "As0", 29.14, &error) ||
+		!mathfun_context_define_const(&ctx, "B0",  30.87, &error) ||
+		!mathfun_context_define_const(&ctx, "C1",  32.70, &error) ||
+		!mathfun_context_define_const(&ctx, "Cs1", 34.65, &error) ||
+		!mathfun_context_define_const(&ctx, "D1",  36.71, &error) ||
+		!mathfun_context_define_const(&ctx, "Ds1", 38.89, &error) ||
+		!mathfun_context_define_const(&ctx, "E1",  41.20, &error) ||
+		!mathfun_context_define_const(&ctx, "F1",  43.65, &error) ||
+		!mathfun_context_define_const(&ctx, "Fs1", 46.25, &error) ||
+		!mathfun_context_define_const(&ctx, "G1",  49.00, &error) ||
+		!mathfun_context_define_const(&ctx, "Gs1", 51.91, &error) ||
+		!mathfun_context_define_const(&ctx, "A1",  55.00, &error) ||
+		!mathfun_context_define_const(&ctx, "As1", 58.27, &error) ||
+		!mathfun_context_define_const(&ctx, "B1",  61.74, &error) ||
+		!mathfun_context_define_const(&ctx, "C2",  65.41, &error) ||
+		!mathfun_context_define_const(&ctx, "Cs2", 69.30, &error) ||
+		!mathfun_context_define_const(&ctx, "D2",  73.42, &error) ||
+		!mathfun_context_define_const(&ctx, "Ds2", 77.78, &error) ||
+		!mathfun_context_define_const(&ctx, "E2",  82.41, &error) ||
+		!mathfun_context_define_const(&ctx, "F2",  87.31, &error) ||
+		!mathfun_context_define_const(&ctx, "Fs2", 92.50, &error) ||
+		!mathfun_context_define_const(&ctx, "G2",  98.00, &error) ||
+		!mathfun_context_define_const(&ctx, "Gs2", 103.83, &error) ||
+		!mathfun_context_define_const(&ctx, "A2",  110.00, &error) ||
+		!mathfun_context_define_const(&ctx, "As2", 116.54, &error) ||
+		!mathfun_context_define_const(&ctx, "B2",  123.47, &error) ||
+		!mathfun_context_define_const(&ctx, "C3",  130.81, &error) ||
+		!mathfun_context_define_const(&ctx, "Cs3", 138.59, &error) ||
+		!mathfun_context_define_const(&ctx, "D3",  146.83, &error) ||
+		!mathfun_context_define_const(&ctx, "Ds3", 155.56, &error) ||
+		!mathfun_context_define_const(&ctx, "E3",  164.81, &error) ||
+		!mathfun_context_define_const(&ctx, "F3",  174.61, &error) ||
+		!mathfun_context_define_const(&ctx, "Fs3", 185.00, &error) ||
+		!mathfun_context_define_const(&ctx, "G3",  196.00, &error) ||
+		!mathfun_context_define_const(&ctx, "Gs3", 207.65, &error) ||
+		!mathfun_context_define_const(&ctx, "A3",  220.00, &error) ||
+		!mathfun_context_define_const(&ctx, "As3", 233.08, &error) ||
+		!mathfun_context_define_const(&ctx, "B3",  246.94, &error) ||
+		!mathfun_context_define_const(&ctx, "C4",  261.63, &error) ||
+		!mathfun_context_define_const(&ctx, "Cs4", 277.18, &error) ||
+		!mathfun_context_define_const(&ctx, "D4",  293.66, &error) ||
+		!mathfun_context_define_const(&ctx, "Ds4", 311.13, &error) ||
+		!mathfun_context_define_const(&ctx, "E4",  329.63, &error) ||
+		!mathfun_context_define_const(&ctx, "F4",  349.23, &error) ||
+		!mathfun_context_define_const(&ctx, "Fs4", 369.99, &error) ||
+		!mathfun_context_define_const(&ctx, "G4",  392.00, &error) ||
+		!mathfun_context_define_const(&ctx, "Gs4", 415.30, &error) ||
+		!mathfun_context_define_const(&ctx, "A4",  440.00, &error) ||
+		!mathfun_context_define_const(&ctx, "As4", 466.16, &error) ||
+		!mathfun_context_define_const(&ctx, "B4",  493.88, &error) ||
+		!mathfun_context_define_const(&ctx, "C5",  523.25, &error) ||
+		!mathfun_context_define_const(&ctx, "Cs5", 554.37, &error) ||
+		!mathfun_context_define_const(&ctx, "D5",  587.33, &error) ||
+		!mathfun_context_define_const(&ctx, "Ds5", 622.25, &error) ||
+		!mathfun_context_define_const(&ctx, "E5",  659.25, &error) ||
+		!mathfun_context_define_const(&ctx, "F5",  698.46, &error) ||
+		!mathfun_context_define_const(&ctx, "Fs5", 739.99, &error) ||
+		!mathfun_context_define_const(&ctx, "G5",  783.99, &error) ||
+		!mathfun_context_define_const(&ctx, "Gs5", 830.61, &error) ||
+		!mathfun_context_define_const(&ctx, "A5",  880.00, &error) ||
+		!mathfun_context_define_const(&ctx, "As5", 932.33, &error) ||
+		!mathfun_context_define_const(&ctx, "B5",  987.77, &error) ||
+		!mathfun_context_define_const(&ctx, "C6",  1046.50, &error) ||
+		!mathfun_context_define_const(&ctx, "Cs6", 1108.73, &error) ||
+		!mathfun_context_define_const(&ctx, "D6",  1174.66, &error) ||
+		!mathfun_context_define_const(&ctx, "Ds6", 1244.51, &error) ||
+		!mathfun_context_define_const(&ctx, "E6",  1318.51, &error) ||
+		!mathfun_context_define_const(&ctx, "F6",  1396.91, &error) ||
+		!mathfun_context_define_const(&ctx, "Fs6", 1479.98, &error) ||
+		!mathfun_context_define_const(&ctx, "G6",  1567.98, &error) ||
+		!mathfun_context_define_const(&ctx, "Gs6", 1661.22, &error) ||
+		!mathfun_context_define_const(&ctx, "A6",  1760.00, &error) ||
+		!mathfun_context_define_const(&ctx, "As6", 1864.66, &error) ||
+		!mathfun_context_define_const(&ctx, "B6",  1975.53, &error) ||
+		!mathfun_context_define_const(&ctx, "C7",  2093.00, &error) ||
+		!mathfun_context_define_const(&ctx, "Cs7", 2217.46, &error) ||
+		!mathfun_context_define_const(&ctx, "D7",  2349.32, &error) ||
+		!mathfun_context_define_const(&ctx, "Ds7", 2489.02, &error) ||
+		!mathfun_context_define_const(&ctx, "E7",  2637.02, &error) ||
+		!mathfun_context_define_const(&ctx, "F7",  2793.83, &error) ||
+		!mathfun_context_define_const(&ctx, "Fs7", 2959.96, &error) ||
+		!mathfun_context_define_const(&ctx, "G7",  3135.96, &error) ||
+		!mathfun_context_define_const(&ctx, "Gs7", 3322.44, &error) ||
+		!mathfun_context_define_const(&ctx, "A7",  3520.00, &error) ||
+		!mathfun_context_define_const(&ctx, "As7", 3729.31, &error) ||
+		!mathfun_context_define_const(&ctx, "B7",  3951.07, &error) ||
+		!mathfun_context_define_const(&ctx, "C8",  4186.01, &error) ||
+		!mathfun_context_define_const(&ctx, "Cs8", 4434.92, &error) ||
+		!mathfun_context_define_const(&ctx, "D8",  4698.63, &error) ||
+		!mathfun_context_define_const(&ctx, "Ds8", 4978.03, &error) ||
+		!mathfun_context_define_const(&ctx, "E8",  5274.04, &error) ||
+		!mathfun_context_define_const(&ctx, "F8",  5587.65, &error) ||
+		!mathfun_context_define_const(&ctx, "Fs8", 5919.91, &error) ||
+		!mathfun_context_define_const(&ctx, "G8",  6271.93, &error) ||
+		!mathfun_context_define_const(&ctx, "Gs8", 6644.88, &error) ||
+		!mathfun_context_define_const(&ctx, "A8",  7040.00, &error) ||
+		!mathfun_context_define_const(&ctx, "As8", 7458.62, &error) ||
+		!mathfun_context_define_const(&ctx, "B8",  7902.13, &error) ||
+
 		!mathfun_context_define_funct(&ctx, "sq",      square_wave,   &sig1, &error) ||
 		!mathfun_context_define_funct(&ctx, "tri",     triangle_wave, &sig1, &error) ||
 		!mathfun_context_define_funct(&ctx, "saw",     sawtooth_wave, &sig1, &error) ||
@@ -237,11 +348,12 @@ bool wavegen(const char *filename, FILE *stream, uint32_t sample_rate, uint16_t 
 	}
 
 	// t ... time in seconds
+	// r ... t * 2 * pi
 	// s ... sample
 	// c ... channel
-	const char *argnames[] = { "t", "s", "c" };
+	const char *argnames[] = { "t", "r", "s", "c" };
 	for (size_t i = 0; i < channels; ++ i) {
-		if (!mathfun_context_compile(&ctx, argnames, 3, channel_functs[i], functs + i, &error)) {
+		if (!mathfun_context_compile(&ctx, argnames, 4, channel_functs[i], functs + i, &error)) {
 			mathfun_error_log_and_cleanup(&error, stderr);
 			for (; i > 0; -- i) {
 				mathfun_cleanup(functs + i - 1);

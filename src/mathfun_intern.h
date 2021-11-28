@@ -22,6 +22,10 @@ extern "C" {
 #define MATHFUN_FUNCT_CODES (1 + ((sizeof(mathfun_binding_funct) - 1) / sizeof(mathfun_code)))
 #define MATHFUN_VALUE_CODES (1 + ((sizeof(mathfun_value) - 1) / sizeof(mathfun_code)))
 
+#ifndef M_TAU
+#	define M_TAU (2*M_PI)
+#endif
+
 #ifndef __GNUC__
 #	define __attribute__(X)
 #endif

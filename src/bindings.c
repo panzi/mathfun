@@ -285,7 +285,7 @@ bool mathfun_context_define_default(mathfun_context *ctx, mathfun_error_p *error
 		{ MATHFUN_DECL_CONST, "ln2",       { .value = M_LN2 } },
 		{ MATHFUN_DECL_CONST, "ln10",      { .value = M_LN10 } },
 		{ MATHFUN_DECL_CONST, "pi",        { .value = M_PI } },
-		{ MATHFUN_DECL_CONST, "tau",       { .value = 2*M_PI } },
+		{ MATHFUN_DECL_CONST, "tau",       { .value = M_TAU } },
 		{ MATHFUN_DECL_CONST, "pi_2",      { .value = M_PI_2 } },
 		{ MATHFUN_DECL_CONST, "pi_4",      { .value = M_PI_4 } },
 		{ MATHFUN_DECL_CONST, "_1_pi",     { .value = M_1_PI } },
