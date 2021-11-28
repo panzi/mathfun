@@ -114,7 +114,7 @@ bool mathfun_wavegen(const char *filename, FILE *stream, uint32_t sample_rate, u
 	}
 
 	const int mid        = 1 << (bits_per_sample - 1);
-	const int max_volume = ~(~0 << (bits_per_sample - 1));
+	const int max_volume = ~(~((uint32_t)0) << (bits_per_sample - 1));
 	const unsigned int ceil_bits_per_sample = to_full_byte(bits_per_sample);
 	const unsigned int shift                = ceil_bits_per_sample - bits_per_sample;
 	const unsigned int bytes_per_sample     = ceil_bits_per_sample / 8;

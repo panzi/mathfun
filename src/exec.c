@@ -139,13 +139,15 @@ mathfun_value mathfun_expr_exec(const mathfun_expr *expr, const double args[]) {
 	return (mathfun_value){ .number = NAN };
 }
 
-#pragma GCC diagnostic ignored "-pedantic"
-#pragma GCC diagnostic ignored "-Wunused-label"
 double mathfun_exec(const mathfun *fun, mathfun_value regs[]) {
 	const mathfun_code *start = fun->code;
 	const mathfun_code *code  = fun->code;
 
 #ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+#pragma GCC diagnostic ignored "-Wunused-label"
+#pragma GCC diagnostic ignored "-Wpointer-arith"
 	// http://gcc.gnu.org/onlinedocs/gcc/Labels-as-Values.html
 	// use offsets instead of absolute addresses to reduce the number of
 	// dynamic relocations for code in shared libraries
@@ -359,4 +361,6 @@ do_nop:
 		}
 	}
 }
+#ifdef __GNUC__
 #pragma GCC diagnostic pop
+#endif
