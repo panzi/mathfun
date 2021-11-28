@@ -327,6 +327,8 @@ bool mathfun_context_undefine(mathfun_context *ctx, const char *name, mathfun_er
 void mathfun_cleanup(mathfun *fun) {
 	free(fun->code);
 	fun->code = NULL;
+	fun->argc = 0;
+	fun->framesize = 0;
 }
 
 double mathfun_call(const mathfun *fun, mathfun_error_p *error, ...) {

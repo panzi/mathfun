@@ -179,11 +179,15 @@ struct mathfun_context {
 	size_t decl_used;
 };
 
+#define MATHFUN_CONTEXT_INIT { .decls = NULL, .decl_capacity = 0, .decl_used = 0 }
+
 struct mathfun {
 	size_t argc;
 	size_t framesize;
 	void  *code;
 };
+
+#define MATHFUN_INIT { .argc = 0, .framesize = 0, .code = NULL }
 
 /** Initialize a mathfun_context.
  *
